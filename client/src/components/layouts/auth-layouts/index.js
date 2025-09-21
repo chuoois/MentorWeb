@@ -1,1 +1,1 @@
-export * from "./main-login";
+export * from "./main-auth-layout";
