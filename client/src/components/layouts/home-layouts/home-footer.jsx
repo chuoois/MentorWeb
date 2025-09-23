@@ -1,36 +1,36 @@
 import { Facebook, Instagram, Twitter, Linkedin, Youtube, GraduationCap } from "lucide-react";
 
 const footerLinks = {
-  Platform: [
-    "Browse Mentors",
-    "Book a Session",
-    "Become a Mentor",
-    "Mentorship for Teams",
-    "Testimonials",
+  Nền_tảng: [
+    "Tìm Mentor",
+    "Đặt buổi học",
+    "Trở thành Mentor",
+    "Mentorship cho Doanh nghiệp",
+    "Cảm nhận học viên",
   ],
-  Resources: [
-    "Newsletter",
-    "Books",
-    "Perks",
-    "Templates",
-    "Career Paths",
+  Tài_nguyên: [
+    "Bản tin",
+    "Sách",
+    "Ưu đãi",
+    "Mẫu tài liệu",
+    "Lộ trình nghề nghiệp",
     "Blog",
   ],
-  Company: [
-    "About",
-    "Case Studies",
-    "Partner Program",
-    "Code of Conduct",
-    "Privacy Policy",
+  Công_ty: [
+    "Về chúng tôi",
+    "Case Study",
+    "Chương trình đối tác",
+    "Quy tắc ứng xử",
+    "Chính sách bảo mật",
     "DMCA",
   ],
-  Explore: [
-    "Companies",
-    "Fractional Executives",
-    "Services & Training",
-    "Part-Time Experts",
+  Khám_phá: [
+    "Công ty",
+    "Chuyên gia bán thời gian",
+    "Dịch vụ & Đào tạo",
+    "Lãnh đạo bán thời gian",
   ],
-  Support: ["FAQ", "Contact"],
+  Hỗ_trợ: ["FAQ", "Liên hệ"],
 };
 
 export const Footer = () => {
@@ -38,7 +38,7 @@ export const Footer = () => {
     <footer className="bg-[#FFFFFF] text-[#333333] pt-16 pb-8 border-t border-[#F9C5D5]/40">
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-5 gap-10 text-center md:text-left">
-          {/* Logo and Description */}
+          {/* Logo và mô tả */}
           <div className="space-y-5">
             <div className="flex items-center justify-center md:justify-start space-x-3">
               <div className="w-10 h-10 bg-[#F9C5D5] rounded-xl flex items-center justify-center shadow">
@@ -49,10 +49,9 @@ export const Footer = () => {
               </span>
             </div>
             <p className="text-[#333333]/80 max-w-sm mx-auto md:mx-0 text-sm leading-relaxed">
-              Your trusted source to find highly-vetted mentors & industry
-              professionals to move your career ahead.
+              Nơi đáng tin cậy để tìm kiếm các mentor & chuyên gia trong ngành, giúp bạn phát triển sự nghiệp.
             </p>
-            {/* Social Media Icons */}
+            {/* Mạng xã hội */}
             <div className="flex space-x-4 justify-center md:justify-start pt-4">
               <a
                 href="https://facebook.com"
@@ -97,11 +96,11 @@ export const Footer = () => {
             </div>
           </div>
 
-          {/* Footer Links */}
+          {/* Các link trong footer */}
           {Object.entries(footerLinks).map(([category, links]) => (
             <div key={category} className="space-y-4">
               <h3 className="font-semibold text-lg text-[#333333] tracking-wide">
-                {category}
+                {category.replace("_", " ")}
               </h3>
               <ul className="space-y-2">
                 {links.map((link, index) => (
@@ -119,9 +118,9 @@ export const Footer = () => {
           ))}
         </div>
 
-        {/* Bottom Note */}
+        {/* Ghi chú dưới cùng */}
         <div className="text-center mt-12 text-sm text-[#333333]/70">
-          © {new Date().getFullYear()} MentorHub. All rights reserved.
+          © {new Date().getFullYear()} MentorHub. Mọi quyền được bảo lưu.
         </div>
       </div>
     </footer>

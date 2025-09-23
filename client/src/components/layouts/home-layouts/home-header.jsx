@@ -22,7 +22,7 @@ export const Header = () => {
 
           {/* Menu desktop */}
           <nav className="hidden lg:flex items-center space-x-8">
-            {["Find Mentors", "Become a Mentor", "For Teams", "Resources"].map(
+            {["Trang chủ", "Trở thành Mentor", "Dành cho Doanh nghiệp", "Tin tức"].map(
               (item, idx) => (
                 <a
                   key={idx}
@@ -38,18 +38,16 @@ export const Header = () => {
           {/* Nút bên phải */}
           <div className="flex items-center space-x-4">
             <Link to="/auth/login">
-              <Link to="/auth/login">
-                <Button
-                  variant="outline"
-                  className="hidden md:inline-flex border border-[#2C3E50] text-[#2C3E50] hover:bg-[#2C3E50] hover:text-white font-medium transition-colors duration-300 rounded-full"
-                >
-                  Sign In
-                </Button>
-              </Link>
-
+              <Button
+                variant="outline"
+                className="hidden md:inline-flex border border-[#2C3E50] text-[#2C3E50] hover:bg-[#2C3E50] hover:text-white font-medium transition-colors duration-300 rounded-full"
+              >
+                Đăng nhập
+              </Button>
             </Link>
+
             <Button className="bg-[#2C3E50] hover:bg-[#1A2634] text-white px-6 py-2 rounded-full font-medium shadow transition duration-300">
-              Browse all mentors
+              Xem tất cả Mentor
             </Button>
 
             {/* Nút toggle menu mobile */}
@@ -66,7 +64,7 @@ export const Header = () => {
         {isMenuOpen && (
           <div className="lg:hidden mt-4 pb-4 border-t border-white/50">
             <nav className="flex flex-col space-y-4 pt-4">
-              {["Find Mentors", "Become a Mentor", "For Teams", "Resources"].map(
+              {["Tìm Mentor", "Trở thành Mentor", "Dành cho Doanh nghiệp", "Tài nguyên"].map(
                 (item, idx) => (
                   <a
                     key={idx}
