@@ -16,7 +16,7 @@ const mentorReasons = [
         icon: Crown,
         title: "Mạng lưới cố vấn có thu nhập cao hàng đầu",
         description:
-            "Không cần làm việc miễn phí (trừ khi bạn muốn). Không phí thành viên. Bạn nhận 80% thu nhập, với hơn 10 triệu USD đã được trả cho các mentor.",
+            "Không cần làm việc miễn phí (trừ khi bạn muốn). Không phí thành viên. Bạn nhận 80% thu nhập.",
     },
     {
         icon: Trophy,
@@ -148,7 +148,7 @@ export const HomeRegisterMentor = () => {
             <section className="py-16 bg-[#FDF7F9]">
                 <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl text-center">
                     <h2 className="text-3xl lg:text-4xl font-extrabold text-[#2C3E50] mb-6">
-                        Vì sao nên cố vấn cùng MentorCruise?
+                        Vì sao nên cố vấn cùng MentorHub?
                     </h2>
                     <p className="text-lg text-[#333333]/70 max-w-3xl mx-auto mb-12">
                         Nơi tác động gặp cơ hội – và nơi mentor xuất sắc tỏa sáng.

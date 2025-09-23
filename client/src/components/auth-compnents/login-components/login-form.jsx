@@ -10,12 +10,12 @@ import { Link } from "react-router-dom"
 export const LoginForm = () => {
   return (
     <div className="w-full space-y-6">
-      <h1 className="text-3xl font-bold text-[#2C3E50] mb-8 text-center">Log in</h1>
+      <h1 className="text-3xl font-bold text-[#2C3E50] mb-8 text-center">Đăng nhập</h1>
 
       <Tabs defaultValue="mentee" className="w-full">
         <TabsList className="grid w-full grid-cols-2 mb-6">
-          <TabsTrigger value="mentee">I'm a mentee</TabsTrigger>
-          <TabsTrigger value="mentor">I'm a mentor</TabsTrigger>
+          <TabsTrigger value="mentee">Tôi là mentee</TabsTrigger>
+          <TabsTrigger value="mentor">Tôi là mentor</TabsTrigger>
         </TabsList>
 
         <TabsContent value="mentee">
@@ -30,7 +30,7 @@ export const LoginForm = () => {
   )
 }
 
-/* =================== Reusable Form =================== */
+/* =================== Form dùng lại =================== */
 const LoginFormContent = ({ type }) => {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -49,7 +49,7 @@ const LoginFormContent = ({ type }) => {
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor={`${type}-email`} className="text-sm font-medium text-[#2C3E50]">
-          Email or username
+          Email
         </Label>
         <Input
           id={`${type}-email`}
@@ -63,7 +63,7 @@ const LoginFormContent = ({ type }) => {
 
       <div className="space-y-2">
         <Label htmlFor={`${type}-password`} className="text-sm font-medium text-[#2C3E50]">
-          Password
+          Mật khẩu
         </Label>
         <div className="relative">
           <Input
@@ -89,16 +89,16 @@ const LoginFormContent = ({ type }) => {
         className="w-full h-12 bg-[#F9C5D5] hover:bg-[#f5b8cc] text-[#2C3E50] font-medium rounded-md transition-colors"
         disabled={isLoading}
       >
-        {isLoading ? "Logging in..." : `Login as ${type}`}
+        {isLoading ? "Đang đăng nhập..." : `Đăng nhập với tư cách ${type === "mentee" ? "mentee" : "mentor"}`}
       </Button>
 
-      {/* Separator + Google login (chỉ cho mentee) */}
+      {/* Separator + Google login (chỉ cho học viên) */}
       {type === "mentee" && (
         <>
           <div className="relative">
             <Separator className="my-6" />
             <div className="absolute inset-0 flex items-center justify-center">
-              <span className="bg-white px-4 text-sm text-gray-500">Or</span>
+              <span className="bg-white px-4 text-sm text-gray-500">Hoặc</span>
             </div>
           </div>
 
@@ -124,7 +124,7 @@ const LoginFormContent = ({ type }) => {
                 d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
               />
             </svg>
-            Log in with Google
+            Đăng nhập bằng Google
           </Button>
         </>
       )}
@@ -133,17 +133,17 @@ const LoginFormContent = ({ type }) => {
       <div className="text-center space-y-2 text-sm">
         <div>
           <Link to="/auth/password_reset" className="text-blue-600 hover:underline">
-            Forgot password?
+            Quên mật khẩu?
           </Link>
         </div>
         <div className="text-gray-600">
-          Don’t have an account?{" "}
+          Chưa có tài khoản?{" "}
           <Link to="/auth/signup" className="text-blue-600 hover:underline">
-            Sign up as a mentee
+            Đăng ký làm mentee
           </Link>{" "}
-          or{" "}
-          <Link to="#" className="text-blue-600 hover:underline">
-            apply to be a mentor
+          hoặc{" "}
+          <Link to="/mentor" className="text-blue-600 hover:underline">
+            nộp đơn làm mentor
           </Link>
         </div>
       </div>
