@@ -15,7 +15,9 @@ import {
   MentorApplicationFormPage,
   MentorApplicationSubmittedPage,
   MentorHome,
-  MentorDetail
+  MentorDetail,
+  MentorList,
+  ListMenteeApply
 } from "@/pages"
 
 // Layout trống (không có header/footer)
@@ -41,8 +43,9 @@ export const router = createBrowserRouter([
       { path: "mentor", element: <HomeRegisterMentorPage /> },
       { path: "mentor-apply", element: <MentorApplicationFormPage /> },
       { path: "/", element: <MentorHome /> },
-      { path: "mentor/:id", element: <MentorDetail /> }
-
+      { path: "mentor/:id", element: <MentorDetail /> },
+      { path: "/listmentor", element: <MentorList /> },
+      { path: "/menteedashboard", element: <ListMenteeApply /> }
     ],
   },
 
