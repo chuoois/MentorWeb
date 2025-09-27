@@ -3,7 +3,8 @@ import { createBrowserRouter, Outlet } from "react-router-dom"
 // Layouts
 import {
   AuthLayout,
-  HomeLayout
+  HomeLayout,
+  MentorLayout
 } from "@/components/layouts"
 
 // Pages
@@ -15,7 +16,10 @@ import {
   MentorApplicationFormPage,
   MentorApplicationSubmittedPage,
   MentorHome,
-  MentorDetail
+  MentorDetail,
+  ApplicationsPage,
+  SettingsMentorPage,
+  ChatMentorPage
 } from "@/pages"
 
 // Layout trống (không có header/footer)
@@ -46,7 +50,7 @@ export const router = createBrowserRouter([
     ],
   },
 
-  // Mentor apply success (trang riêng, không header/footer)
+  // Mentor apply success
   {
     path: "/mentor-apply",
     element: <BlankLayout />,
@@ -54,4 +58,14 @@ export const router = createBrowserRouter([
       { path: "success", element: <MentorApplicationSubmittedPage /> },
     ],
   },
+  // Mentor routes
+  {
+    path: "/",
+    element: <MentorLayout />,
+    children: [
+      { path: "applications", element: <ApplicationsPage /> },
+      { path: "chat", element: <ChatMentorPage /> },
+      { path: "settings", element: <SettingsMentorPage /> },
+    ],
+  }
 ])
