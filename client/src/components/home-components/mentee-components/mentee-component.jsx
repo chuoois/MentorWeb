@@ -17,7 +17,7 @@ import {
   Search,
 } from "lucide-react"
 
-// 🎨 Colors
+// 🎨 Màu sắc
 const colors = {
   primary: "#F9C5D5",
   secondary: "#FFFFFF",
@@ -25,84 +25,84 @@ const colors = {
   text: "#333333",
 }
 
-// ---------------- FAKE DATA ----------------
+// ---------------- DỮ LIỆU GIẢ ----------------
 export const fakeData = {
   features: [
-    { icon: Users, title: "Thousands of mentors", description: "Connect with mentors from Google, Meta, Amazon, and more top companies." },
-    { icon: Calendar, title: "Flexible scheduling", description: "Book sessions that fit your schedule, available 24/7 worldwide." },
-    { icon: MessageCircle, title: "Personal chat", description: "Communicate directly with mentors via messages and video calls." },
-    { icon: Trophy, title: "Track progress", description: "Set goals and track your career growth over time." },
-    { icon: Shield, title: "Quality assurance", description: "All mentors are verified and reviewed by mentees." },
-    { icon: Clock, title: "24/7 support", description: "Our support team is always ready to assist you anytime." },
+    { icon: Users, title: "Hàng nghìn mentor", description: "Kết nối với mentor từ Google, Meta, Amazon và nhiều công ty hàng đầu khác." },
+    { icon: Calendar, title: "Lịch học linh hoạt", description: "Đặt buổi học phù hợp với lịch của bạn, có sẵn 24/7 trên toàn thế giới." },
+    { icon: MessageCircle, title: "Trò chuyện riêng", description: "Trao đổi trực tiếp với mentor qua tin nhắn và cuộc gọi video." },
+    { icon: Trophy, title: "Theo dõi tiến độ", description: "Đặt mục tiêu và theo dõi sự phát triển sự nghiệp theo thời gian." },
+    { icon: Shield, title: "Đảm bảo chất lượng", description: "Tất cả mentor đều được xác minh và đánh giá bởi mentee." },
+    { icon: Clock, title: "Hỗ trợ 24/7", description: "Đội ngũ hỗ trợ luôn sẵn sàng giúp bạn bất cứ lúc nào." },
   ],
 
   mentors: [
     {
       id: 1,
       name: "Minh Anh Nguyen",
-      title: "Senior Product Manager at Google",
+      title: "Senior Product Manager tại Google",
       company: "Google",
-      location: "Ho Chi Minh City",
+      location: "TP. Hồ Chí Minh",
       rating: 4.9,
       sessions: 150,
       price: "2,500,000",
       image: "/professional-asian-woman-smiling.png",
-      skills: ["Product Strategy", "Leadership", "Analytics"],
+      skills: ["Chiến lược sản phẩm", "Lãnh đạo", "Phân tích"],
       available: true,
     },
     {
       id: 2,
       name: "Duc Huy Tran",
-      title: "Engineering Manager at Meta",
+      title: "Engineering Manager tại Meta",
       company: "Meta",
-      location: "Hanoi",
+      location: "Hà Nội",
       rating: 4.8,
       sessions: 89,
       price: "3,000,000",
       image: "/professional-asian-man-suit.png",
-      skills: ["Software Engineering", "Team Management", "System Design"],
+      skills: ["Kỹ thuật phần mềm", "Quản lý nhóm", "Thiết kế hệ thống"],
       available: true,
     },
     {
       id: 3,
       name: "Mai Le",
-      title: "UX Design Lead at Shopee",
+      title: "UX Design Lead tại Shopee",
       company: "Shopee",
-      location: "Ho Chi Minh City",
+      location: "TP. Hồ Chí Minh",
       rating: 4.9,
       sessions: 203,
       price: "2,200,000",
       image: "/professional-asian-designer.png",
-      skills: ["UX Design", "Design Systems", "User Research"],
+      skills: ["Thiết kế UX", "Design System", "Nghiên cứu người dùng"],
       available: false,
     },
 
     {
       id: 4,
       name: "Mai Le",
-      title: "UX Design Lead at Shopee",
+      title: "UX Design Lead tại Shopee",
       company: "Shopee",
-      location: "Ho Chi Minh City",
+      location: "TP. Hồ Chí Minh",
       rating: 4.9,
       sessions: 203,
       price: "2,200,000",
       image: "/professional-asian-designer.png",
-      skills: ["UX Design", "Design Systems", "User Research"],
+      skills: ["Thiết kế UX", "Design System", "Nghiên cứu người dùng"],
       available: false,
     },
   ],
 
   stats: [
-    { number: "6,400+", label: "Available mentors" },
-    { number: "33,000+", label: "Mentoring sessions" },
-    { number: "130+", label: "Countries" },
+    { number: "6,400+", label: "Mentor sẵn có" },
+    { number: "33,000+", label: "Phiên mentoring" },
+    { number: "130+", label: "Quốc gia" },
   ],
 
   testimonial: {
     quote:
-      "Having access to the knowledge and experience of mentors on this platform is an opportunity I couldn’t miss. Thanks to my mentor, I achieved my goal of joining Tesla.",
+      "Được tiếp cận với kiến thức và kinh nghiệm của mentor trên nền tảng này là cơ hội mà tôi không thể bỏ qua. Nhờ mentor, tôi đã đạt được mục tiêu gia nhập Tesla.",
     name: "Lan Pham",
-    title: "Software Engineer at Tesla",
+    title: "Kỹ sư phần mềm tại Tesla",
     image: "/professional-vietnamese-woman-smiling.jpg",
   },
 }
@@ -117,23 +117,23 @@ export const HeroSection = () => {
       <div className="absolute inset-0 bg-black/20" />
       <div className="relative z-10 text-center max-w-4xl mx-auto">
         <h1 className="text-5xl md:text-7xl font-bold mb-6 text-balance" style={{ color: colors.text }}>
-          1-on-1 connection with{" "}
+          Kết nối 1-1 với{" "}
           <span
             className="px-4 py-2 rounded-lg inline-block"
             style={{ background: colors.accent, color: colors.secondary }}
           >
-            Professional Mentors
+            Mentor chuyên nghiệp
           </span>
         </h1>
         <p className="text-xl md:text-2xl mb-8 text-pretty" style={{ color: colors.text }}>
-          Learn new skills, kickstart projects, and accelerate your career growth
+          Học kỹ năng mới, bắt đầu dự án và tăng tốc phát triển sự nghiệp
         </p>
 
         <div className="max-w-2xl mx-auto mb-8">
           <div className="relative">
             <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5" style={{ color: colors.text }} />
             <Input
-              placeholder="Search by company, skill, or role..."
+              placeholder="Tìm theo công ty, kỹ năng hoặc vai trò..."
               className="pl-12 pr-4 py-6 text-lg rounded-xl border"
               style={{ backgroundColor: colors.secondary, color: colors.text }}
             />
@@ -142,13 +142,13 @@ export const HeroSection = () => {
               className="absolute right-2 top-1/2 transform -translate-y-1/2 rounded-lg px-8"
               style={{ background: colors.accent, color: colors.secondary }}
             >
-              Find mentor
+              Tìm mentor
             </Button>
           </div>
         </div>
 
         <div className="flex flex-wrap justify-center gap-3 text-sm">
-          {["Product Manager", "Career Coach", "Software Engineer", "Leadership", "UX Designer", "Marketing Coach"].map(
+          {["Quản lý sản phẩm", "Huấn luyện sự nghiệp", "Kỹ sư phần mềm", "Lãnh đạo", "Nhà thiết kế UX", "Huấn luyện Marketing"].map(
             (tag) => (
               <span
                 key={tag}
@@ -173,10 +173,10 @@ export const FeatureSection = () => {
         <div className="grid lg:grid-cols-2 gap-16 items-center">
           <div>
             <h2 className="text-4xl font-bold mb-6 text-balance" style={{ color: colors.text }}>
-              Why choose our platform?
+              Tại sao chọn nền tảng của chúng tôi?
             </h2>
             <p className="text-xl mb-8 text-pretty" style={{ color: colors.text }}>
-              We connect you with experienced mentors to help you grow your career effectively.
+              Chúng tôi kết nối bạn với các mentor giàu kinh nghiệm để giúp sự nghiệp của bạn phát triển hiệu quả.
             </p>
 
             <div className="space-y-6">
@@ -185,8 +185,8 @@ export const FeatureSection = () => {
                   <Users className="h-6 w-6" style={{ color: colors.accent }} />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-lg mb-2" style={{ color: colors.text }}>High-quality mentors</h3>
-                  <p style={{ color: colors.text }}>All mentors have at least 5 years of industry experience.</p>
+                  <h3 className="font-semibold text-lg mb-2" style={{ color: colors.text }}>Mentor chất lượng cao</h3>
+                  <p style={{ color: colors.text }}>Tất cả mentor đều có ít nhất 5 năm kinh nghiệm trong ngành.</p>
                 </div>
               </div>
 
@@ -195,14 +195,14 @@ export const FeatureSection = () => {
                   <Trophy className="h-6 w-6" style={{ color: colors.accent }} />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-lg mb-2" style={{ color: colors.text }}>Measurable results</h3>
-                  <p style={{ color: colors.text }}>95% of mentees achieved their career goals after 6 months of mentoring.</p>
+                  <h3 className="font-semibold text-lg mb-2" style={{ color: colors.text }}>Kết quả rõ ràng</h3>
+                  <p style={{ color: colors.text }}>95% mentee đạt được mục tiêu sự nghiệp sau 6 tháng mentoring.</p>
                 </div>
               </div>
             </div>
 
             <Button size="lg" className="mt-8" style={{ background: colors.accent, color: colors.secondary }}>
-              Get started
+              Bắt đầu ngay
             </Button>
           </div>
 
@@ -231,9 +231,9 @@ export const MentorGrid = () => {
     <section className="py-20 px-4" style={{ background: colors.primary + "40" }}>
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-12">
-          <h2 className="text-4xl font-bold mb-4" style={{ color: colors.text }}>Featured Mentors</h2>
+          <h2 className="text-4xl font-bold mb-4" style={{ color: colors.text }}>Mentor nổi bật</h2>
           <p className="text-xl max-w-2xl mx-auto" style={{ color: colors.text }}>
-            Connect with top professionals from leading tech companies
+            Kết nối với các chuyên gia hàng đầu từ những công ty công nghệ lớn
           </p>
         </div>
 
@@ -260,7 +260,7 @@ export const MentorGrid = () => {
                     <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
                     <span className="font-medium">{mentor.rating}</span>
                   </div>
-                  <div>{mentor.sessions} sessions</div>
+                  <div>{mentor.sessions} phiên</div>
                 </div>
 
                 <div className="flex flex-wrap gap-2 mb-4 justify-center">
@@ -278,12 +278,12 @@ export const MentorGrid = () => {
 
                 <div className="text-center mb-4">
                   <div className="text-2xl font-bold" style={{ color: colors.accent }}>{mentor.price}₫</div>
-                  <div className="text-sm" style={{ color: colors.text }}>/ per 1-hour session</div>
+                  <div className="text-sm" style={{ color: colors.text }}>/ mỗi phiên 1 giờ</div>
                 </div>
 
                 <div className="flex justify-center">
                   <Link to={`/mentor/${mentor.id}`}>
-                    <Button variant="default">View Profile</Button>
+                    <Button variant="default">Xem hồ sơ</Button>
                   </Link>
                 </div>
               </CardContent>
@@ -293,7 +293,7 @@ export const MentorGrid = () => {
 
         <div className="text-center mt-12">
           <Button size="lg" variant="outline" className="px-8" style={{ borderColor: colors.accent, color: colors.accent }}>
-            See all mentors
+            Xem tất cả mentor
           </Button>
         </div>
       </div>
