@@ -1,93 +1,90 @@
-import { Button } from "@/components/ui/button"
-import { Menu, X, GraduationCap } from "lucide-react"
 import { useState } from "react"
 import { Link } from "react-router-dom"
+import { Menu, X, GraduationCap } from "lucide-react"
+import { Button } from "@/components/ui/button"
 
 export const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
 
   return (
-    <header className="bg-[#F9C5D5] backdrop-blur-sm border-b border-[#F9C5D5] z-50">
-      <div className="container mx-auto px-6 py-4">
-        <div className="flex items-center justify-between">
-          {/* Logo + tên */}
-          <div className="flex items-center space-x-3">
-            <Link to="/" className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow">
-                <GraduationCap className="w-6 h-6 text-[#2C3E50]" />
-              </div>
-              <span className="text-2xl font-bold text-[#2C3E50] tracking-tight">
-                MentorHub
-              </span>
-            </Link>
+    <header className="bg-[#F9C5D5] border-b border-[#F9C5D5] z-50">
+      <div className="container mx-auto px-6 py-4 flex items-center justify-between">
+        
+        {/* Logo */}
+        <Link to="/" className="flex items-center space-x-3">
+          <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow">
+            <GraduationCap className="w-6 h-6 text-[#2C3E50]" />
           </div>
+          <span className="text-2xl font-bold text-[#2C3E50] tracking-tight">
+            MentorHub
+          </span>
+        </Link>
 
-          {/* Phần bên phải: Menu + Buttons */}
-          <div className="flex items-center space-x-6">
-            {/* Menu desktop */}
-            <nav className="hidden lg:flex items-center space-x-6">
-              <Link
-                to="/mentor"
-                className="text-[#2C3E50] hover:text-white font-medium transition-colors duration-300"
-              >
-                Trở thành Mentor
-              </Link>
-              <Link
-                to="/news"
-                className="text-[#2C3E50] hover:text-white font-medium transition-colors duration-300"
-              >
-                Tin tức
-              </Link>
-            </nav>
+        {/* Menu desktop */}
+        <nav className="hidden lg:flex items-center space-x-8">
+          <Link to="/" className="text-[#2C3E50] hover:text-white transition-colors font-medium">
+            Trang chủ
+          </Link>
+          <Link to="/listmentor" className="text-[#2C3E50] hover:text-white transition-colors font-medium">
+            Xem toàn bộ Mentor
+          </Link>
+          <Link to="/news" className="text-[#2C3E50] hover:text-white transition-colors font-medium">
+            Tin tức
+          </Link>
+          <Link to="/mentor" className="text-[#2C3E50] hover:text-white transition-colors font-medium">
+            Trở thành Mentor
+          </Link>
+        </nav>
 
-
-            {/* Nút bên phải */}
-            <Link to="/auth/login">
-              <Button
-                variant="outline"
-                className="hidden md:inline-flex border border-[#2C3E50] text-[#2C3E50] hover:bg-[#2C3E50] hover:text-white font-medium transition-colors duration-300 rounded-full"
-              >
-                Đăng nhập
-              </Button>
-            </Link>
-
-            <Button className="bg-[#2C3E50] hover:bg-[#1A2634] text-white px-6 py-2 rounded-full font-medium shadow transition duration-300">
-              Xem tất cả Mentor
-            </Button>
-
-            {/* Nút toggle menu mobile */}
-            <button
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="lg:hidden p-2 text-[#2C3E50] hover:text-white transition-colors duration-300"
+        {/* Auth buttons */}
+        <div className="hidden lg:flex items-center space-x-4">
+          <Link to="/auth/login">
+            <Button
+              variant="outline"
+              className="border border-[#2C3E50] text-[#2C3E50] hover:bg-[#2C3E50] hover:text-white rounded-full transition"
             >
-              {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-            </button>
-          </div>
+              Đăng nhập
+            </Button>
+          </Link>
+          <Link to="/auth/signup">
+            <Button className="bg-[#2C3E50] hover:bg-[#1A2634] text-white rounded-full px-6 transition">
+              Đăng ký
+            </Button>
+          </Link>
         </div>
 
-        {/* Menu mobile */}
-        {isMenuOpen && (
-          <div className="lg:hidden mt-4 pb-4 border-t border-white/50">
-            <nav className="flex flex-col space-y-4 pt-4">
-              <Link
-                to="/mentor"
-                className="text-[#2C3E50] hover:text-white font-medium transition-colors duration-300"
-                onClick={() => setIsMenuOpen(false)} 
-              >
-                Trở thành Mentor
-              </Link>
-              <Link
-                to="/news"
-                className="text-[#2C3E50] hover:text-white font-medium transition-colors duration-300"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Tin tức
-              </Link>
-            </nav>
-          </div>
-        )}
-
+        {/* Mobile toggle */}
+        <button
+          className="lg:hidden p-2 text-[#2C3E50] hover:text-white transition"
+          onClick={() => setIsMenuOpen(!isMenuOpen)}
+        >
+          {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+        </button>
       </div>
+
+      {/* Mobile menu */}
+      {isMenuOpen && (
+        <div className="lg:hidden px-6 pb-4 space-y-4 bg-[#F9C5D5] border-t">
+          <Link to="/" className="block text-[#2C3E50] hover:text-white font-medium" onClick={() => setIsMenuOpen(false)}>
+            Trang chủ
+          </Link>
+          <Link to="/mentors" className="block text-[#2C3E50] hover:text-white font-medium" onClick={() => setIsMenuOpen(false)}>
+            Xem toàn bộ Mentor
+          </Link>
+          <Link to="/news" className="block text-[#2C3E50] hover:text-white font-medium" onClick={() => setIsMenuOpen(false)}>
+            Tin tức
+          </Link>
+          <Link to="/mentor" className="block text-[#2C3E50] hover:text-white font-medium" onClick={() => setIsMenuOpen(false)}>
+            Trở thành Mentor
+          </Link>
+          <Link to="/auth/login" className="block text-[#2C3E50] hover:text-white font-medium" onClick={() => setIsMenuOpen(false)}>
+            Đăng nhập
+          </Link>
+          <Link to="/auth/register" className="block text-[#2C3E50] hover:text-white font-medium" onClick={() => setIsMenuOpen(false)}>
+            Đăng ký
+          </Link>
+        </div>
+      )}
     </header>
   )
 }

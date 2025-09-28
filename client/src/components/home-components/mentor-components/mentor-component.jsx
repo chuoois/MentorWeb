@@ -7,7 +7,7 @@ import { Link } from "react-router-dom";
 const benefits = [
     "Kết nối với những người cố vấn truyền cảm hứng & mentee đầy nhiệt huyết",
     "Lịch trình & chi phí linh hoạt",
-    "Gặp gỡ mentor từ hơn 90+ quốc gia",
+    "Gặp gỡ mentor từ nhiều ngành nghề khác nhau",
 ];
 
 // Lý do trở thành Mentor
@@ -99,7 +99,7 @@ export const HomeRegisterMentor = () => {
                                 Chia sẻ chuyên môn. Phát triển kỹ năng. Tạo sự khác biệt.
                             </h2>
                             <p className="text-lg text-[#333333]/80 max-w-xl leading-relaxed">
-                                Mentoring là con đường hai chiều. Hãy để chúng tôi xử lý những phần phức tạp
+                                MentorHub là con đường hai chiều. Hãy để chúng tôi xử lý những phần phức tạp
                                 để bạn tập trung vào sự phát triển cá nhân và nghề nghiệp – cho cả bạn và mentee.
                             </p>
                             <div className="space-y-4">
