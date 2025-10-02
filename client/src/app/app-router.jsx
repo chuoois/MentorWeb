@@ -4,7 +4,8 @@ import { createBrowserRouter, Outlet } from "react-router-dom"
 import {
   AuthLayout,
   HomeLayout,
-  MentorLayout
+  MentorLayout,
+  AdminLayout
 } from "@/components/layouts"
 
 // Pages
@@ -70,5 +71,16 @@ export const router = createBrowserRouter([
       { path: "chat", element: <ChatMentorPage /> },
       { path: "settings", element: <SettingsMentorPage /> },
     ],
-  }
+  },
+  // Admin routes
+  {
+    path: "/admin",
+    element: <AdminLayout />,
+    children: [
+      { path: "dashboard", element: <div>Dashboard Admin</div> },
+      { path: "mentors", element: <div>Quản lý mentor</div> },
+      { path: "mentees", element: <div>Quản lý mentee</div> },
+      { path: "applications", element: <div>Đơn ứng tuyển mentor</div> },
+    ],
+  },
 ])
