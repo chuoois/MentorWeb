@@ -11,8 +11,9 @@ router.get('/:id', authRequired, c.getOne);
 router.post('/', authRequired, roleRequired('MENTEE'), c.create);
 
 // Cập nhật trạng thái (mentor xác nhận / admin chỉnh sửa)
-router.put('/:id', authRequired, roleRequired('ADMIN', 'MENTOR'), c.updatePut);
-router.patch('/:id', authRequired, roleRequired('ADMIN', 'MENTOR'), c.updatePatch);
+router.put('/:id', authRequired, roleRequired('ADMIN', 'MENTOR'), c.update);
+router.patch('/:id', authRequired, roleRequired('ADMIN', 'MENTOR'), c.update);
+
 
 // ADMIN mới được xoá order
 router.delete('/:id', authRequired, roleRequired('ADMIN'), c.remove);

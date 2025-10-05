@@ -74,6 +74,7 @@ exports.list = async (req, res) => {
   }
 };
 
+/*************  ✨ Windsurf Command 🌟  *************/
 // PUT /mentor-pricing/:id
 exports.update = async (req, res) => {
   try {
@@ -92,6 +93,7 @@ exports.update = async (req, res) => {
     return res.status(500).json({ ok: false, error: err.message || 'Server error' });
   }
 };
+/*******  684974d9-5732-4d30-aaab-9af6bf813b58  *******/
 
 // DELETE /mentor-pricing/:id
 exports.remove = async (req, res) => {

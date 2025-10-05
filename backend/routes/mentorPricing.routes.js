@@ -11,8 +11,8 @@ router.get('/:id', c.getOne);
 router.post('/', authRequired, roleRequired('ADMIN', 'MENTOR'), c.create);
 
 // ADMIN hoặc mentor sở hữu gói đó mới được update
-router.put('/:id', authRequired, roleRequired('ADMIN', 'MENTOR'), c.updatePut);
-router.patch('/:id', authRequired, roleRequired('ADMIN', 'MENTOR'), c.updatePatch);
+router.put('/:id', authRequired, roleRequired('ADMIN', 'MENTOR'), c.update);
+router.patch('/:id', authRequired, roleRequired('ADMIN', 'MENTOR'), c.update);
 
 // ADMIN hoặc mentor sở hữu gói đó mới được xoá
 router.delete('/:id', authRequired, roleRequired('ADMIN', 'MENTOR'), c.remove);
