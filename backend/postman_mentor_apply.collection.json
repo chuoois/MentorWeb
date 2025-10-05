@@ -1,0 +1,135 @@
+{
+  "info": {
+    "name": "MentorApp - Apply/Approve",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Collection to register 3 mentees, create mentee records, apply to be mentor and perform admin approval"
+  },
+  "item": [
+    {
+      "name": "Register Alice (mentee)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"alice.mentor@example.com\",\n  \"password\": \"AlicePass123!\",\n  \"full_name\": \"Alice Nguyen\",\n  \"phone\": \"+84900111222\"\n}"
+        },
+        "url": { "raw": "{{baseUrl}}/auth/register", "host": [ "{{baseUrl}}" ], "path": [ "auth", "register" ] }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const json = pm.response.json();",
+              "if (json && json.user) {",
+              "  pm.environment.set('alice_userId', json.user._id);",
+              "  pm.environment.set('alice_access', json.accessToken);",
+              "  pm.environment.set('alice_email', json.user.email);",
+              "}",
+              "pm.test('status 201 or 409', () => { pm.expect(pm.response.code).to.be.oneOf([201,409]); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Register Binh (mentee)",
+      "request": {
+        "method": "POST",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "body": { "mode": "raw", "raw": "{\n  \"email\": \"binh.student@example.com\",\n  \"password\": \"BinhSecure!9\",\n  \"full_name\": \"Binh Tran\",\n  \"phone\": \"+84900333444\"\n}" },
+        "url": { "raw": "{{baseUrl}}/auth/register", "host": [ "{{baseUrl}}" ], "path": [ "auth", "register" ] }
+      },
+      "event": [ { "listen": "test", "script": { "exec": [ "const json = pm.response.json();", "if (json && json.user) { pm.environment.set('binh_userId', json.user._id); pm.environment.set('binh_access', json.accessToken); pm.environment.set('binh_email', json.user.email);} ", "pm.test('status 201 or 409', () => { pm.expect(pm.response.code).to.be.oneOf([201,409]); });" ] } } ]
+    },
+    {
+      "name": "Register Lary (mentee)",
+      "request": {
+        "method": "POST",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "body": { "mode": "raw", "raw": "{\n  \"email\": \"lary.phan@example.com\",\n  \"password\": \"LaryPwd#2025\",\n  \"full_name\": \"Lary Phan\"\n}" },
+        "url": { "raw": "{{baseUrl}}/auth/register", "host": [ "{{baseUrl}}" ], "path": [ "auth", "register" ] }
+      },
+      "event": [ { "listen": "test", "script": { "exec": [ "const json = pm.response.json();", "if (json && json.user) { pm.environment.set('lary_userId', json.user._id); pm.environment.set('lary_access', json.accessToken); pm.environment.set('lary_email', json.user.email);} ", "pm.test('status 201 or 409', () => { pm.expect(pm.response.code).to.be.oneOf([201,409]); });" ] } } ]
+    },
+    {
+      "name": "Create mentee record - Alice",
+      "request": {
+        "method": "POST",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "body": { "mode": "raw", "raw": "{\n  \"user_id\": \"{{alice_userId}}\"\n}" },
+        "url": { "raw": "{{baseUrl}}/mentees", "host": [ "{{baseUrl}}" ], "path": [ "mentees" ] }
+      },
+      "event": [ { "listen": "test", "script": { "exec": [ "pm.test('created or conflict', () => { pm.expect(pm.response.code).to.be.oneOf([201,409]); });", "const j = pm.response.json(); if(j && j.data && j.data._id) pm.environment.set('alice_menteeId', j.data._id);" ] } } ]
+    },
+    {
+      "name": "Create mentee record - Binh",
+      "request": {
+        "method": "POST",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "body": { "mode": "raw", "raw": "{\n  \"user_id\": \"{{binh_userId}}\"\n}" },
+        "url": { "raw": "{{baseUrl}}/mentees", "host": [ "{{baseUrl}}" ], "path": [ "mentees" ] }
+      },
+      "event": [ { "listen": "test", "script": { "exec": [ "pm.test('created or conflict', () => { pm.expect(pm.response.code).to.be.oneOf([201,409]); });", "const j = pm.response.json(); if(j && j.data && j.data._id) pm.environment.set('binh_menteeId', j.data._id);" ] } } ]
+    },
+    {
+      "name": "Create mentee record - Lary",
+      "request": {
+        "method": "POST",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "body": { "mode": "raw", "raw": "{\n  \"user_id\": \"{{lary_userId}}\"\n}" },
+        "url": { "raw": "{{baseUrl}}/mentees", "host": [ "{{baseUrl}}" ], "path": [ "mentees" ] }
+      },
+      "event": [ { "listen": "test", "script": { "exec": [ "pm.test('created or conflict', () => { pm.expect(pm.response.code).to.be.oneOf([201,409]); });", "const j = pm.response.json(); if(j && j.data && j.data._id) pm.environment.set('lary_menteeId', j.data._id);" ] } } ]
+    },
+    {
+      "name": "Admin Login (use an existing admin account or promote one in DB)",
+      "request": {
+        "method": "POST",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "body": { "mode": "raw", "raw": "{\n  \"email\": \"test_admin@example.com\",\n  \"password\": \"AdminPass123!\"\n}" },
+        "url": { "raw": "{{baseUrl}}/auth/login", "host": [ "{{baseUrl}}" ], "path": [ "auth", "login" ] }
+      },
+      "event": [ { "listen": "test", "script": { "exec": [ "const json = pm.response.json(); if(json && json.accessToken) pm.environment.set('admin_access', json.accessToken); pm.test('admin login ok', () => { pm.expect(pm.response.code).to.be.oneOf([200,201]); });" ] } } ]
+    },
+    {
+      "name": "Admin: Get pending mentors",
+      "request": {
+        "method": "GET",
+        "header": [ { "key": "Authorization", "value": "Bearer {{admin_access}}" } ],
+        "url": { "raw": "{{baseUrl}}/admin/mentors/pending", "host": [ "{{baseUrl}}" ], "path": [ "admin", "mentors", "pending" ] }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const json = pm.response.json();",
+              "pm.test('got pending list', () => { pm.expect(pm.response.code).to.equal(200); });",
+              "// try to find Alice by saved email and capture her user id",
+              "const email = pm.environment.get('alice_email');",
+              "if(email && json.items && Array.isArray(json.items)) {",
+              "  const found = json.items.find(i => i.user_id && i.user_id.email === email);",
+              "  if(found) { pm.environment.set('pending_userId', found.user_id._id); pm.environment.set('pending_mentorProfileId', found._id); }",
+              "}",
+              "pm.test('set pending_userId if found', () => { const id = pm.environment.get('pending_userId'); pm.expect(id === null || typeof id === 'string').to.be.ok; });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin: Approve pending (use pending_userId)",
+      "request": {
+        "method": "PATCH",
+        "header": [ { "key": "Authorization", "value": "Bearer {{admin_access}}" }, { "key": "Content-Type", "value": "application/json" } ],
+        "body": { "mode": "raw", "raw": "{}" },
+        "url": { "raw": "{{baseUrl}}/admin/mentors/{{pending_userId}}/approve", "host": [ "{{baseUrl}}" ], "path": [ "admin", "mentors", "{{pending_userId}}", "approve" ] }
+      },
+      "event": [ { "listen": "test", "script": { "exec": [ "pm.test('approve ok', () => { pm.expect(pm.response.code).to.equal(200); });", "const j = pm.response.json(); if(j && j.data) pm.environment.set('approved_user_role', j.data.role);" ] } } ]
+    }
+  ]
+}
