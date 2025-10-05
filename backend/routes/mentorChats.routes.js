@@ -1,15 +1,21 @@
 // backend/routes/mentorChats.routes.js
 const router = require('express').Router();
-const c = require('../controller/mentorChat.controller.js');
-const { authRequired, roleRequired } = require('../middleware/auth.middleware.js');
+const c = require('../controller/mentorChat.controller');
+const { authRequired, roleRequired } = require('../middleware/auth.middleware');
 
-// Xem tin nhắn theo order
-router.get('/order/:orderId', authRequired, c.listByOrder);
+// Lấy toàn bộ tin nhắn của 1 order (cả mentor & mentee đều xem được)
+router.get('/order/:orderId', authRequired, c.list);
 
-// Gửi tin nhắn (chỉ mentor & mentee trong order đó)
-router.post('/', authRequired, roleRequired('MENTEE', 'MENTOR'), c.create);
+// Xem chi tiết 1 tin nhắn
+router.get('/:id', authRequired, c.getOne);
 
-// Admin có thể xoá tin nhắn
-router.delete('/:id', authRequired, roleRequired('ADMIN'), c.remove);
+// Gửi tin nhắn mới (mentor hoặc mentee đều được)
+router.post('/', authRequired, roleRequired('MENTOR', 'MENTEE'), c.create);
+
+// Sửa tin nhắn (người gửi hoặc admin)
+router.patch('/:id', authRequired, c.update);
+
+// Xóa tin nhắn (người gửi hoặc admin)
+router.delete('/:id', authRequired, c.remove);
 
 module.exports = router;
