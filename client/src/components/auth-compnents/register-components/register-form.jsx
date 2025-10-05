@@ -32,8 +32,7 @@ export const MenteeRegisterForm = () => {
       const data = {
         email: formData.email.trim(),
         full_name: formData.full_name.trim(),
-        password: formData.password,
-        role: "MENTEE", // backend có thể dùng role để phân biệt
+        password: formData.password
       };
 
       const res = await AuthService.register(data);
