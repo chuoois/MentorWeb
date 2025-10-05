@@ -37,16 +37,24 @@ const transporter = nodemailer.createTransport({
  */
 async function sendMail({ to, subject, html, text, cc, bcc, replyTo }) {
   const from = MAIL_FROM || SMTP_USER;
-  return transporter.sendMail({
-    from,
-    to,
-    subject,
-    html,
-    text: text || '',
-    cc,
-    bcc,
-    replyTo,
-  });
+  try {
+    const info = await transporter.sendMail({
+      from,
+      to,
+      subject,
+      html,
+      text: text || '',
+      cc,
+      bcc,
+      replyTo,
+    });
+    console.log('✅ Mail sent to:', to, '| MessageId:', info.messageId);
+    return info;
+  } catch (err) {
+    console.error('❌ sendMail error:', err);
+    throw err;
+  }
 }
+
 
 module.exports = { sendMail, transporter };

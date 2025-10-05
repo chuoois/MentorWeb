@@ -9,13 +9,17 @@ const userSchema = new mongoose.Schema(
     password_hash: { type: String }, // với Google login có thể để undefined
     full_name: { type: String, required: true },
     avatar_url: { type: String },
-    role: { type: String, enum: ['ADMIN','MENTOR','MENTEE'], default: 'MENTEE' },
-    status: { type: String, enum: ['ACTIVE','INACTIVE','BANNED','PENDING'], default: 'ACTIVE' },
+    role: { type: String, enum: ['ADMIN', 'MENTOR', 'MENTEE'], default: 'MENTEE' },
+    status: { type: String, enum: ['ACTIVE', 'INACTIVE', 'BANNED', 'PENDING'], default: 'ACTIVE' },
     email_verified: { type: Boolean, default: false },
 
     // OAuth
     provider: { type: String, enum: ['local', 'google'], default: 'local', index: true },
     google_id: { type: String, index: true, sparse: true },
+
+    // ✅ Thêm hai trường phục vụ xác thực email
+    verification_token: { type: String }, // token xác minh
+    verification_expires: { type: Date }, // hạn dùng token
   },
   { timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } }
 );
@@ -55,19 +59,23 @@ async function ensureMentorExists(userDoc) {
 }
 
 // Hook khi tạo mới user
-userSchema.post('save', async function(doc, next) {
+userSchema.post('save', async function (doc, next) {
   try {
     await ensureMentorExists(doc);
     next();
-  } catch (e) { next(e); }
+  } catch (e) {
+    next(e);
+  }
 });
 
 // Hook khi update bằng findOneAndUpdate: bắt thay đổi role
-userSchema.post('findOneAndUpdate', async function(result, next) {
+userSchema.post('findOneAndUpdate', async function (result, next) {
   try {
     if (result) await ensureMentorExists(result);
     next();
-  } catch (e) { next(e); }
+  } catch (e) {
+    next(e);
+  }
 });
 
 module.exports = mongoose.model('User', userSchema);
