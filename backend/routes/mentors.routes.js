@@ -11,7 +11,7 @@ router.get('/:id', c.getOne);
 router.post('/', authRequired, roleRequired('ADMIN', 'MENTOR'), c.create);
 
 // POST /api/mentors/apply - mentee applies to become mentor (goes to admin for approval)
-router.post('/apply', authRequired, roleRequired('MENTEE'), c.apply);
+router.post('/apply', authRequired, roleRequired('MENTOR'), c.apply);
 
 
 router.put('/:id', authRequired, roleRequired('ADMIN', 'MENTOR'), c.updatePut);

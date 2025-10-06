@@ -13,6 +13,7 @@ import {
   LoginPage,
   MenteeRegisterPage,
   ForgotPasswordPage,
+  VerifyEmailPage,
   HomeRegisterMentorPage,
   MentorApplicationFormPage,
   MentorApplicationSubmittedPage,
@@ -37,6 +38,7 @@ export const router = createBrowserRouter([
       { path: "login", element: <LoginPage /> },
       { path: "signup", element: <MenteeRegisterPage /> },
       { path: "password_reset", element: <ForgotPasswordPage /> },
+      { path: "verify-email", element: <VerifyEmailPage /> },
     ],
   },
 

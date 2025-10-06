@@ -1,15 +1,29 @@
-import { useState } from "react"
-import { Link } from "react-router-dom"
-import { Menu, X, GraduationCap } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { Menu, X, GraduationCap } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export const Header = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const navigate = useNavigate();
+
+  // Kiểm tra trạng thái đăng nhập
+  useEffect(() => {
+    const token = localStorage.getItem("accessToken");
+    setIsLoggedIn(!!token);
+  }, []);
+
+  // Đăng xuất
+  const handleLogout = () => {
+    localStorage.removeItem("accessToken");
+    setIsLoggedIn(false);
+    navigate("/auth/login");
+  };
 
   return (
     <header className="bg-[#F9C5D5] border-b border-[#F9C5D5] z-50">
       <div className="container mx-auto px-6 py-4 flex items-center justify-between">
-        
         {/* Logo */}
         <Link to="/" className="flex items-center space-x-3">
           <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow">
@@ -31,26 +45,45 @@ export const Header = () => {
           <Link to="/news" className="text-[#2C3E50] hover:text-white transition-colors font-medium">
             Tin tức
           </Link>
-          <Link to="/mentor" className="text-[#2C3E50] hover:text-white transition-colors font-medium">
-            Trở thành Mentor
-          </Link>
+
+          {/* Nếu chưa login → Trở thành Mentor | Nếu login → Trang cá nhân */}
+          {!isLoggedIn ? (
+            <Link to="/mentor" className="text-[#2C3E50] hover:text-white transition-colors font-medium">
+              Trở thành Mentor
+            </Link>
+          ) : (
+            <Link to="/menteedashboard" className="text-[#2C3E50] hover:text-white transition-colors font-medium">
+              Trang cá nhân
+            </Link>
+          )}
         </nav>
 
         {/* Auth buttons */}
         <div className="hidden lg:flex items-center space-x-4">
-          <Link to="/auth/login">
+          {isLoggedIn ? (
             <Button
-              variant="outline"
-              className="border border-[#2C3E50] text-[#2C3E50] hover:bg-[#2C3E50] hover:text-white rounded-full transition"
+              onClick={handleLogout}
+              className="bg-[#2C3E50] hover:bg-[#1A2634] text-white rounded-full px-6 transition"
             >
-              Đăng nhập
+              Đăng xuất
             </Button>
-          </Link>
-          <Link to="/auth/signup">
-            <Button className="bg-[#2C3E50] hover:bg-[#1A2634] text-white rounded-full px-6 transition">
-              Đăng ký
-            </Button>
-          </Link>
+          ) : (
+            <>
+              <Link to="/auth/login">
+                <Button
+                  variant="outline"
+                  className="border border-[#2C3E50] text-[#2C3E50] hover:bg-[#2C3E50] hover:text-white rounded-full transition"
+                >
+                  Đăng nhập
+                </Button>
+              </Link>
+              <Link to="/auth/signup">
+                <Button className="bg-[#2C3E50] hover:bg-[#1A2634] text-white rounded-full px-6 transition">
+                  Đăng ký
+                </Button>
+              </Link>
+            </>
+          )}
         </div>
 
         {/* Mobile toggle */}
@@ -68,23 +101,47 @@ export const Header = () => {
           <Link to="/" className="block text-[#2C3E50] hover:text-white font-medium" onClick={() => setIsMenuOpen(false)}>
             Trang chủ
           </Link>
-          <Link to="/mentors" className="block text-[#2C3E50] hover:text-white font-medium" onClick={() => setIsMenuOpen(false)}>
+          <Link to="/listmentor" className="block text-[#2C3E50] hover:text-white font-medium" onClick={() => setIsMenuOpen(false)}>
             Xem toàn bộ Mentor
           </Link>
           <Link to="/news" className="block text-[#2C3E50] hover:text-white font-medium" onClick={() => setIsMenuOpen(false)}>
             Tin tức
           </Link>
-          <Link to="/mentor" className="block text-[#2C3E50] hover:text-white font-medium" onClick={() => setIsMenuOpen(false)}>
-            Trở thành Mentor
-          </Link>
-          <Link to="/auth/login" className="block text-[#2C3E50] hover:text-white font-medium" onClick={() => setIsMenuOpen(false)}>
-            Đăng nhập
-          </Link>
-          <Link to="/auth/register" className="block text-[#2C3E50] hover:text-white font-medium" onClick={() => setIsMenuOpen(false)}>
-            Đăng ký
-          </Link>
+
+          {/* Mobile: đổi Trở thành Mentor ↔ Trang cá nhân */}
+          {!isLoggedIn ? (
+            <Link to="/mentor" className="block text-[#2C3E50] hover:text-white font-medium" onClick={() => setIsMenuOpen(false)}>
+              Trở thành Mentor
+            </Link>
+          ) : (
+            <Link to="/menteedashboard" className="block text-[#2C3E50] hover:text-white font-medium" onClick={() => setIsMenuOpen(false)}>
+              Trang cá nhân
+            </Link>
+          )}
+
+          {/* Auth buttons */}
+          {isLoggedIn ? (
+            <button
+              onClick={() => {
+                handleLogout();
+                setIsMenuOpen(false);
+              }}
+              className="block w-full text-left text-[#2C3E50] hover:text-white font-medium"
+            >
+              Đăng xuất
+            </button>
+          ) : (
+            <>
+              <Link to="/auth/login" className="block text-[#2C3E50] hover:text-white font-medium" onClick={() => setIsMenuOpen(false)}>
+                Đăng nhập
+              </Link>
+              <Link to="/auth/signup" className="block text-[#2C3E50] hover:text-white font-medium" onClick={() => setIsMenuOpen(false)}>
+                Đăng ký
+              </Link>
+            </>
+          )}
         </div>
       )}
     </header>
-  )
-}
+  );
+};

@@ -1,4 +1,5 @@
 import api from "@/lib/axios";
+import publicApi from "@/lib/publicApi";
 
 /**
  * AuthService: Cung cấp các hàm đăng ký / đăng nhập / xác thực Google / refresh / quên mật khẩu
@@ -20,17 +21,39 @@ const AuthService = {
   },
 
   /**
-   * Đăng nhập thông thường
-   * @param {Object} data - { email, password }
-   */
-  login: async (data) => {
-    const res = await api.post("/auth/login", data);
+    * Xác thực email bằng token
+    * @param {string} token
+    */
+  verifyEmail: async (token) => {
+    const res = await publicApi.get("/auth/verify-email", {
+      params: { token }
+    });
+
     if (res.data.accessToken) {
       localStorage.setItem("accessToken", res.data.accessToken);
       localStorage.setItem("refreshToken", res.data.refreshToken);
       localStorage.setItem("user", JSON.stringify(res.data.user));
     }
     return res.data;
+  },
+
+  /**
+   * Gửi lại email xác thực nếu user chưa verify
+   * @param {string} email
+   */
+  resendVerificationEmail: async (email) => {
+    const res = await api.post("/auth/resend-verification", { email });
+    return res.data;
+  },
+
+  /**
+   * Đăng nhập thông thường
+   * @param {Object} data - { email, password }
+   */
+  // AuthService.js
+  login: async (data) => {
+    const res = await api.post('/auth/login', data);
+    return res.data; // ❌ không lưu vào localStorage ở đây
   },
 
   /**

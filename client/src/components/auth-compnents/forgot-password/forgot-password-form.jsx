@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { toast } from "react-hot-toast"
 import { Link } from "react-router-dom"
+import AuthService from "@/services/auth.service"
 
 export const ForgotPasswordForm = () => {
   const [email, setEmail] = useState("")
@@ -11,11 +12,22 @@ export const ForgotPasswordForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    if (!email.trim()) {
+      toast.error("Vui lòng nhập email hợp lệ!")
+      return
+    }
+
     setIsLoading(true)
-    // Giả lập gửi link
-    await new Promise((resolve) => setTimeout(resolve, 2000))
-    toast.success("Liên kết đặt lại mật khẩu đã được gửi tới email của bạn!")
-    setIsLoading(false)
+    try {
+      const res = await AuthService.forgotPassword(email.trim())
+      toast.success(res.message || "Liên kết đặt lại mật khẩu đã được gửi tới email của bạn!")
+    } catch (err) {
+      console.error("Forgot password error:", err)
+      const msg = err.response?.data?.message || "Không thể gửi email đặt lại mật khẩu!"
+      toast.error(msg)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -24,7 +36,7 @@ export const ForgotPasswordForm = () => {
         Đặt lại mật khẩu
       </h1>
       <p className="text-center text-gray-600">
-        Nhập địa chỉ email và chúng tôi sẽ gửi cho bạn mật khẩu mới để đăng nhập.
+        Nhập địa chỉ email và chúng tôi sẽ gửi cho bạn liên kết để đặt lại mật khẩu.
       </p>
 
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -48,11 +60,11 @@ export const ForgotPasswordForm = () => {
           className="w-full h-12 bg-[#F9C5D5] hover:bg-[#f5b8cc] text-[#2C3E50] font-medium rounded-md transition-colors"
           disabled={isLoading}
         >
-          {isLoading ? "Đang gửi..." : "Gửi mật khẩu mới"}
+          {isLoading ? "Đang gửi..." : "Gửi liên kết đặt lại mật khẩu"}
         </Button>
       </form>
 
-      <div className="text-sm text-gray-600">
+      <div className="text-sm text-gray-600 text-center">
         <Link to="/auth/login" className="text-blue-600 hover:underline">
           Quay lại đăng nhập
         </Link>
