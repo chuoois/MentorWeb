@@ -46,70 +46,53 @@ exports.register = async (req, res, next) => {
       return res.status(409).json({ message: 'Email/phone đã tồn tại' });
     }
 
-    // Chỉ cho phép 2 role: MENTEE (default) hoặc MENTOR
-    const normalizedRole = String(roleRaw || '').toUpperCase();
-    const role = normalizedRole === 'MENTOR' ? 'MENTOR' : 'MENTEE';
+    // map role: chỉ 2 giá trị MENTEE/MENTOR
+const normalizedRole = String(roleRaw || '').toUpperCase();
+const role = normalizedRole === 'MENTOR' ? 'MENTOR' : 'MENTEE';
 
-    const password_hash = await bcrypt.hash(password, SALT_ROUNDS);
+const password_hash = await bcrypt.hash(password, SALT_ROUNDS);
+const verification_token = crypto.randomBytes(32).toString('hex');
+const verification_expires = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
-    // ✅ Tạo token xác thực email (32 bytes hex = 64 ký tự)
-    const verification_token = crypto.randomBytes(32).toString('hex');
-    const verification_expires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 giờ
+const userDoc = await User.create({
+  email: String(email).toLowerCase().trim(),
+  phone: phone ? String(phone).trim() : undefined,
+  password_hash,          
+  full_name: String(full_name).trim(),
+  avatar_url: avatar_url || undefined,
+  role,
+  status: 'PENDING',
+  provider: 'local',
+  email_verified: false,
+  verification_token,
+  verification_expires,
+});
 
-    const userDoc = await User.create({
-      email: String(email).toLowerCase().trim(),
-      phone: phone ? String(phone).trim() : undefined,
-      password_hash,
-      full_name: String(full_name).trim(),
-      avatar_url: avatar_url || undefined,
-      role,
-      status: 'PENDING', // ✅ Tài khoản ở trạng thái PENDING cho đến khi verify
-      provider: 'local',
-      email_verified: false,
-      verification_token,
-      verification_expires,
-    });
+// Nếu đăng ký làm mentor -> tạo/ghi đè hồ sơ mentors
+if (role === 'MENTOR') {
+  await Mentor.findOneAndUpdate(
+    { user_id: userDoc._id },
+    {
+      user_id: userDoc._id,
+      status: 'PENDING',
+      is_available: false,
+      job_title: job_title || '',
+      company: company || '',
+      category: category || '',
+      skill: skill || '',
+      bio: bio || '',
+      current_position: current_position || '',
+      linkedin_url: linkedin_url || '',
+      personal_link_url: personal_link_url || '',
+      intro_video: intro_video || '',
+      featured_article: featured_article || '',
+      question: question || {},
+      cv_img: cv_img || ''
+    },
+    { upsert: true, new: true, setDefaultsOnInsert: true }
+  );
+}
 
-    // Nếu là mentor thì đảm bảo có record mentors tương ứng
-    // Lưu các trường hồ sơ mentor nếu client gửi (ứng dụng: đăng ký làm mentor)
-    if (role === 'MENTOR') {
-      const {
-        job_title,
-        company,
-        category,
-        skill,
-        bio,
-        current_position,
-        linkedin_url,
-        personal_link_url,
-        intro_video,
-        featured_article,
-        question,
-        cv_img,
-      } = req.body || {};
-
-      await Mentor.findOneAndUpdate(
-        { user_id: userDoc._id },
-        {
-          user_id: userDoc._id,
-          status: 'PENDING', // profile pending until admin approves
-          is_available: false, // mặc định false; admin bật khi approve
-          job_title: job_title || '',
-          company: company || '',
-          category: category || '',
-          skill: skill || '',
-          bio: bio || '',
-          current_position: current_position || '',
-          linkedin_url: linkedin_url || '',
-          personal_link_url: personal_link_url || '',
-          intro_video: intro_video || '',
-          featured_article: featured_article || '',
-          question: question || {},
-          cv_img: cv_img || '',
-        },
-        { upsert: true, new: true, setDefaultsOnInsert: true }
-      );
-    }
 
     // ✅ Gửi email xác thực
     const appName = process.env.APP_NAME || 'MentorHub';
