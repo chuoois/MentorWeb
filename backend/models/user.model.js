@@ -58,10 +58,32 @@ async function ensureMentorExists(userDoc) {
   }
 }
 
-// Hook khi tạo mới user
-userSchema.post('save', async function (doc, next) {
+// Khi tạo mới (đăng ký), đảm bảo role mặc định là 'MENTEE' nếu không được cung cấp,
+// và chuẩn hoá kiểu chữ của role nếu có (tránh nhập 'mentee' hoặc 'Mentee').
+userSchema.pre('save', function (next) {
   try {
-    await ensureMentorExists(doc);
+    if (this.isNew) {
+      if (!this.role) this.role = 'MENTEE';
+    }
+
+    if (this.role && typeof this.role === 'string') {
+      this.role = this.role.toUpperCase();
+    }
+
+    next();
+  } catch (e) {
+    next(e);
+  }
+});
+
+// Khi dùng findOneAndUpdate, normalize role nếu được cập nhật
+userSchema.pre('findOneAndUpdate', function (next) {
+  try {
+    const update = this.getUpdate();
+    if (update && update.role && typeof update.role === 'string') {
+      update.role = update.role.toUpperCase();
+      this.setUpdate(update);
+    }
     next();
   } catch (e) {
     next(e);

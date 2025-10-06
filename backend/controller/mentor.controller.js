@@ -4,7 +4,7 @@ const User = require("../models/user.model");
 const sanitize = (doc) => (doc?.toObject ? doc.toObject() : { ...doc });
 
 // GET /api/mentors
-// - Public: chỉ thấy mentor ACTIVE
+// - Public: chỉ thấy mentor có user.status = ACTIVE (đang hoạt động)
 // - Admin: thấy tất cả
 exports.list = async (req, res, next) => {
   try {
@@ -23,8 +23,8 @@ exports.list = async (req, res, next) => {
     }
     if (category) q.category = category;
 
-    // nếu không phải ADMIN thì chỉ show mentors có user.status = ACTIVE
-    const userMatch = req.user?.role === "ADMIN" ? {} : { status: "ACTIVE" };
+    // nếu không phải ADMIN thì chỉ show mentors có user.status = ACTIVE và role = MENTOR
+    const userMatch = req.user?.role === "ADMIN" ? {} : { status: "ACTIVE", role: "MENTOR" };
 
     const [items, total] = await Promise.all([
       Mentor.find(q)
@@ -39,7 +39,7 @@ exports.list = async (req, res, next) => {
       Mentor.countDocuments(q),
     ]);
 
-    // lọc bỏ mentor mà populate bị null (vì user không match ACTIVE)
+    // lọc bỏ mentor mà populate bị null (vì user không match ACTIVE/MENTOR)
     const visible = items.filter((m) => m.user_id);
     res.json({ total: req.user?.role === "ADMIN" ? total : visible.length, items: visible.map(sanitize) });
   } catch (err) {
@@ -48,14 +48,16 @@ exports.list = async (req, res, next) => {
 };
 
 // GET /api/mentors/:id
-// - Public: chỉ xem được nếu mentor đó ACTIVE
+// - Public: chỉ xem được nếu user của mentor đó ACTIVE & role MENTOR
 // - Admin: xem tất cả
 exports.getOne = async (req, res, next) => {
   try {
     const m = await Mentor.findById(req.params.id).populate("user_id", "full_name email avatar_url role status");
     if (!m) return res.status(404).json({ message: "Not found" });
-    if (req.user?.role !== "ADMIN" && m.user_id?.status !== "ACTIVE") {
-      return res.status(403).json({ message: "Forbidden" });
+    if (req.user?.role !== "ADMIN") {
+      if (m.user_id?.status !== "ACTIVE" || m.user_id?.role !== "MENTOR") {
+        return res.status(403).json({ message: "Forbidden" });
+      }
     }
     res.json(sanitize(m));
   } catch (err) {
@@ -68,7 +70,21 @@ exports.getOne = async (req, res, next) => {
 // - MENTOR chỉ được tạo cho chính mình (user_id === req.user.id)
 exports.create = async (req, res, next) => {
   try {
-    const { user_id, job_title, company, category, skill, bio, current_position, linkedin_url, personal_link_url, intro_video, featured_article, cv_img, question } = req.body || {};
+    const {
+      user_id,
+      job_title,
+      company,
+      category,
+      skill,
+      bio,
+      current_position,
+      linkedin_url,
+      personal_link_url,
+      intro_video,
+      featured_article,
+      cv_img,
+      question,
+    } = req.body || {};
 
     const user = await User.findById(user_id);
     if (!user || user.role !== "MENTOR") return res.status(400).json({ message: "User is not a mentor" });
@@ -103,28 +119,68 @@ exports.create = async (req, res, next) => {
   }
 };
 
-// POST /api/mentors/apply - mentee applies to become mentor
-// This will set the user's role to MENTOR and status to PENDING so admin can review
+// POST /api/mentors/apply
+// YÊU CẦU MỚI: Khách nộp hồ sơ => set user.role='MENTOR' & user.status='PENDING'
+// Lưu/ghi đè hồ sơ Mentor với đầy đủ dữ liệu form ở trạng thái chờ duyệt
 exports.apply = async (req, res, next) => {
   try {
     const userId = req.user.id;
 
     const user = await User.findById(userId);
-    if (!user) return res.status(404).json({ message: 'User not found' });
+    if (!user) return res.status(404).json({ message: "User not found" });
 
-    // If user already a mentor and active, no need to apply
-    if (user.role === 'MENTOR' && user.status === 'ACTIVE') {
-      return res.status(400).json({ message: 'Already a mentor' });
+    // Nếu đã là mentor và ACTIVE thì không cần apply
+    if (user.role === "MENTOR" && user.status === "ACTIVE") {
+      return res.status(400).json({ message: "Already a mentor" });
     }
 
-    // Set role to MENTOR and status to PENDING so admin can approve
-    user.role = 'MENTOR';
-    user.status = 'PENDING';
+    const {
+      job_title,
+      company,
+      category,
+      skill,
+      bio,
+      current_position,
+      linkedin_url,
+      personal_link_url,
+      intro_video,
+      featured_article,
+      question,
+      cv_img,
+    } = req.body || {};
+
+    // Upsert hồ sơ mentor với dữ liệu đầy đủ từ form (để admin duyệt)
+    const mentor = await Mentor.findOneAndUpdate(
+      { user_id: userId },
+      {
+        $set: {
+          job_title,
+          company,
+          category,
+          skill,
+          bio,
+          current_position,
+          linkedin_url,
+          personal_link_url,
+          intro_video,
+          featured_article,
+          question,
+          cv_img,
+        },
+      },
+      { new: true, upsert: true }
+    );
+
+    // Set role/status theo yêu cầu: role=MENTOR, status=PENDING (đợi admin duyệt để ACTIVE)
+    user.role = "MENTOR";
+    user.status = "PENDING";
     await user.save();
 
-    // ensure mentor profile exists (User model has hook to create Mentor on save)
-
-    res.status(200).json({ message: 'Applied for mentor. Waiting for admin approval.' });
+    res.status(200).json({
+      message: "Đã nộp hồ sơ mentor. Vui lòng đợi admin duyệt.",
+      mentor: sanitize(mentor),
+      user: { id: user._id, role: user.role, status: user.status },
+    });
   } catch (err) {
     next(err);
   }
