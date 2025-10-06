@@ -52,7 +52,7 @@ export const Header = () => {
               Trở thành Mentor
             </Link>
           ) : (
-            <Link to="/menteedashboard" className="text-[#2C3E50] hover:text-white transition-colors font-medium">
+            <Link to="/mentee/overview" className="text-[#2C3E50] hover:text-white transition-colors font-medium">
               Trang cá nhân
             </Link>
           )}
@@ -114,7 +114,7 @@ export const Header = () => {
               Trở thành Mentor
             </Link>
           ) : (
-            <Link to="/menteedashboard" className="block text-[#2C3E50] hover:text-white font-medium" onClick={() => setIsMenuOpen(false)}>
+            <Link to="/mentee/overview" className="block text-[#2C3E50] hover:text-white font-medium" onClick={() => setIsMenuOpen(false)}>
               Trang cá nhân
             </Link>
           )}

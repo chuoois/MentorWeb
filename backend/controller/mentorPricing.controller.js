@@ -74,7 +74,6 @@ exports.list = async (req, res) => {
   }
 };
 
-/*************  ✨ Windsurf Command 🌟  *************/
 // PUT /mentor-pricing/:id
 exports.update = async (req, res) => {
   try {
