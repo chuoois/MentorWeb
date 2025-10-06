@@ -114,6 +114,17 @@ exports.approveMentor = async (req, res, next) => {
       { new: true }
     );
     if (!user) return res.status(404).json({ error: "User not found" });
+    // Ensure mentor profile exists and mark available
+    try {
+      await Mentor.findOneAndUpdate(
+        { user_id: user._id },
+        { $set: { is_available: true, status: 'ACTIVE', user_id: user._id } },
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+      );
+    } catch (e) {
+      // log but don't fail approval
+      console.warn('Failed to mark mentor available:', e && e.message ? e.message : e);
+    }
     res.json({ message: "Mentor approved", data: sanitize(user) });
   } catch (err) {
     next(err);
@@ -131,6 +142,16 @@ exports.rejectMentor = async (req, res, next) => {
       { new: true }
     );
     if (!user) return res.status(404).json({ error: "User not found" });
+    // mark mentor profile as rejected/inactive if exists
+    try {
+      await Mentor.findOneAndUpdate(
+        { user_id: user._id },
+        { $set: { status: 'REJECTED', is_available: false } },
+        { new: true }
+      );
+    } catch (e) {
+      console.warn('Failed to mark mentor rejected:', e && e.message ? e.message : e);
+    }
     res.json({ message: "Mentor rejected", data: sanitize(user) });
   } catch (err) {
     next(err);
