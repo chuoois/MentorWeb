@@ -4,6 +4,9 @@ const mongoose = require("mongoose");
 const mentorSchema = new mongoose.Schema(
   {
     user_id:          { type: mongoose.Schema.Types.ObjectId, ref: "User", unique: true, required: true, index: true },
+    // status on mentor profile: PENDING until admin approves, ACTIVE when available
+    status:           { type: String, enum: ['PENDING', 'ACTIVE', 'INACTIVE', 'REJECTED'], default: 'PENDING' },
+    is_available:     { type: Boolean, default: false },
     job_title:        { type: String },
     company:          { type: String },        // optional
     category:         { type: String },

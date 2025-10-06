@@ -71,23 +71,41 @@ exports.register = async (req, res, next) => {
     });
 
     // Nếu là mentor thì đảm bảo có record mentors tương ứng
+    // Lưu các trường hồ sơ mentor nếu client gửi (ứng dụng: đăng ký làm mentor)
     if (role === 'MENTOR') {
+      const {
+        job_title,
+        company,
+        category,
+        skill,
+        bio,
+        current_position,
+        linkedin_url,
+        personal_link_url,
+        intro_video,
+        featured_article,
+        question,
+        cv_img,
+      } = req.body || {};
+
       await Mentor.findOneAndUpdate(
         { user_id: userDoc._id },
         {
           user_id: userDoc._id,
-          job_title: '',
-          company: '',
-          category: '',
-          skill: '',
-          bio: '',
-          current_position: '',
-          linkedin_url: '',
-          personal_link_url: '',
-          intro_video: '',
-          featured_article: '',
-          question: {},
-          cv_img: '',
+          status: 'PENDING', // profile pending until admin approves
+          is_available: false, // mặc định false; admin bật khi approve
+          job_title: job_title || '',
+          company: company || '',
+          category: category || '',
+          skill: skill || '',
+          bio: bio || '',
+          current_position: current_position || '',
+          linkedin_url: linkedin_url || '',
+          personal_link_url: personal_link_url || '',
+          intro_video: intro_video || '',
+          featured_article: featured_article || '',
+          question: question || {},
+          cv_img: cv_img || '',
         },
         { upsert: true, new: true, setDefaultsOnInsert: true }
       );

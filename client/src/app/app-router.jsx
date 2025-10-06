@@ -23,7 +23,14 @@ import {
   ApplicationsPage,
   SettingsMentorPage,
   ChatMentorPage,
-  MentorList
+  MentorList,
+  ListMenteeApply,
+  AdminDashboard,
+  MentorManagement,
+  MenteesManagement,
+  WebsiteStatistic,
+  AnalysisPage,
+  MentorVerification
 } from "@/pages"
 
 // Layout trống (không có header/footer)
@@ -92,10 +99,10 @@ export const router = createBrowserRouter([
     path: "/admin",
     element: <AdminLayout />,
     children: [
-      { path: "dashboard", element: <div>Dashboard Admin</div> },
-      { path: "mentors", element: <div>Quản lý mentor</div> },
-      { path: "mentees", element: <div>Quản lý mentee</div> },
-      { path: "applications", element: <div>Đơn ứng tuyển mentor</div> },
+      { path: "dashboard", element: <AdminDashboard/>},
+      { path: "mentors", element: <MentorManagement />},
+      { path: "mentees", element: <MenteesManagement/> },
+      { path: "applications", element: <ApplicationsPage /> },
     ],
   },
 ])
