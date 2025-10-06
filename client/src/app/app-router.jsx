@@ -5,7 +5,8 @@ import {
   AuthLayout,
   HomeLayout,
   MentorLayout,
-  AdminLayout
+  AdminLayout,
+  MenteeLayout
 } from "@/components/layouts"
 
 // Pages
@@ -57,11 +58,24 @@ export const router = createBrowserRouter([
       { path: "mentor-apply", element: <MentorApplicationFormPage /> },
       { path: "/", element: <MentorHome /> },
       { path: "mentor/:id", element: <MentorDetail /> },
-      { path: "/listmentor", element: <MentorList /> },
-      { path: "/menteedashboard", element: <ListMenteeApply /> }
+      { path: "/listmentor", element: <MentorList /> }
     ],
   },
-
+  // Mentee routes
+  {
+    path: "/mentee",
+    element: <MenteeLayout />,
+    children: [
+      { index: true, element: <div>Tổng quan</div> },
+      { path: "overview", element: <div>Tổng quan</div> },
+      { path: "applications", element: <div>Đơn ứng tuyển</div> },
+      { path: "progress", element: <div>Tiến độ học tập</div> },
+      { path: "schedule", element: <div>Lịch học</div> },
+      { path: "messages", element: <div>Tin nhắn</div> },
+      { path: "profile", element: <div>Hồ sơ</div> },
+      { path: "settings", element: <div>Cài đặt</div> },
+    ],
+  },
   // Mentor apply success
   {
     path: "/mentor-apply",
