@@ -139,11 +139,14 @@ exports.getMenteeBookedSlots = async (req, res) => {
     const bookings = await Booking.find({
       mentee: menteeId,
       status: { $in: ["PENDING", "CONFIRMED", "COMPLETED"] },
+      paymentStatus: "PAID",
     })
-      .select("session_times status note mentor price duration sessions")
-      .populate("mentor", "full_name job_title company price");
+      .select("session_times status note mentor price duration sessions paymentStatus")
+      .populate("mentor", "full_name job_title company price")
+      .lean();
 
     res.status(200).json({
+      success: true,
       mentee: { id: menteeId },
       bookedSlots: bookings.map(b => ({
         id: b._id,
@@ -153,13 +156,17 @@ exports.getMenteeBookedSlots = async (req, res) => {
         duration: b.duration,
         sessions: b.sessions,
         price: b.price,
+        paymentStatus: b.paymentStatus,
         mentor: b.mentor,
       })),
     });
-
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Lỗi server" });
+    console.error("Error fetching mentee booked slots:", error);
+    res.status(500).json({
+      success: false,
+      message: "Lỗi server khi lấy danh sách slot đã đặt",
+      error: error.message,
+    });
   }
 };
 
@@ -169,21 +176,21 @@ exports.getBookingStatusByMenteeId = async (req, res) => {
     const menteeId = req.user.id;
     const { status, mentorName, page = 1, limit = 10 } = req.query;
 
-    // Xây dựng điều kiện lọc
-    const query = { mentee: menteeId };
+    // Build query with paymentStatus filter
+    const query = { mentee: menteeId, paymentStatus: "PAID" };
     if (status) query.status = status;
 
-    // Nếu có tìm theo tên mentor
+    // Mentor name filter
     const mentorFilter = mentorName
       ? { full_name: { $regex: mentorName, $options: "i" } }
       : {};
 
-    // Lấy tổng số bản ghi để phân trang
+    // Get total count for pagination
     const total = await Booking.countDocuments(query);
 
     const bookings = await Booking.find(query)
       .select(
-        "status cancel_reason session_times.status session_times.start_time session_times.end_time session_times.meeting_link price duration sessions createdAt updatedAt"
+        "status cancel_reason session_times.status session_times.start_time session_times.end_time session_times.meeting_link price duration sessions paymentStatus createdAt updatedAt"
       )
       .populate({
         path: "mentor",
@@ -194,7 +201,7 @@ exports.getBookingStatusByMenteeId = async (req, res) => {
       .limit(parseInt(limit))
       .lean();
 
-    // Loại bỏ booking nào không có mentor (do filter theo mentorName)
+    // Filter out bookings without a mentor
     const filteredBookings = bookings.filter((b) => b.mentor);
 
     if (filteredBookings.length === 0) {
@@ -204,7 +211,7 @@ exports.getBookingStatusByMenteeId = async (req, res) => {
       });
     }
 
-    // Format dữ liệu
+    // Format data
     const formattedBookings = filteredBookings.map((booking) => ({
       bookingId: booking._id,
       mentor: {
@@ -220,6 +227,7 @@ exports.getBookingStatusByMenteeId = async (req, res) => {
       },
       status: booking.status,
       cancelReason: booking.cancel_reason || null,
+      paymentStatus: booking.paymentStatus || "N/A",
       price: booking.price,
       duration: booking.duration,
       sessions: booking.sessions,
@@ -259,20 +267,24 @@ exports.getLearningProgress = async (req, res) => {
     const menteeId = req.user.id;
     const { status, mentorName, page = 1, limit = 10 } = req.query;
 
+    // Build query with paymentStatus filter
     const query = {
       mentee: menteeId,
       status: { $in: ["PENDING", "CONFIRMED", "COMPLETED"] },
+      paymentStatus: "PAID",
     };
     if (status) query.status = status;
 
+    // Mentor name filter
     const mentorFilter = mentorName
       ? { full_name: { $regex: mentorName, $options: "i" } }
       : {};
 
+    // Get total count for pagination
     const total = await Booking.countDocuments(query);
 
     const bookings = await Booking.find(query)
-      .select("session_times status note mentor price duration sessions createdAt updatedAt")
+      .select("session_times status note mentor price duration sessions paymentStatus createdAt updatedAt")
       .populate({
         path: "mentor",
         match: mentorFilter,
@@ -282,6 +294,7 @@ exports.getLearningProgress = async (req, res) => {
       .limit(parseInt(limit))
       .lean();
 
+    // Filter out bookings without a mentor
     const filteredBookings = bookings.filter((b) => b.mentor);
 
     if (filteredBookings.length === 0) {
@@ -291,6 +304,7 @@ exports.getLearningProgress = async (req, res) => {
       });
     }
 
+    // Calculate learning progress
     const learningProgress = filteredBookings.map((booking) => {
       const completedSessions = booking.session_times.filter(
         (s) => s.status === "COMPLETED"
@@ -326,6 +340,7 @@ exports.getLearningProgress = async (req, res) => {
         completedSessions,
         progressPercentage: parseFloat(progressPercentage),
         status: booking.status,
+        paymentStatus: booking.paymentStatus || "N/A",
         price: booking.price,
         duration: booking.duration,
         note: booking.note || null,
@@ -335,7 +350,7 @@ exports.getLearningProgress = async (req, res) => {
       };
     });
 
-    // Tính tổng quan tiến độ học
+    // Calculate overall progress
     const totalBookings = filteredBookings.length;
     const totalSessions = filteredBookings.reduce((sum, b) => sum + b.sessions, 0);
     const totalCompletedSessions = learningProgress.reduce(
