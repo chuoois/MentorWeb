@@ -8,7 +8,10 @@ import { Eye, EyeOff } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { Link, useNavigate } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
-import AuthService from "@/services/auth.service";
+import { Formik, Form, Field, ErrorMessage } from "formik";
+import * as Yup from "yup";
+import MenteeService from "@/services/mentee.service";
+import MentorService from "@/services/mentor.service";
 
 export const LoginForm = () => {
   return (
@@ -35,47 +38,40 @@ export const LoginForm = () => {
   );
 };
 
-/* =================== Form dùng lại =================== */
 const LoginFormContent = ({ type }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [formData, setFormData] = useState({ email: "", password: "" });
   const navigate = useNavigate();
 
-  const handleChange = (e) => {
-    const { id, value } = e.target;
-    setFormData((prev) => ({ ...prev, [id]: value }));
-  };
+  // Yup schema
+  const validationSchema = Yup.object({
+    email: Yup.string().email("Email không hợp lệ").required("Bắt buộc"),
+    password: Yup.string().min(6, "Mật khẩu ít nhất 6 ký tự").required("Bắt buộc"),
+  });
 
-  /** 🔹 Submit form login thường */
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (values) => {
     setIsLoading(true);
-
     try {
       const data = {
-        email: formData.email.trim(),
-        password: formData.password,
+        email: values.email.trim(),
+        password: values.password,
       };
 
-      // 🚀 Gọi API đăng nhập
-      const res = await AuthService.login(data);
+      // Sau khi gọi API login
+      const res =
+        type === "mentee"
+          ? await MenteeService.login(data)
+          : await MentorService.login(data);
 
-      // 🚫 Kiểm tra sai role thì không lưu token
-      if (type === "mentee" && res.user.role !== "MENTEE") {
-        throw new Error("Tài khoản này không phải mentee.");
-      }
-      if (type === "mentor" && res.user.role !== "MENTOR") {
-        throw new Error("Tài khoản này không phải mentor.");
-      }
+      // Lưu token
+      localStorage.setItem("token", res.token);
+      // Lưu thông tin mentee
+      const currentUser = type === "mentee" ? res.mentee : res.mentor;
 
-      // ✅ Nếu đúng role mới lưu token
-      localStorage.setItem("accessToken", res.accessToken);
-      localStorage.setItem("refreshToken", res.refreshToken);
-      localStorage.setItem("user", JSON.stringify(res.user));
+      // Toast
+      toast.success(`Xin chào ${currentUser.full_name || "bạn"}!`);
 
-      toast.success(`Xin chào ${res.user.full_name || "bạn"}!`);
-      navigate(type === "mentor" ? "/mentor/dashboard" : "/");
+      navigate(type === "/" ? "/applications" : "/");
     } catch (err) {
       console.error("Login error:", err);
       const msg =
@@ -86,132 +82,146 @@ const LoginFormContent = ({ type }) => {
     }
   };
 
-  /** 🔹 Đăng nhập Google */
+  /** Google login (chỉ cho mentee) */
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
       const id_token = credentialResponse?.credential;
       if (!id_token) throw new Error("Không nhận được token từ Google");
 
-      const res = await AuthService.loginWithGoogle(id_token);
+      const res = await MenteeService.loginWithGoogle(id_token);
 
-      // Kiểm tra role
-      if (type === "mentor" && res.user.role !== "MENTOR") {
-        throw new Error("Tài khoản này không phải mentor.");
-      }
+      // Lưu token
+      localStorage.setItem("token", res.token);
 
-      // ✅ Lưu token cho đúng role
-      localStorage.setItem("accessToken", res.accessToken);
-      localStorage.setItem("refreshToken", res.refreshToken);
-      localStorage.setItem("user", JSON.stringify(res.user));
+      // Lưu thông tin mentee
+      const currentUser = res.mentee;
 
-      toast.success(`Xin chào ${res.user.full_name || "bạn"}!`);
-      navigate(type === "mentor" ? "/mentor/dashboard" : "/");
+      toast.success(`Xin chào ${currentUser.full_name || "bạn"}!`);
+      navigate("/");
     } catch (err) {
       console.error("Google login error:", err);
       toast.error("Đăng nhập Google thất bại!");
     }
   };
 
-  const handleGoogleError = () => {
-    toast.error("Đăng nhập Google bị hủy hoặc lỗi!");
-  };
+  const handleGoogleError = () => toast.error("Đăng nhập Google bị hủy hoặc lỗi!");
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      {/* Email */}
-      <div className="space-y-2">
-        <Label htmlFor={`${type}-email`} className="text-sm font-medium text-[#2C3E50]">
-          Email
-        </Label>
-        <Input
-          id="email"
-          type="email"
-          placeholder="Nhập email của bạn"
-          value={formData.email}
-          onChange={handleChange}
-          required
-          className="h-12 border border-gray-300 rounded-md focus:border-[#F9C5D5] focus:ring-1 focus:ring-[#F9C5D5]"
-        />
-      </div>
-
-      {/* Mật khẩu */}
-      <div className="space-y-2">
-        <Label htmlFor={`${type}-password`} className="text-sm font-medium text-[#2C3E50]">
-          Mật khẩu
-        </Label>
-        <div className="relative">
-          <Input
-            id="password"
-            type={showPassword ? "text" : "password"}
-            placeholder="Nhập mật khẩu"
-            value={formData.password}
-            onChange={handleChange}
-            required
-            className="h-12 border border-gray-300 rounded-md focus:border-[#F9C5D5] focus:ring-1 focus:ring-[#F9C5D5] pr-10"
-          />
-          <button
-            type="button"
-            onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-          >
-            {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-          </button>
-        </div>
-      </div>
-
-      {/* Nút đăng nhập */}
-      <Button
-        type="submit"
-        className="w-full h-12 bg-[#F9C5D5] hover:bg-[#f5b8cc] text-[#2C3E50] font-medium rounded-md transition-colors"
-        disabled={isLoading}
-      >
-        {isLoading
-          ? "Đang đăng nhập..."
-          : `Đăng nhập với tư cách ${type === "mentee" ? "mentee" : "mentor"}`}
-      </Button>
-
-      {/* Google login chỉ cho mentee */}
-      {type === "mentee" && (
-        <>
-          <div className="relative">
-            <Separator className="my-6" />
-            <div className="absolute inset-0 flex items-center justify-center">
-              <span className="bg-white px-4 text-sm text-gray-500">Hoặc</span>
-            </div>
-          </div>
-
-          <div className="w-full h-12">
-            <GoogleLogin
-              onSuccess={handleGoogleSuccess}
-              onError={handleGoogleError}
-              useOneTap
-              theme="outline"
-              shape="rectangular"
-              size="large"
-              width="100%"
+    <Formik
+      initialValues={{ email: "", password: "" }}
+      validationSchema={validationSchema}
+      onSubmit={handleSubmit}
+    >
+      {({ errors, touched }) => (
+        <Form className="space-y-4">
+          {/* Email */}
+          <div className="space-y-2">
+            <Label htmlFor="email" className="text-sm font-medium text-[#2C3E50]">
+              Email
+            </Label>
+            <Field
+              id="email"
+              name="email"
+              type="email"
+              placeholder="Nhập email của bạn"
+              className={`h-12 border rounded-md w-full px-3 focus:outline-none focus:ring-1 ${errors.email && touched.email
+                ? "border-red-500 focus:ring-red-500"
+                : "border-gray-300 focus:ring-[#F9C5D5]"
+                }`}
+            />
+            <ErrorMessage
+              name="email"
+              component="div"
+              className="text-red-500 text-sm mt-1"
             />
           </div>
-        </>
-      )}
 
-      {/* Footer */}
-      <div className="text-center space-y-2 text-sm mt-6 text-gray-600">
-        <div>
-          <Link to="/auth/password_reset" className="text-blue-600 hover:underline">
-            Quên mật khẩu?
-          </Link>
-        </div>
-        <div>
-          Chưa có tài khoản?{" "}
-          <Link to="/auth/signup" className="text-blue-600 hover:underline">
-            Đăng ký làm mentee
-          </Link>{" "}
-          hoặc{" "}
-          <Link to="/mentor" className="text-blue-600 hover:underline">
-            nộp đơn làm mentor
-          </Link>
-        </div>
-      </div>
-    </form>
+          {/* Password */}
+          <div className="space-y-2">
+            <Label htmlFor="password" className="text-sm font-medium text-[#2C3E50]">
+              Mật khẩu
+            </Label>
+            <div className="relative">
+              <Field
+                id="password"
+                name="password"
+                type={showPassword ? "text" : "password"}
+                placeholder="Nhập mật khẩu"
+                className={`h-12 border rounded-md w-full px-3 pr-10 focus:outline-none focus:ring-1 ${errors.password && touched.password
+                  ? "border-red-500 focus:ring-red-500"
+                  : "border-gray-300 focus:ring-[#F9C5D5]"
+                  }`}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              </button>
+            </div>
+            <ErrorMessage
+              name="password"
+              component="div"
+              className="text-red-500 text-sm mt-1"
+            />
+          </div>
+
+          {/* Submit button */}
+          <Button
+            type="submit"
+            className="w-full h-12 bg-[#F9C5D5] hover:bg-[#f5b8cc] text-[#2C3E50] font-medium rounded-md transition-colors"
+            disabled={isLoading}
+          >
+            {isLoading
+              ? "Đang đăng nhập..."
+              : `Đăng nhập với tư cách ${type === "mentee" ? "mentee" : "mentor"}`}
+          </Button>
+
+          {/* Google login chỉ cho mentee */}
+          {type === "mentee" && (
+            <>
+              <div className="relative">
+                <Separator className="my-6" />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="bg-white px-4 text-sm text-gray-500">Hoặc</span>
+                </div>
+              </div>
+
+              <div className="w-full h-12">
+                <GoogleLogin
+                  onSuccess={handleGoogleSuccess}
+                  onError={handleGoogleError}
+                  useOneTap
+                  theme="outline"
+                  shape="rectangular"
+                  size="large"
+                  width="100%"
+                />
+              </div>
+            </>
+          )}
+
+          {/* Footer */}
+          <div className="text-center space-y-2 text-sm mt-6 text-gray-600">
+            <div>
+              <Link to="/auth/password_reset" className="text-blue-600 hover:underline">
+                Quên mật khẩu?
+              </Link>
+            </div>
+            <div>
+              Chưa có tài khoản?{" "}
+              <Link to="/auth/signup" className="text-blue-600 hover:underline">
+                Đăng ký làm mentee
+              </Link>{" "}
+              hoặc{" "}
+              <Link to="/mentor" className="text-blue-600 hover:underline">
+                nộp đơn làm mentor
+              </Link>
+            </div>
+          </div>
+        </Form>
+      )}
+    </Formik>
   );
 };

@@ -4,7 +4,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { toast } from "react-hot-toast"
 import { Link } from "react-router-dom"
-import AuthService from "@/services/auth.service"
 
 export const ForgotPasswordForm = () => {
   const [email, setEmail] = useState("")

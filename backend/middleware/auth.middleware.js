@@ -1,57 +1,42 @@
 // backend/middleware/auth.middleware.js
 const jwt = require('jsonwebtoken');
+const Role = require("../models/role.model");
 
-function signAccessToken(payload) {
-  return jwt.sign(payload, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRES || '15m',
-  });
-}
-function signRefreshToken(payload) {
-  return jwt.sign(payload, process.env.REFRESH_SECRET, {
-    expiresIn: process.env.REFRESH_EXPIRES || '30d',
-  });
-}
+// Middleware để xác thực token
+const authMiddleware = (req, res, next) => {
+  // Lấy token từ header Authorization
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1]; 
 
-// Helper lấy token từ nhiều nguồn, chấp nhận "Bearer"/"bearer"
-function extractToken(req) {
-  const h = req.headers.authorization || req.headers.Authorization || '';
-  const m = /^Bearer\s+(.+)$/i.exec(h);
-  if (m && m[1]) return m[1].trim();
-  // fallback khác nếu bạn dùng
-  if (req.headers['x-access-token']) return String(req.headers['x-access-token']).trim();
-  if (req.cookies?.accessToken) return req.cookies.accessToken;
-  return null;
-}
-
-function authRequired(req, res, next) {
-  // Bỏ qua preflight CORS
-  if (req.method === 'OPTIONS') return next();
-
-  const token = extractToken(req);
-  if (!token) return next({ status: 401, message: 'Unauthorized' });
+  if (!token) {
+    return res.status(401).json({ message: 'Không tìm thấy token' });
+  }
 
   try {
-    const payload = jwt.verify(token, process.env.JWT_SECRET);
-    // Chuẩn hoá user object để dùng nhất quán
-    req.user = {
-      id: String(payload.id || payload.sub || ''),
-      role: payload.role,
-      email: payload.email,
-      raw: payload, // nếu cần debug thêm
-    };
-    if (!req.user.id) return next({ status: 401, message: 'Invalid token payload' });
-    next();
-  } catch (e) {
-    return next({ status: 401, message: 'Invalid or expired token' });
+    // Xác thực token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded; // Lưu thông tin người dùng từ token vào request
+    next(); // Chuyển tiếp đến route handler
+  } catch (error) {
+    return res.status(403).json({ message: 'Token không hợp lệ' });
   }
-}
+};
+// Middleware để xác quyền
+const checkRole = (...allowedRoles) => {
+  return async (req, res, next) => {
+    if (!req.user || !req.user.role) return res.status(403).json({ message: "Không có quyền" });
 
-function roleRequired(...roles) {
-  return (req, _res, next) => {
-    if (!req.user) return next({ status: 401, message: 'Unauthorized' });
-    if (!roles.includes(req.user.role)) return next({ status: 403, message: 'Forbidden' });
-    next();
+    try {
+      const role = await Role.findById(req.user.role);
+      if (!role) return res.status(403).json({ message: "Role không tồn tại" });
+
+      if (allowedRoles.includes(role.name)) return next();
+      return res.status(403).json({ message: "Bạn không có quyền thực hiện hành động này" });
+    } catch (err) {
+      return res.status(500).json({ message: "Lỗi server" });
+    }
   };
-}
+};
 
-module.exports = { signAccessToken, signRefreshToken, authRequired, roleRequired };
+
+module.exports = { authMiddleware, checkRole };

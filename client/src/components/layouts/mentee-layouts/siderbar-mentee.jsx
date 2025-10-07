@@ -12,13 +12,11 @@ import {
 
 export const Sidebar = () => {
   const tabs = [
-    { path: "/mentee/overview", label: "Tổng quan", icon: <Home className="w-4 h-4" /> },
-    { path: "/mentee/applications", label: "Đơn ứng tuyển", icon: <Users className="w-4 h-4" /> },
+    { path: "/mentee/applications", label: "Đơn xét duyệt", icon: <Users className="w-4 h-4" /> },
     { path: "/mentee/progress", label: "Tiến độ học tập", icon: <BookOpen className="w-4 h-4" /> },
     { path: "/mentee/schedule", label: "Lịch học", icon: <Calendar className="w-4 h-4" /> },
     { path: "/mentee/messages", label: "Tin nhắn", icon: <MessageSquare className="w-4 h-4" /> },
     { path: "/mentee/profile", label: "Hồ sơ", icon: <User className="w-4 h-4" /> },
-    { path: "/mentee/settings", label: "Cài đặt", icon: <Settings className="w-4 h-4" /> },
   ];
 
   return (

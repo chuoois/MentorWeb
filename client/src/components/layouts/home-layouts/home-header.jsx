@@ -10,13 +10,13 @@ export const Header = () => {
 
   // Kiểm tra trạng thái đăng nhập
   useEffect(() => {
-    const token = localStorage.getItem("accessToken");
+    const token = localStorage.getItem("token");
     setIsLoggedIn(!!token);
   }, []);
 
   // Đăng xuất
   const handleLogout = () => {
-    localStorage.removeItem("accessToken");
+    localStorage.removeItem("token");
     setIsLoggedIn(false);
     navigate("/auth/login");
   };
@@ -52,7 +52,7 @@ export const Header = () => {
               Trở thành Mentor
             </Link>
           ) : (
-            <Link to="/mentee/overview" className="text-[#2C3E50] hover:text-white transition-colors font-medium">
+            <Link to="/mentee/applications" className="text-[#2C3E50] hover:text-white transition-colors font-medium">
               Trang cá nhân
             </Link>
           )}

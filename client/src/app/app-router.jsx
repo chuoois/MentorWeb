@@ -14,7 +14,6 @@ import {
   LoginPage,
   MenteeRegisterPage,
   ForgotPasswordPage,
-  VerifyEmailPage,
   HomeRegisterMentorPage,
   MentorApplicationFormPage,
   MentorApplicationSubmittedPage,
@@ -24,13 +23,17 @@ import {
   SettingsMentorPage,
   ChatMentorPage,
   MentorList,
-  ListMenteeApply,
+  // ListMenteeApply,
   AdminDashboard,
   MentorManagement,
   MenteesManagement,
-  WebsiteStatistic,
-  AnalysisPage,
-  MentorVerification
+  // WebsiteStatistic,
+  // AnalysisPage,
+  // MentorVerification,
+  MenteeSchedulePage,
+  MenteeProfilePage,
+  MenteeApplicationPage,
+  LearningProgressPage
 } from "@/pages"
 
 // Layout trống (không có header/footer)
@@ -45,7 +48,6 @@ export const router = createBrowserRouter([
       { path: "login", element: <LoginPage /> },
       { path: "signup", element: <MenteeRegisterPage /> },
       { path: "password_reset", element: <ForgotPasswordPage /> },
-      { path: "verify-email", element: <VerifyEmailPage /> },
     ],
   },
 
@@ -66,14 +68,11 @@ export const router = createBrowserRouter([
     path: "/mentee",
     element: <MenteeLayout />,
     children: [
-      { index: true, element: <div>Tổng quan</div> },
-      { path: "overview", element: <div>Tổng quan</div> },
-      { path: "applications", element: <div>Đơn ứng tuyển</div> },
-      { path: "progress", element: <div>Tiến độ học tập</div> },
-      { path: "schedule", element: <div>Lịch học</div> },
+      { path: "applications", element: <MenteeApplicationPage /> },
+      { path: "progress", element: <LearningProgressPage /> },
+      { path: "schedule", element: <MenteeSchedulePage /> },
       { path: "messages", element: <div>Tin nhắn</div> },
-      { path: "profile", element: <div>Hồ sơ</div> },
-      { path: "settings", element: <div>Cài đặt</div> },
+      { path: "profile", element: <MenteeProfilePage /> }
     ],
   },
   // Mentor apply success
@@ -99,9 +98,9 @@ export const router = createBrowserRouter([
     path: "/admin",
     element: <AdminLayout />,
     children: [
-      { path: "dashboard", element: <AdminDashboard/>},
-      { path: "mentors", element: <MentorManagement />},
-      { path: "mentees", element: <MenteesManagement/> },
+      { path: "dashboard", element: <AdminDashboard /> },
+      { path: "mentors", element: <MentorManagement /> },
+      { path: "mentees", element: <MenteesManagement /> },
       { path: "applications", element: <ApplicationsPage /> },
     ],
   },

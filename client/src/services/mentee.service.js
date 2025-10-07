@@ -1,69 +1,67 @@
-import api from "@/lib/axios";
+import api from "../lib/axios";
 
-/**
- * MenteeService: Cung cấp các hàm CRUD cho thực thể Mentee.
- * Tất cả request đều hướng tới /mentees/... tương ứng với backend.
- */
 const MenteeService = {
-  /**
-   * Tạo mới một mentee
-   * @param {Object} data - { user_id: string }
-   * @returns {Promise<Object>} - { ok, data } hoặc lỗi từ backend
-   */
-  create: async (data) => {
-    const res = await api.post("/mentees", data);
-    return res.data;
+  register: async (data) => {
+    try {
+      const res = await api.post("/api/mentees/register", data);
+      return res.data;
+    } catch (err) {
+      throw err.response?.data || err;
+    }
   },
 
-  /**
-   * Lấy danh sách mentees (có hỗ trợ search và phân trang)
-   * @param {Object} params - { search?: string, page?: number, pageSize?: number }
-   * @returns {Promise<Object>} - { ok, data, pagination }
-   */
-  list: async (params = {}) => {
-    const res = await api.get("/mentees", { params });
-    return res.data;
+  login: async (data) => {
+    try {
+      const res = await api.post("/api/mentees/login", data);
+      return res.data;
+    } catch (err) {
+      throw err.response?.data || err;
+    }
   },
 
-  /**
-   * Lấy thông tin mentee theo id
-   * @param {string} id
-   * @returns {Promise<Object>} - { ok, data }
-   */
-  getById: async (id) => {
-    const res = await api.get(`/mentees/${id}`);
-    return res.data;
+  forgotPassword: async (data) => {
+    try {
+      const res = await api.post("/api/mentees/forgot-password", data);
+      return res.data;
+    } catch (err) {
+      throw err.response?.data || err;
+    }
   },
 
-  /**
-   * Lấy mentee theo user_id (dùng khi cần tìm mentee gắn với user cụ thể)
-   * @param {string} userId
-   * @returns {Promise<Object>} - { ok, data }
-   */
-  getByUserId: async (userId) => {
-    const res = await api.get(`/mentees/by-user/${userId}`);
-    return res.data;
+  loginWithGoogle: async (idToken) => {
+    try {
+      const res = await api.post("/api/mentees/login-with-google", { idToken });
+      return res.data;
+    } catch (err) {
+      throw err.response?.data || err;
+    }
   },
 
-  /**
-   * Cập nhật thông tin mentee (chủ yếu để đổi user_id)
-   * @param {string} id
-   * @param {Object} data - { user_id?: string }
-   * @returns {Promise<Object>} - { ok, data }
-   */
-  update: async (id, data) => {
-    const res = await api.patch(`/mentees/${id}`, data);
-    return res.data;
+  getProfile: async () => {
+    try {
+      const res = await api.get("/api/mentees");
+      return res.data;
+    } catch (err) {
+      throw err.response?.data || err;
+    }
   },
 
-  /**
-   * Xoá mentee theo id
-   * @param {string} id
-   * @returns {Promise<Object>} - { ok, data: { deleted_id } }
-   */
-  remove: async (id) => {
-    const res = await api.delete(`/mentees/${id}`);
-    return res.data;
+  updateProfile: async (data) => {
+    try {
+      const res = await api.put("/api/mentees/update", data);
+      return res.data;
+    } catch (err) {
+      throw err.response?.data || err;
+    }
+  },
+
+  deleteAccount: async () => {
+    try {
+      const res = await api.delete("/api/mentees/delete");
+      return res.data;
+    } catch (err) {
+      throw err.response?.data || err;
+    }
   },
 };
 

@@ -1,175 +1,268 @@
-// controllers/mentees.controller.js
-const mongoose = require('mongoose');
-const Mentee = require('../models/mentee.model');        // đường dẫn tùy dự án của bạn
-const User = require('../models/user.model');            // cần model User để kiểm tra tồn tại
+const Mentee = require("../models/mentee.model");
+const Mentor = require("../models/mentor.model");
+const Role = require("../models/role.model");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const { sendMail } = require("../utils/mailer");
+const crypto = require("crypto");
+const { OAuth2Client } = require("google-auth-library");
 
-// Helper: validate ObjectId
-function isObjectId(id) {
-  return mongoose.Types.ObjectId.isValid(id);
-}
+// Config từ .env
+const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES;
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
+const client = new OAuth2Client(GOOGLE_CLIENT_ID);
+const APP_LOGIN_URL = process.env.APP_LOGIN_URL || "http://localhost:5173/auth/login";
+const APP_NAME = process.env.APP_NAME || "MentorHub";
 
-// POST /mentees
-// body: { user_id: "..." }
-exports.create = async (req, res) => {
+// ---------------------- REGISTER ----------------------
+exports.register = async (req, res) => {
   try {
-    const { user_id } = req.body;
-    if (!user_id) return res.status(400).json({ ok: false, error: 'Missing user_id' });
-    if (!isObjectId(user_id)) return res.status(400).json({ ok: false, error: 'Invalid user_id' });
+    const { email, password, full_name, phone } = req.body;
 
-    // user phải tồn tại
-    const user = await User.findById(user_id);
-    if (!user) return res.status(404).json({ ok: false, error: 'User not found' });
-
-    // tránh trùng mentee theo user_id
-    const existed = await Mentee.findOne({ user_id });
-    if (existed) return res.status(409).json({ ok: false, error: 'Mentee already exists for this user' });
-
-    const mentee = await Mentee.create({ user_id });
-
-    // OPTIONAL: nếu muốn tự động set role user là MENTEE (bỏ comment nếu cần)
-    // if (user.role !== 'MENTEE') {
-    //   user.role = 'MENTEE';
-    //   await user.save();
-    // }
-
-    return res.status(201).json({ ok: true, data: mentee });
-  } catch (err) {
-    // xử lý lỗi unique index trùng user_id
-    if (err?.code === 11000) {
-      return res.status(409).json({ ok: false, error: 'Duplicate user_id for mentee' });
-    }
-    return res.status(500).json({ ok: false, error: err.message || 'Server error' });
-  }
-};
-
-// GET /mentees
-// query: search, page=1, pageSize=20
-// search theo email/full_name của User
-exports.list = async (req, res) => {
-  try {
-    const { search = '', page = 1, pageSize = 20 } = req.query;
-    const limit = Math.max(parseInt(pageSize) || 20, 1);
-    const skip = (Math.max(parseInt(page) || 1, 1) - 1) * limit;
-
-    const pipeline = [
-      { $lookup: { from: 'users', localField: 'user_id', foreignField: '_id', as: 'user' } },
-      { $unwind: '$user' },
-    ];
-
-    if (search) {
-      pipeline.push({
-        $match: {
-          $or: [
-            { 'user.email': { $regex: search, $options: 'i' } },
-            { 'user.full_name': { $regex: search, $options: 'i' } },
-          ],
-        },
-      });
+    // Kiểm tra email đã tồn tại
+    const existingMentee = await Mentee.findOne({ email });
+    if (existingMentee) {
+      return res.status(400).json({ message: "Email đã được sử dụng" });
     }
 
-    const facet = await Mentee.aggregate([
-      ...pipeline,
-      { $sort: { _id: -1 } },
-      {
-        $facet: {
-          items: [{ $skip: skip }, { $limit: limit }],
-          totalRows: [{ $count: 'count' }],
-        },
-      },
-    ]);
+    // Lấy role 'MENTEE'
+    const role = await Role.findOne({ name: "MENTEE" });
+    if (!role) {
+      return res.status(500).json({ message: "Role 'MENTEE' chưa được tạo" });
+    }
 
-    const items = facet[0]?.items || [];
-    const total = facet[0]?.totalRows?.[0]?.count || 0;
+    // Hash password
+    const password_hash = await bcrypt.hash(password, 10);
 
-    return res.json({
-      ok: true,
-      data: items,
-      pagination: {
-        page: Number(page),
-        pageSize: limit,
-        total,
-        totalPages: Math.ceil(total / limit),
+    // Tạo mentee mới
+    const newMentee = new Mentee({
+      email,
+      full_name,
+      phone,
+      password_hash,
+      role: role._id,
+    });
+
+    await newMentee.save();
+
+    res.status(201).json({
+      message: "Đăng ký thành công",
+      mentee: {
+        id: newMentee._id,
+        email: newMentee.email,
+        full_name: newMentee.full_name,
+        phone: newMentee.phone,
       },
     });
-  } catch (err) {
-    return res.status(500).json({ ok: false, error: err.message || 'Server error' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Lỗi server" });
   }
 };
 
-// GET /mentees/:id
-exports.getById = async (req, res) => {
+// ---------------------- LOGIN ----------------------
+exports.login = async (req, res) => {
   try {
-    const { id } = req.params;
-    if (!isObjectId(id)) return res.status(400).json({ ok: false, error: 'Invalid id' });
+    const { email, password } = req.body;
 
-    const mentee = await Mentee.findById(id).populate('user_id');
-    if (!mentee) return res.status(404).json({ ok: false, error: 'Mentee not found' });
+    const mentee = await Mentee.findOne({ email }).populate("role");
+    if (!mentee) return res.status(400).json({ message: "Email hoặc mật khẩu không đúng" });
 
-    return res.json({ ok: true, data: mentee });
-  } catch (err) {
-    return res.status(500).json({ ok: false, error: err.message || 'Server error' });
-  }
-};
-
-// GET /mentees/by-user/:userId  (lấy theo user_id)
-exports.getByUserId = async (req, res) => {
-  try {
-    const { userId } = req.params;
-    if (!isObjectId(userId)) return res.status(400).json({ ok: false, error: 'Invalid userId' });
-
-    const mentee = await Mentee.findOne({ user_id: userId }).populate('user_id');
-    if (!mentee) return res.status(404).json({ ok: false, error: 'Mentee not found' });
-
-    return res.json({ ok: true, data: mentee });
-  } catch (err) {
-    return res.status(500).json({ ok: false, error: err.message || 'Server error' });
-  }
-};
-
-// PATCH /mentees/:id
-// body: { user_id?: "..." } — chủ yếu để đổi sang user khác (hiếm khi dùng)
-exports.update = async (req, res) => {
-  try {
-    const { id } = req.params;
-    if (!isObjectId(id)) return res.status(400).json({ ok: false, error: 'Invalid id' });
-
-    const updates = {};
-    if (req.body.user_id !== undefined) {
-      if (!isObjectId(req.body.user_id)) return res.status(400).json({ ok: false, error: 'Invalid user_id' });
-      // kiểm tra user tồn tại
-      const user = await User.findById(req.body.user_id);
-      if (!user) return res.status(404).json({ ok: false, error: 'User not found' });
-
-      // tránh trùng mentee khác đã dùng user_id này
-      const dup = await Mentee.findOne({ user_id: req.body.user_id, _id: { $ne: id } });
-      if (dup) return res.status(409).json({ ok: false, error: 'user_id already used by another mentee' });
-
-      updates.user_id = req.body.user_id;
+    if (mentee.status === "BANNED") {
+      return res.status(403).json({ message: "Tài khoản bị khóa" });
     }
 
-    const mentee = await Mentee.findByIdAndUpdate(id, updates, { new: true }).populate('user_id');
-    if (!mentee) return res.status(404).json({ ok: false, error: 'Mentee not found' });
+    const isMatch = await bcrypt.compare(password, mentee.password_hash);
+    if (!isMatch) return res.status(400).json({ message: "Email hoặc mật khẩu không đúng" });
 
-    return res.json({ ok: true, data: mentee });
-  } catch (err) {
-    if (err?.code === 11000) {
-      return res.status(409).json({ ok: false, error: 'Duplicate user_id for mentee' });
-    }
-    return res.status(500).json({ ok: false, error: err.message || 'Server error' });
+    const token = jwt.sign({ id: mentee._id, role: mentee.role.name }, JWT_SECRET, {
+      expiresIn: JWT_EXPIRES_IN,
+    });
+
+    res.json({
+      message: "Đăng nhập thành công",
+      token,
+      mentee: {
+        id: mentee._id,
+        email: mentee.email,
+        full_name: mentee.full_name,
+        phone: mentee.phone,
+        role: mentee.role.name,
+        avatar_url: mentee.avatar_url,
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Lỗi server" });
   }
 };
 
-// DELETE /mentees/:id
-exports.remove = async (req, res) => {
+// ---------------------- FORGOT PASSWORD ----------------------
+exports.forgotPassword = async (req, res) => {
   try {
-    const { id } = req.params;
-    if (!isObjectId(id)) return res.status(400).json({ ok: false, error: 'Invalid id' });
+    const { email } = req.body;
 
-    const mentee = await Mentee.findByIdAndDelete(id);
-    if (!mentee) return res.status(404).json({ ok: false, error: 'Mentee not found' });
+    // Tìm mentee hoặc mentor theo email
+    let user = await Mentee.findOne({ email });
+    let userType = "mentee";
 
-    return res.json({ ok: true, data: { deleted_id: id } });
-  } catch (err) {
-    return res.status(500).json({ ok: false, error: err.message || 'Server error' });
+    if (!user) {
+      user = await Mentor.findOne({ email });
+      userType = "mentor";
+    }
+
+    if (!user) {
+      return res.status(404).json({ message: "Email không tồn tại" });
+    }
+
+    // Tạo mật khẩu tạm thời 8 ký tự
+    const tempPassword = crypto.randomBytes(4).toString("hex");
+
+    // Hash và lưu vào DB
+    user.password_hash = await bcrypt.hash(tempPassword, 10);
+    await user.save();
+
+    const subject = `${APP_NAME} - Mật khẩu mới của bạn`;
+    const html = `
+      <p>Xin chào <strong>${user.full_name}</strong>,</p>
+      <p>Mật khẩu mới tạm thời của bạn là: <strong>${tempPassword}</strong></p>
+      <p>Vui lòng <a href="${APP_LOGIN_URL}">đăng nhập</a> và đổi mật khẩu ngay sau khi nhận được email này.</p>
+    `;
+
+    await sendMail({ to: user.email, subject, html });
+
+    res.json({ message: "Mật khẩu mới đã được gửi vào email của bạn" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Lỗi server" });
+  }
+};
+
+// ---------------------- LOGIN WITH GOOGLE ----------------------
+exports.loginWithGoogle = async (req, res) => {
+  try {
+    const { idToken } = req.body;
+    if (!idToken) return res.status(400).json({ message: "Missing idToken" });
+
+    // Verify Google token
+    const ticket = await client.verifyIdToken({
+      idToken,
+      audience: GOOGLE_CLIENT_ID,
+    });
+    const payload = ticket.getPayload();
+    const { email, name, picture } = payload;
+
+    let mentee = await Mentee.findOne({ email }).populate("role");
+
+    if (!mentee) {
+      const role = await Role.findOne({ name: "MENTEE" });
+      if (!role) return res.status(500).json({ message: "Role 'MENTEE' chưa được tạo" });
+
+      mentee = new Mentee({
+        email,
+        full_name: name,
+        password_hash: "", // Google login không cần password
+        role: role._id,
+        avatar_url: picture,
+      });
+      await mentee.save();
+      await mentee.populate("role");
+    }
+
+    if (mentee.status === "BANNED") {
+      return res.status(403).json({ message: "Tài khoản bị khóa" });
+    }
+
+    const token = jwt.sign({ id: mentee._id, role: mentee.role.name }, JWT_SECRET, {
+      expiresIn: JWT_EXPIRES_IN,
+    });
+
+    res.json({
+      message: "Đăng nhập thành công",
+      token,
+      mentee: {
+        id: mentee._id,
+        email: mentee.email,
+        full_name: mentee.full_name,
+        phone: mentee.phone,
+        role: mentee.role.name,
+        avatar_url: mentee.avatar_url,
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Lỗi server" });
+  }
+};
+
+// ---------------------- GET PROFILE ----------------------
+exports.getProfile = async (req, res) => {
+  try {
+    const menteeId = req.user.id;
+
+    const mentee = await Mentee.findById(menteeId).select("-password_hash");
+    if (!mentee) return res.status(404).json({ message: "Mentee not found" });
+
+    res.status(200).json(mentee);
+  } catch (error) {
+    console.error("Get profile error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// ---------------------- UPDATE PROFILE ----------------------
+exports.updateProfile = async (req, res) => {
+  try {
+    const menteeId = req.user.id;
+    console.log("req.user:", req.user);
+    const { full_name, phone, gpa, experience, motivation, password, confirm_password } = req.body;
+
+    const mentee = await Mentee.findById(menteeId);
+    if (!mentee) return res.status(404).json({ message: "Mentee not found" });
+
+    // Cập nhật thông tin cơ bản
+    if (full_name) mentee.full_name = full_name;
+    if (phone) mentee.phone = phone;
+    if (gpa !== undefined) mentee.gpa = gpa;
+    if (experience !== undefined) mentee.experience = experience;
+    if (motivation !== undefined) mentee.motivation = motivation;
+
+    // Cập nhật mật khẩu nếu có
+    if (password) {
+      if (!confirm_password) {
+        return res.status(400).json({ message: "Vui lòng nhập xác nhận mật khẩu" });
+      }
+      if (password !== confirm_password) {
+        return res.status(400).json({ message: "Mật khẩu xác nhận không khớp" });
+      }
+      // Hash mật khẩu mới
+      mentee.password_hash = await bcrypt.hash(password, 10);
+    }
+
+    await mentee.save();
+
+    // Lấy lại thông tin mentee không bao gồm password_hash
+    const updatedMentee = await Mentee.findById(menteeId).select("-password_hash");
+
+    res.status(200).json({ message: "Cập nhật hồ sơ thành công", mentee: updatedMentee });
+  } catch (error) {
+    console.error("Update profile error:", error);
+    res.status(500).json({ message: "Lỗi server" });
+  }
+};
+
+// ---------------------- DELETE ACCOUNT ----------------------
+exports.deleteAccount = async (req, res) => {
+  try {
+    const menteeId = req.user.id;
+
+    const mentee = await Mentee.findByIdAndDelete(menteeId);
+    if (!mentee) return res.status(404).json({ message: "Mentee not found" });
+
+    res.status(200).json({ message: "Account deleted successfully" });
+  } catch (error) {
+    console.error("Delete account error:", error);
+    res.status(500).json({ message: "Server error" });
   }
 };

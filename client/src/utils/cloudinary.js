@@ -1,22 +1,37 @@
-// src/utils/cloudinary.js
-export const uploadToCloudinary = async (file) => {
-  const CLOUD_NAME = "doevhf5tms"; 
-  const UPLOAD_PRESET = "my_unsigned_preset"; 
-
-  const formData = new FormData();
-  formData.append("file", file);
-  formData.append("upload_preset", UPLOAD_PRESET);
-
-  const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
-    method: "POST",
-    body: formData,
-  });
-
-  const data = await res.json();
-
-  if (!data.secure_url) {
-    throw new Error("Upload thất bại");
+export const uploadImages = async (files, setUploading) => {
+  if (!files || files.length === 0) {
+    console.error("Không có file");
+    return [];
   }
 
-  return data.secure_url;
+  setUploading(true);
+  try {
+    const uploadPromises = Array.from(files).map(async (file) => {
+      const formDataUpload = new FormData();
+      formDataUpload.append("file", file);
+      formDataUpload.append("upload_preset", "giftme");
+
+      const res = await fetch(
+        "https://api.cloudinary.com/v1_1/dqh0zio2c/image/upload",
+        {
+          method: "POST",
+          body: formDataUpload,
+        }
+      );
+
+      const data = await res.json();
+      if (!data.secure_url) {
+        throw new Error(`Upload thất bại cho ảnh ${file.name}`);
+      }
+      return data.secure_url;
+    });
+
+    const uploadedUrls = await Promise.all(uploadPromises);
+    return uploadedUrls.filter((url) => url && url.trim());
+  } catch (error) {
+    console.error(error);
+    return [];
+  } finally {
+    setUploading(false);
+  }
 };
