@@ -41,7 +41,7 @@ import BookingService from "@/services/booking.service";
 import CommentService from "@/services/comment.service";
 import { Skeleton } from "@/components/ui/skeleton";
 
-// Skeleton loading component
+// Skeleton loading component (unchanged)
 const MentorSkeleton = () => (
   <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-pulse">
     <div className="lg:col-span-2 space-y-6">
@@ -119,8 +119,9 @@ export const MentorDetailPage = () => {
   const [mentor, setMentor] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState(addDays(new Date(), 5)); // Default to +5 days
+  const [selectedDays, setSelectedDays] = useState([addDays(new Date(), 5)]); // Track multiple selected days
+  const [selectedSlots, setSelectedSlots] = useState({}); // Map of date -> slots
   const [bookedSlots, setBookedSlots] = useState([]);
-  const [selectedSlots, setSelectedSlots] = useState([]);
   const [note, setNote] = useState("");
   const [sessionDuration, setSessionDuration] = useState(1);
   const [comments, setComments] = useState([]);
@@ -183,47 +184,76 @@ export const MentorDetailPage = () => {
     [sessionDuration, bookedSlots]
   );
 
-  const availableSlots = generateAvailableSlots(selectedDate);
-
   const handleSlotSelect = (slot) => {
+    const dateKey = format(selectedDate, "yyyy-MM-dd");
     setSelectedSlots((prev) => {
-      const exists = prev.some(
+      const slotsForDate = prev[dateKey] || [];
+      const exists = slotsForDate.some(
         (s) => s.start.getTime() === slot.start.getTime()
       );
       if (exists) {
-        return prev.filter((s) => s.start.getTime() !== slot.start.getTime());
+        return {
+          ...prev,
+          [dateKey]: slotsForDate.filter(
+            (s) => s.start.getTime() !== slot.start.getTime()
+          ),
+        };
       }
-      return [...prev, slot];
+      return {
+        ...prev,
+        [dateKey]: [...slotsForDate, slot],
+      };
     });
   };
 
   const handleAddDate = () => {
-    const newDate = new Date(selectedDate.getTime() + 24 * 60 * 60 * 1000);
+    const newDate = addDays(selectedDate, 1);
     const minDate = addDays(new Date(), 5);
-    setSelectedDate(newDate >= minDate ? newDate : minDate);
-    setSelectedSlots([]); // Clear slots when adding a new date
+    if (newDate >= minDate && !selectedDays.some((d) => format(d, "yyyy-MM-dd") === format(newDate, "yyyy-MM-dd"))) {
+      setSelectedDays((prev) => [...prev, newDate]);
+      setSelectedDate(newDate);
+    } else {
+      toast.error("Ngày này đã được chọn hoặc không hợp lệ!");
+    }
+  };
+
+  const handleRemoveDate = (dateToRemove) => {
+    const dateKey = format(dateToRemove, "yyyy-MM-dd");
+    setSelectedDays((prev) => prev.filter((d) => format(d, "yyyy-MM-dd") !== dateKey));
+    setSelectedSlots((prev) => {
+      const { [dateKey]: _, ...rest } = prev;
+      return rest;
+    });
+    if (format(selectedDate, "yyyy-MM-dd") === dateKey) {
+      setSelectedDate(selectedDays[0] || addDays(new Date(), 5));
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     const minAllowedDate = addDays(new Date(), 5);
-    if (selectedDate < startOfDay(minAllowedDate)) {
-      toast.error("Ngày đặt lịch phải từ 5 ngày sau trở đi!");
-      return;
-    }
-    if (selectedSlots.length === 0) {
+    const allSlots = Object.entries(selectedSlots).flatMap(([date, slots]) =>
+      slots.map((slot) => ({ ...slot, date: new Date(date) }))
+    );
+
+    if (allSlots.length === 0) {
       toast.error("Vui lòng chọn ít nhất một khung giờ");
       return;
     }
 
+    if (allSlots.some((slot) => slot.date < startOfDay(minAllowedDate))) {
+      toast.error("Ngày đặt lịch phải từ 5 ngày sau trở đi!");
+      return;
+    }
+
     // Format session_times for backend
-    const sessionTimes = selectedSlots.map((slot) => ({
+    const sessionTimes = allSlots.map((slot) => ({
       start_time: slot.start.toISOString(),
       end_time: slot.end.toISOString(),
     }));
 
     // Confirmation prompt
-    const sessionTimesText = selectedSlots
+    const sessionTimesText = allSlots
       .map(
         (slot) =>
           `từ ${format(slot.start, "HH:mm")} đến ${format(
@@ -233,7 +263,7 @@ export const MentorDetailPage = () => {
       )
       .join(", ");
     const confirm = window.confirm(
-      `Bạn có chắc muốn đặt ${selectedSlots.length} buổi mentoring với ${mentor.full_name
+      `Bạn có chắc muốn đặt ${allSlots.length} buổi mentoring với ${mentor.full_name
       } vào các khung giờ: ${sessionTimesText}?`
     );
     if (!confirm) return;
@@ -286,7 +316,8 @@ export const MentorDetailPage = () => {
   }
 
   // Calculate total duration and price
-  const totalDuration = selectedSlots.length * sessionDuration;
+  const totalSlots = Object.values(selectedSlots).flat().length;
+  const totalDuration = totalSlots * sessionDuration;
   const calculatedPrice = (mentor.price * totalDuration).toLocaleString("vi-VN", {
     style: "currency",
     currency: "VND",
@@ -296,6 +327,9 @@ export const MentorDetailPage = () => {
   const sortedComments = [...comments].sort(
     (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
   );
+
+  // Generate available slots for the current selected date
+  const availableSlots = generateAvailableSlots(selectedDate);
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-pink-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
@@ -309,9 +343,8 @@ export const MentorDetailPage = () => {
         </Link>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
-          {/* Main Content */}
+          {/* Main Content (unchanged) */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Profile Header */}
             <Card className="shadow-xl hover:shadow-2xl transition-all duration-300 border-0 overflow-hidden bg-white">
               <div className="absolute top-0 left-0 w-full h-2 bg-[#F9C5D5]"></div>
               <CardContent className="p-6 sm:p-8">
@@ -429,7 +462,6 @@ export const MentorDetailPage = () => {
               </CardContent>
             </Card>
 
-            {/* About */}
             <Card className="shadow-lg hover:shadow-xl transition-shadow border-0 bg-white">
               <CardHeader className="border-b border-[#F9C5D5]/20">
                 <CardTitle className="text-xl flex items-center gap-2 text-[#2C3E50]">
@@ -444,7 +476,6 @@ export const MentorDetailPage = () => {
               </CardContent>
             </Card>
 
-            {/* Skills */}
             {mentor.skill && (
               <Card className="shadow-lg hover:shadow-xl transition-shadow border-0 bg-white">
                 <CardHeader className="border-b border-[#F9C5D5]/20">
@@ -468,7 +499,6 @@ export const MentorDetailPage = () => {
               </Card>
             )}
 
-            {/* Comments */}
             <Card className="shadow-lg hover:shadow-xl transition-shadow border-0 bg-white">
               <CardHeader className="border-b border-[#F9C5D5]/20">
                 <CardTitle className="text-xl flex items-center gap-2 text-[#2C3E50]">
@@ -567,7 +597,7 @@ export const MentorDetailPage = () => {
                     <div className="flex items-center gap-1">
                       <DollarSign className="h-4 w-4 text-[#F9C5D5]" />
                       <span className="text-2xl font-bold text-[#2C3E50]">
-                        {selectedSlots.length > 0
+                        {totalSlots > 0
                           ? calculatedPrice
                           : `${mentor.price?.toLocaleString("vi-VN", {
                             style: "currency",
@@ -577,7 +607,7 @@ export const MentorDetailPage = () => {
                     </div>
                   </div>
                   <p className="text-xs text-gray-600">
-                    {sessionDuration} giờ × {selectedSlots.length} buổi
+                    {sessionDuration} giờ × {totalSlots} buổi
                   </p>
                 </div>
 
@@ -590,7 +620,7 @@ export const MentorDetailPage = () => {
                     value={sessionDuration}
                     onChange={(e) => {
                       setSessionDuration(parseFloat(e.target.value));
-                      setSelectedSlots([]); // Clear slots when duration changes
+                      setSelectedSlots({}); // Clear slots when duration changes
                     }}
                     className="w-full p-3 border-2 border-[#F9C5D5]/30 rounded-lg bg-white text-[#333333] focus:border-[#F9C5D5] focus:ring-2 focus:ring-[#F9C5D5]/20 transition-all"
                   >
@@ -610,11 +640,36 @@ export const MentorDetailPage = () => {
                   <p className="text-xs text-gray-500 mb-2">
                     Lịch chỉ có thể đặt từ ngày {format(addDays(new Date(), 5), "dd/MM/yyyy")} trở đi.
                   </p>
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {selectedDays.map((day, idx) => (
+                      <Button
+                        key={idx}
+                        variant={format(day, "yyyy-MM-dd") === format(selectedDate, "yyyy-MM-dd") ? "default" : "outline"}
+                        className={`text-sm ${format(day, "yyyy-MM-dd") === format(selectedDate, "yyyy-MM-dd")
+                          ? "bg-[#2C3E50] text-white"
+                          : "border-[#F9C5D5] text-[#2C3E50] hover:bg-[#F9C5D5]/10"
+                          }`}
+                        onClick={() => setSelectedDate(day)}
+                      >
+                        {format(day, "dd/MM/yyyy", { locale: vi })}
+                        <X
+                          className="h-4 w-4 ml-2"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRemoveDate(day);
+                          }}
+                        />
+                      </Button>
+                    ))}
+                  </div>
                   <DatePicker
                     selected={selectedDate}
                     onChange={(date) => {
+                      const dateKey = format(date, "yyyy-MM-dd");
+                      if (!selectedDays.some((d) => format(d, "yyyy-MM-dd") === dateKey)) {
+                        setSelectedDays((prev) => [...prev, date]);
+                      }
                       setSelectedDate(date);
-                      setSelectedSlots([]); // Clear slots when date changes
                     }}
                     minDate={addDays(new Date(), 5)}
                     dateFormat="dd/MM/yyyy"
@@ -635,7 +690,7 @@ export const MentorDetailPage = () => {
                   <label className="flex items-center justify-between text-sm font-semibold text-[#2C3E50] mb-3">
                     <span className="flex items-center gap-2">
                       <Clock className="h-4 w-4 text-[#F9C5D5]" />
-                      Khung giờ khả dụng
+                      Khung giờ khả dụng ({format(selectedDate, "dd/MM/yyyy")})
                     </span>
                     <Badge variant="secondary" className="text-xs bg-[#F9C5D5]/20 text-[#2C3E50]">
                       {availableSlots.length} slot
@@ -644,7 +699,8 @@ export const MentorDetailPage = () => {
                   <div className="grid grid-cols-2 gap-2 max-h-64 overflow-y-auto p-2 bg-pink-50/50 rounded-lg">
                     {availableSlots.length > 0 ? (
                       availableSlots.map((slot, idx) => {
-                        const isSelected = selectedSlots.some(
+                        const dateKey = format(selectedDate, "yyyy-MM-dd");
+                        const isSelected = (selectedSlots[dateKey] || []).some(
                           (s) => s.start.getTime() === slot.start.getTime()
                         );
                         return (
@@ -669,49 +725,57 @@ export const MentorDetailPage = () => {
                   </div>
                 </div>
 
-                {selectedSlots.length > 0 && (
+                {totalSlots > 0 && (
                   <div className="bg-[#F9C5D5]/10 p-4 rounded-lg border-2 border-[#F9C5D5]/30">
                     <label className="text-sm font-semibold text-[#2C3E50] mb-3 flex items-center justify-between">
-                      <span>Đã chọn ({selectedSlots.length})</span>
+                      <span>Đã chọn ({totalSlots})</span>
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => setSelectedSlots([])}
+                        onClick={() => setSelectedSlots({})}
                         className="text-xs text-red-500 hover:text-red-700 hover:bg-red-50"
                       >
                         Xóa tất cả
                       </Button>
                     </label>
                     <div className="space-y-2 max-h-40 overflow-y-auto">
-                      {selectedSlots
-                        .sort((a, b) => a.start - b.start)
-                        .map((slot, idx) => (
-                          <div
-                            key={idx}
-                            className="flex items-center justify-between bg-white p-2 rounded-lg text-sm border border-[#F9C5D5]/30"
-                          >
-                            <span className="text-[#333333]">
-                              {format(slot.start, "HH:mm")} - {format(slot.end, "HH:mm")}
-                              <span className="text-xs text-gray-500 ml-2">
-                                {format(slot.start, "dd/MM", { locale: vi })}
-                              </span>
-                            </span>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-6 w-6 p-0 hover:bg-red-100"
-                              onClick={() =>
-                                setSelectedSlots((prev) =>
-                                  prev.filter(
-                                    (s) => s.start.getTime() !== slot.start.getTime()
-                                  )
-                                )
-                              }
-                            >
-                              <X className="h-3 w-3 text-red-500" />
-                            </Button>
-                          </div>
-                        ))}
+                      {Object.entries(selectedSlots)
+                        .sort(([dateA], [dateB]) => new Date(dateA) - new Date(dateB))
+                        .map(([date, slots]) =>
+                          slots
+                            .sort((a, b) => a.start - b.start)
+                            .map((slot, idx) => (
+                              <div
+                                key={`${date}-${idx}`}
+                                className="flex items-center justify-between bg-white p-2 rounded-lg text-sm border border-[#F9C5D5]/30"
+                              >
+                                <span className="text-[#333333]">
+                                  {format(slot.start, "HH:mm")} - {format(slot.end, "HH:mm")}
+                                  <span className="text-xs text-gray-500 ml-2">
+                                    {format(new Date(date), "dd/MM", { locale: vi })}
+                                  </span>
+                                </span>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-6 w-6 p-0 hover:bg-red-100"
+                                  onClick={() =>
+                                    setSelectedSlots((prev) => {
+                                      const slotsForDate = prev[date].filter(
+                                        (s) => s.start.getTime() !== slot.start.getTime()
+                                      );
+                                      return {
+                                        ...prev,
+                                        [date]: slotsForDate.length > 0 ? slotsForDate : undefined,
+                                      };
+                                    })
+                                  }
+                                >
+                                  <X className="h-3 w-3 text-red-500" />
+                                </Button>
+                              </div>
+                            ))
+                        )}
                     </div>
                   </div>
                 )}
@@ -730,12 +794,12 @@ export const MentorDetailPage = () => {
 
                 <Button
                   onClick={handleSubmit}
-                  disabled={loading || selectedSlots.length === 0}
+                  disabled={loading || totalSlots === 0}
                   className="w-full bg-[#2C3E50] hover:bg-[#1a252f] text-white py-6 text-base font-semibold shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {loading ? (
                     "Đang xử lý..."
-                  ) : selectedSlots.length === 0 ? (
+                  ) : totalSlots === 0 ? (
                     "Chọn khung giờ để tiếp tục"
                   ) : (
                     <>
