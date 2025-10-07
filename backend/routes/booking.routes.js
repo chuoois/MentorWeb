@@ -18,4 +18,14 @@ router.get("/mentee/progress", authMiddleware, c.getLearningProgress);
 // GET /api/bookings/:mentorId
 router.get("/:mentorId", authMiddleware, c.getBookedSlots);
 
+// POST /api/bookings  -> MENTEE tạo booking (controller sẽ tạo link PayOS ngay sau khi lưu)
+router.post("/", authMiddleware, checkRole("MENTEE"), c.createBooking);
+
+// POST /api/bookings/:id/recreate-payment -> MENTEE tạo lại link thanh toán
+router.post("/:id/recreate-payment", authMiddleware, checkRole("MENTEE"), c.recreatePaymentLink);
+
+// PATCH /api/bookings/:id/cancel -> MENTEE hủy booking (service sẽ hủy link PayOS nếu chưa thanh toán)
+router.patch("/:id/cancel", authMiddleware, checkRole("MENTEE"), c.cancelBooking);
+
+
 module.exports = router;
