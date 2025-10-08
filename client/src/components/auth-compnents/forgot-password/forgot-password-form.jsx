@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { toast } from "react-hot-toast"
 import { Link } from "react-router-dom"
+import AuthService from "@/services/mentee.service"
 
 export const ForgotPasswordForm = () => {
   const [email, setEmail] = useState("")
@@ -18,7 +19,7 @@ export const ForgotPasswordForm = () => {
 
     setIsLoading(true)
     try {
-      const res = await AuthService.forgotPassword(email.trim())
+      const res = await AuthService.forgotPassword({ email });
       toast.success(res.message || "Liên kết đặt lại mật khẩu đã được gửi tới email của bạn!")
     } catch (err) {
       console.error("Forgot password error:", err)
