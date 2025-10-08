@@ -400,7 +400,7 @@ exports.getLearningProgress = async (req, res) => {
       error: error.message,
     });
   }
-<<<<<<< HEAD
+
 };// ---------------------- GET ALL APPLICATIONS OF A MENTOR ----------------------
 exports.getMentorApplications = async (req, res) => {
   try {
@@ -513,8 +513,6 @@ exports.getApplicationDetail = async (req, res) => {
     res.status(500).json({ success: false, message: "Lỗi server khi lấy chi tiết đơn" });
   }
 };
-=======
-};
 
 // ---------------------- CANCEL BOOKING (Hủy & hủy link PayOS nếu chưa thanh toán) ----------------------
 exports.cancelBooking = async (req, res) => {
@@ -574,6 +572,3 @@ exports.recreatePaymentLink = async (req, res) => {
     });
   }
 };
-
-
->>>>>>> 7f128f3e1bccfd6d99fffe05d7f5b2f54fd152a1

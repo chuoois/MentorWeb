@@ -20,8 +20,6 @@ router.get("/mentor/applications/:applicationId", authMiddleware, c.getApplicati
 // GET /api/bookings/:mentorId
 router.get("/:mentorId", authMiddleware, c.getBookedSlots);
 
-<<<<<<< HEAD
-=======
 // POST /api/bookings  -> MENTEE tạo booking (controller sẽ tạo link PayOS ngay sau khi lưu)
 router.post("/", authMiddleware, checkRole("MENTEE"), c.createBooking);
 
@@ -30,7 +28,5 @@ router.post("/:id/recreate-payment", authMiddleware, checkRole("MENTEE"), c.recr
 
 // PATCH /api/bookings/:id/cancel -> MENTEE hủy booking (service sẽ hủy link PayOS nếu chưa thanh toán)
 router.patch("/:id/cancel", authMiddleware, checkRole("MENTEE"), c.cancelBooking);
->>>>>>> 7f128f3e1bccfd6d99fffe05d7f5b2f54fd152a1
-
 
 module.exports = router;
