@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import { toast } from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { User, Calendar, CheckCircle, Clock, BookOpen } from "lucide-react";
@@ -20,7 +19,6 @@ export const LearningProgress = () => {
         console.log("Learning progress data:", response.data);
       } catch (error) {
         console.error("Error fetching learning progress:", error);
-        toast.error("Không tải được tiến độ học tập");
       } finally {
         setLoading(false);
       }

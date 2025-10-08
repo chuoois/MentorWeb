@@ -33,6 +33,11 @@ const bookingSchema = new mongoose.Schema({
   },
   note: { type: String },
   cancel_reason: { type: String },
+  paymentProvider: { type: String, enum: ['PAYOS'], default: 'PAYOS' },
+  order_code: { type: Number, index: true, unique: true, sparse: true }, // PayOS dùng số nguyên "orderCode"
+  payment_link_id: { type: String },      // paymentLinkId PayOS
+  payment_link_url: { type: String },     // checkoutUrl
+  currency: { type: String, default: 'VND' },
 }, { timestamps: true });
 
 module.exports = mongoose.model("Booking", bookingSchema);

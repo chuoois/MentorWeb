@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import { toast } from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { Calendar, CheckCircle, XCircle, Clock } from "lucide-react";
@@ -17,7 +16,6 @@ export const MenteeApplication = () => {
         setBookings(response.data || []);
       } catch (error) {
         console.error(error);
-        toast.error("Không tải được trạng thái đăng ký");
       } finally {
         setLoading(false);
       }
