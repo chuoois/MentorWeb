@@ -9,6 +9,36 @@ const payos = new PayOS({
   checksumKey: process.env.PAYOS_CHECKSUM_KEY,
 });
 
+const API_HOST = process.env.PAYOS_API_HOST || 'https://api-merchant.payos.vn';
+
+exports.getPaymentInfo = async (id) => {
+  if (!id) throw new Error('orderCode/paymentLinkId is required');
+
+  const url = `${API_HOST}/v2/payment-requests/${id}`;
+  try {
+    const resp = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'x-client-id': process.env.PAYOS_CLIENT_ID,
+        'x-api-key': process.env.PAYOS_API_KEY,
+        'content-type': 'application/json',
+      },
+    });
+
+    const body = await resp.json().catch(() => ({}));
+    if (!resp.ok) {
+      const err = new Error(body?.message || body?.error || `PayOS GET failed (${resp.status})`);
+      err._debug = body;
+      throw err;
+    }
+    return body;
+  } catch (err) {
+    // log nguyên nhân gốc để dễ debug mạng/TLS/DNS
+    console.error('[PayOS:getPaymentInfo] fetch error:', err.message, err.cause || '');
+    throw new Error('fetch failed');
+  }
+};
+
 exports.handleWebhook = async (rawBody) => {
   try {
     // 1) Verify bằng SDK

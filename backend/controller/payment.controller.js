@@ -14,10 +14,10 @@ exports.createLinkForBooking = async (req, res, next) => {
 exports.getPaymentInfo = async (req, res, next) => {
   try {
     const { orderCode } = req.params;
-    const info = await payosSvc.getPaymentInfo(Number(orderCode));
-    res.json({ ok: true, data: info });
+    const data = await payosSvc.getPaymentInfo(orderCode);
+    res.json({ ok: true, data });
   } catch (err) {
-    next({ status: 400, message: err.message || 'Get payment info failed' });
+    next({ status: 400, message: err.message });
   }
 };
 
