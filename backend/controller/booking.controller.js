@@ -373,4 +373,115 @@ exports.getLearningProgress = async (req, res) => {
       error: error.message,
     });
   }
+};// ---------------------- GET ALL APPLICATIONS OF A MENTOR ----------------------
+exports.getMentorApplications = async (req, res) => {
+  try {
+    // Nếu mentor đã đăng nhập, lấy id từ token
+    const mentorId = req.user?.id || req.params.mentorId;
+
+    // Kiểm tra mentor có tồn tại không
+    const mentor = await Mentor.findById(mentorId);
+    if (!mentor) {
+      return res.status(404).json({ success: false, message: "Mentor không tồn tại" });
+    }
+
+    // Lấy toàn bộ booking gửi đến mentor này (mọi trạng thái)
+    const bookings = await Booking.find({ mentor: mentorId })
+      .populate("mentee", "full_name email avatar_url gpa university major")
+      .sort({ createdAt: -1 })
+      .lean();
+
+    if (bookings.length === 0) {
+      return res.status(200).json({ success: true, data: [] });
+    }
+
+    // Chuẩn hóa dữ liệu trả về (cho FE hiển thị list)
+    const formatted = bookings.map((b) => ({
+      id: b._id,
+      program: b.note || "Không có ghi chú",
+      status: b.status,
+      priority: b.priority || "MEDIUM",
+      submittedDate: b.createdAt,
+      mentee: {
+        id: b.mentee?._id,
+        fullName: b.mentee?.full_name || "N/A",
+        email: b.mentee?.email || "N/A",
+        avatar: b.mentee?.avatar_url || null,
+        gpa: b.mentee?.gpa || null,
+        university: b.mentee?.university || null,
+        major: b.mentee?.major || null,
+      },
+    }));
+
+    return res.status(200).json({
+      success: true,
+      total: formatted.length,
+      data: formatted,
+    });
+  } catch (error) {
+    console.error("Error fetching mentor applications:", error);
+    res.status(500).json({ success: false, message: "Lỗi server khi lấy danh sách đơn" });
+  }
+};
+
+// ---------------------- GET APPLICATION DETAIL BY ID ----------------------
+exports.getApplicationDetail = async (req, res) => {
+  try {
+    const { applicationId } = req.params;
+
+    const booking = await Booking.findById(applicationId)
+      .populate("mentor", "full_name email job_title company avatar_url price")
+      .populate("mentee", "full_name email avatar_url gpa university major experience motivation")
+      .lean();
+
+    if (!booking) {
+      return res.status(404).json({ success: false, message: "Không tìm thấy đơn đăng ký" });
+    }
+
+    // Format chi tiết cho đẹp
+    const formatted = {
+      id: booking._id,
+      program: booking.note || "Không có mô tả",
+      status: booking.status,
+      paymentStatus: booking.paymentStatus,
+      price: booking.price,
+      duration: booking.duration,
+      sessions: booking.sessions,
+      sessionTimes: booking.session_times?.map((s) => ({
+        startTime: s.start_time,
+        endTime: s.end_time,
+        status: s.status,
+        meetingLink: s.meeting_link || null,
+        mentorConfirmed: s.mentor_confirmed,
+        note: s.note || "",
+      })),
+      mentee: {
+        id: booking.mentee?._id,
+        fullName: booking.mentee?.full_name,
+        email: booking.mentee?.email,
+        avatar: booking.mentee?.avatar_url,
+        gpa: booking.mentee?.gpa,
+        university: booking.mentee?.university,
+        major: booking.mentee?.major,
+        experience: booking.mentee?.experience,
+        motivation: booking.mentee?.motivation,
+      },
+      mentor: {
+        id: booking.mentor?._id,
+        fullName: booking.mentor?.full_name,
+        email: booking.mentor?.email,
+        avatar: booking.mentor?.avatar_url,
+        jobTitle: booking.mentor?.job_title,
+        company: booking.mentor?.company,
+        price: booking.mentor?.price,
+      },
+      createdAt: booking.createdAt,
+      updatedAt: booking.updatedAt,
+    };
+
+    return res.status(200).json({ success: true, data: formatted });
+  } catch (error) {
+    console.error("Error fetching application detail:", error);
+    res.status(500).json({ success: false, message: "Lỗi server khi lấy chi tiết đơn" });
+  }
 };

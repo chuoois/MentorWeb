@@ -3,7 +3,7 @@ const mentorRoutes = require("./mentor.routes");
 const bookingRoutes = require("./booking.routes");
 const commentRoutes = require("./comment.routes");
 const express = require("express");
-const router = express();
+const router = express.Router();
 
 router.use("/mentees", menteeRoutes);
 router.use("/mentors", mentorRoutes);
