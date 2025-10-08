@@ -26,6 +26,31 @@ const BookingService = {
     const response = await api.get(`/api/bookings/mentee/progress`, { params });
     return response.data;
   },
+
+  recreatePaymentLink: async (bookingId) => {
+    const response = await api.put(`/api/bookings/${bookingId}/recreate-payment`);
+    return response.data;
+  },
+
+  getMentorApplications: async () => {
+    const response = await api.get(`/api/bookings/applications`);
+    return response.data;
+  },
+
+  getApplicationDetails: async (bookingId) => {
+    const response = await api.get(`/api/bookings/applications/${bookingId}`);
+    return response.data;
+  },
+
+  updateApplicationStatus: async (bookingId, data) => {
+    const response = await api.patch(`/api/bookings/applications/${bookingId}/status`, data);
+    return response.data;
+  },
+
+  cancelBooking: async (bookingId, sessionIndex) => {
+    const response = await api.patch(`/api/bookings/${bookingId}/session/${sessionIndex}`);
+    return response.data;
+  },
 };
 
 export default BookingService;

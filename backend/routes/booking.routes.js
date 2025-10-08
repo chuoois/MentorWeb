@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const c = require("../controller/booking.controller");
+const cx  = require("../controller/mentorApplications.controller");
 const { authMiddleware, checkRole } = require("../middleware/auth.middleware");
 
 // POST /api/bookings
@@ -14,11 +15,9 @@ router.get("/mentee/status", authMiddleware, c.getBookingStatusByMenteeId);
 
 // GET /api/bookings/progress
 router.get("/mentee/progress", authMiddleware, c.getLearningProgress);
-// Mentor routes 
-router.get("/mentor/applications", authMiddleware, c.getMentorApplications);
-router.get("/mentor/applications/:applicationId", authMiddleware, c.getApplicationDetail);
+
 // GET /api/bookings/:mentorId
-router.get("/:mentorId", authMiddleware, c.getBookedSlots);
+router.get("/:mentorId", c.getBookedSlots);
 
 // POST /api/bookings  -> MENTEE tạo booking (controller sẽ tạo link PayOS ngay sau khi lưu)
 router.post("/", authMiddleware, checkRole("MENTEE"), c.createBooking);
@@ -28,5 +27,13 @@ router.post("/:id/recreate-payment", authMiddleware, checkRole("MENTEE"), c.recr
 
 // PATCH /api/bookings/:id/cancel -> MENTEE hủy booking (service sẽ hủy link PayOS nếu chưa thanh toán)
 router.patch("/:id/cancel", authMiddleware, checkRole("MENTEE"), c.cancelBooking);
+
+router.get("/applications", cx.getMentorApplications);
+
+router.get("/applications/:applicationId", cx.getApplicationDetail);
+
+router.put("/applications/:applicationId/status", cx.updateApplicationStatus);
+
+router.put("/applications/:bookingId/session/:sessionIndex", cx.updateSessionByMentor);
 
 module.exports = router;
