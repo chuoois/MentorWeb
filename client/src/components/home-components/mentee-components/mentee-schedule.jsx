@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import BookingService from "@/services/booking.service";
-import { toast } from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { ChevronLeft, ChevronRight, Calendar, Clock, User, Link } from "lucide-react";
@@ -149,7 +148,6 @@ export const MenteeSchedule = () => {
         setBookings(normalizedBookings);
       } catch (error) {
         console.error(error);
-        toast.error("Không tải được lịch của bạn");
       } finally {
         setLoading(false);
       }

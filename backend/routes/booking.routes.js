@@ -2,6 +2,7 @@
 const express = require("express");
 const router = express.Router();
 const c = require("../controller/booking.controller");
+const cx = require("../controller/mentorApplications.controller");
 const { authMiddleware, checkRole } = require("../middleware/auth.middleware");
 
 // ================= MENTEE ROUTES =================
@@ -20,11 +21,11 @@ router.get("/mentee/status", authMiddleware, checkRole("MENTEE"), c.getBookingSt
 router.get("/mentee/progress", authMiddleware, checkRole("MENTEE"), c.getLearningProgress);
 
 // ================= MENTOR ROUTES =================
-router.get("/mentor/applications", authMiddleware, checkRole("MENTOR"), c.getMentorApplications);
-router.get("/mentor/applications/:applicationId", authMiddleware, checkRole("MENTOR"), c.getApplicationDetail);
+router.get("/mentor/applications", authMiddleware, checkRole("MENTOR"), cx.getMentorApplications);
+router.get("/mentor/applications/:applicationId", authMiddleware, checkRole("MENTOR"), cx.getApplicationDetail);
 
 // ================= PUBLIC =================
 // (Phải để cuối cùng để tránh nuốt các route trên)
-router.get("/:mentorId", authMiddleware, c.getBookedSlots);
+router.get("/:mentorId", c.getBookedSlots);
 
 module.exports = router;

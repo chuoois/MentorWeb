@@ -35,13 +35,13 @@ import { toast } from "react-hot-toast";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { format, addHours, startOfDay, addDays } from "date-fns";
-import { vi } from "date-fns/locale"; // Vietnamese locale
+import { vi } from "date-fns/locale";
 import MentorService from "@/services/mentor.service";
 import BookingService from "@/services/booking.service";
 import CommentService from "@/services/comment.service";
 import { Skeleton } from "@/components/ui/skeleton";
 
-// Skeleton loading component (unchanged)
+// MentorSkeleton component (unchanged)
 const MentorSkeleton = () => (
   <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-pulse">
     <div className="lg:col-span-2 space-y-6">
@@ -118,9 +118,9 @@ export const MentorDetailPage = () => {
 
   const [mentor, setMentor] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [selectedDate, setSelectedDate] = useState(addDays(new Date(), 5)); // Default to +5 days
-  const [selectedDays, setSelectedDays] = useState([addDays(new Date(), 5)]); // Track multiple selected days
-  const [selectedSlots, setSelectedSlots] = useState({}); // Map of date -> slots
+  const [selectedDate, setSelectedDate] = useState(addDays(new Date(), 5));
+  const [selectedDays, setSelectedDays] = useState([addDays(new Date(), 5)]);
+  const [selectedSlots, setSelectedSlots] = useState({});
   const [bookedSlots, setBookedSlots] = useState([]);
   const [note, setNote] = useState("");
   const [sessionDuration, setSessionDuration] = useState(1);
@@ -277,14 +277,18 @@ export const MentorDetailPage = () => {
       };
       // Create booking
       const bookingResponse = await BookingService.createBooking(bookingData);
+      console.log("Booking response:", bookingResponse);
       toast.success("Đặt lịch thành công! Đang chuyển hướng đến trang thanh toán...");
 
-      // Generate payment link
-      const paymentResponse = await BookingService.recreatePaymentLink(bookingResponse.booking._id);
-      const paymentLink = paymentResponse.paymentLink; // Assuming the API returns a paymentLink field
-
-      // Redirect to payment link
-      window.location.href = paymentLink; // Redirect user to the payment page
+      // Check if payment link exists and redirect
+      const paymentLink = bookingResponse.payment?.checkoutUrl;
+      if (paymentLink) {
+        window.location.href = paymentLink; // Redirect to the payment page
+      } else {
+        toast.error("Không thể tạo link thanh toán. Vui lòng thử lại sau.");
+        // Optionally, navigate to a booking confirmation page or allow retry
+        navigate(`/booking-confirmation/${bookingResponse.booking._id}`);
+      }
     } catch (error) {
       console.error(error);
       const errorMessage =
@@ -338,6 +342,7 @@ export const MentorDetailPage = () => {
   // Generate available slots for the current selected date
   const availableSlots = generateAvailableSlots(selectedDate);
 
+  // Rest of the component remains unchanged
   return (
     <main className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-pink-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -627,7 +632,7 @@ export const MentorDetailPage = () => {
                     value={sessionDuration}
                     onChange={(e) => {
                       setSessionDuration(parseFloat(e.target.value));
-                      setSelectedSlots({}); // Clear slots when duration changes
+                      setSelectedSlots({});
                     }}
                     className="w-full p-3 border-2 border-[#F9C5D5]/30 rounded-lg bg-white text-[#333333] focus:border-[#F9C5D5] focus:ring-2 focus:ring-[#F9C5D5]/20 transition-all"
                   >

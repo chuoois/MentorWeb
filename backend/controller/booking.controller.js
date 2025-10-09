@@ -85,6 +85,7 @@ exports.createBooking = async (req, res) => {
     let paymentLink = null;
     try {
       paymentLink = await payosSvc.createPaymentForBooking(newBooking._id);
+      console.log("[PayOS] Payment link created:", newBooking._id);
 
       // Ghi vào booking (bổ sung cho PayOS)
       if (paymentLink) {
