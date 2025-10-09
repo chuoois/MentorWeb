@@ -33,7 +33,8 @@ import {
   MenteeSchedulePage,
   MenteeProfilePage,
   MenteeApplicationPage,
-  LearningProgressPage
+  LearningProgressPage,
+  AdminLogin 
 } from "@/pages"
 
 // Layout trống (không có header/footer)
@@ -48,6 +49,8 @@ export const router = createBrowserRouter([
       { path: "login", element: <LoginPage /> },
       { path: "signup", element: <MenteeRegisterPage /> },
       { path: "password_reset", element: <ForgotPasswordPage /> },
+      { path: "adminlogin", element: <AdminLogin /> },
+
     ],
   },
 
