@@ -275,13 +275,20 @@ export const MentorDetailPage = () => {
         session_times: sessionTimes,
         note,
       };
-      const response = await BookingService.createBooking(bookingData);
-      toast.success("Đặt lịch thành công!");
-      navigate("/mentee/schedule");
+      // Create booking
+      const bookingResponse = await BookingService.createBooking(bookingData);
+      toast.success("Đặt lịch thành công! Đang chuyển hướng đến trang thanh toán...");
+
+      // Generate payment link
+      const paymentResponse = await BookingService.recreatePaymentLink(bookingResponse.booking._id);
+      const paymentLink = paymentResponse.paymentLink; // Assuming the API returns a paymentLink field
+
+      // Redirect to payment link
+      window.location.href = paymentLink; // Redirect user to the payment page
     } catch (error) {
       console.error(error);
       const errorMessage =
-        error.response?.data?.message || "Lỗi khi đặt lịch";
+        error.response?.data?.message || "Lỗi khi đặt lịch hoặc tạo link thanh toán";
       toast.error(errorMessage);
     } finally {
       setLoading(false);
