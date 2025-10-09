@@ -1,32 +1,30 @@
+// backend/routes/booking.routes.js
 const express = require("express");
 const router = express.Router();
 const c = require("../controller/booking.controller");
 const { authMiddleware, checkRole } = require("../middleware/auth.middleware");
 
-// POST /api/bookings
-router.post("/", authMiddleware, c.createBooking);
-
-// GET /api/bookings/mentee
-router.get("/mentee", authMiddleware, c.getMenteeBookedSlots);
-
-// GET /api/bookings/status
-router.get("/mentee/status", authMiddleware, c.getBookingStatusByMenteeId);
-
-// GET /api/bookings/progress
-router.get("/mentee/progress", authMiddleware, c.getLearningProgress);
-// Mentor routes 
-router.get("/mentor/applications", authMiddleware, c.getMentorApplications);
-router.get("/mentor/applications/:applicationId", authMiddleware, c.getApplicationDetail);
-// GET /api/bookings/:mentorId
-router.get("/:mentorId", authMiddleware, c.getBookedSlots);
-
-// POST /api/bookings  -> MENTEE tạo booking (controller sẽ tạo link PayOS ngay sau khi lưu)
+// ================= MENTEE ROUTES =================
+// 1. Tạo booking (tự tạo link PayOS)
 router.post("/", authMiddleware, checkRole("MENTEE"), c.createBooking);
 
-// POST /api/bookings/:id/recreate-payment -> MENTEE tạo lại link thanh toán
+// 2. Tạo lại link thanh toán PayOS
 router.post("/:id/recreate-payment", authMiddleware, checkRole("MENTEE"), c.recreatePaymentLink);
 
-// PATCH /api/bookings/:id/cancel -> MENTEE hủy booking (service sẽ hủy link PayOS nếu chưa thanh toán)
+// 3. Hủy booking (và hủy link PayOS nếu chưa thanh toán)
 router.patch("/:id/cancel", authMiddleware, checkRole("MENTEE"), c.cancelBooking);
+
+// 4. Xem các booking của mentee
+router.get("/mentee", authMiddleware, checkRole("MENTEE"), c.getMenteeBookedSlots);
+router.get("/mentee/status", authMiddleware, checkRole("MENTEE"), c.getBookingStatusByMenteeId);
+router.get("/mentee/progress", authMiddleware, checkRole("MENTEE"), c.getLearningProgress);
+
+// ================= MENTOR ROUTES =================
+router.get("/mentor/applications", authMiddleware, checkRole("MENTOR"), c.getMentorApplications);
+router.get("/mentor/applications/:applicationId", authMiddleware, checkRole("MENTOR"), c.getApplicationDetail);
+
+// ================= PUBLIC =================
+// (Phải để cuối cùng để tránh nuốt các route trên)
+router.get("/:mentorId", authMiddleware, c.getBookedSlots);
 
 module.exports = router;

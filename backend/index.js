@@ -10,11 +10,11 @@ const routes = require('./routes/index');
 app.use(cors());
 app.use(express.json()); // parse JSON body
 
-const paymentController = require('./controller/payment.controller');
+const paymentsController = require('./controller/payment.controller');
 app.post(
-  '/api/payments/webhook',
-  express.raw({ type: '*/*' }),
-  paymentController.webhook
+  '/api/payos/webhook',
+  express.raw({ type: 'application/json' }), // raw body cho riêng webhook
+  paymentsController.webhook
 );
 
 // Routes

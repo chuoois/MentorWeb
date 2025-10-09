@@ -8,7 +8,7 @@ const payosSvc = require("../business/payos.service"); // <-- update path nếu 
 exports.createBooking = async (req, res) => {
   try {
     const menteeId = req.user.id;
-    const { mentorId, session_times, note } = req.body; // session_times = [{ start_time, end_time }, ...]
+    const { mentorId, session_times, note } = req.body;
 
     if (!session_times || !Array.isArray(session_times) || session_times.length === 0) {
       return res.status(400).json({ message: "Phải cung cấp ít nhất 1 buổi học với thời gian bắt đầu và kết thúc" });
@@ -19,22 +19,22 @@ exports.createBooking = async (req, res) => {
       return res.status(404).json({ message: "Mentor không tồn tại hoặc không hoạt động" });
     }
 
-    // Kiểm tra trùng lịch cho từng buổi (CHỈ theo mentor này)
+    // Kiểm tra trùng lịch
     for (const session of session_times) {
       const start = new Date(session.start_time);
       const end = new Date(session.end_time);
 
       if (end <= start) {
-        return res.status(400).json({ message: "Thời gian kết thúc phải sau thời gian bắt đầu của từng buổi" });
+        return res.status(400).json({ message: "Thời gian kết thúc phải sau thời gian bắt đầu" });
       }
 
-      const conflictingBooking = await Booking.findOne({
-        mentor: mentorId, // ✅ chỉ kiểm tra lịch của đúng mentor
+      const conflict = await Booking.findOne({
+        mentor: mentorId,
         session_times: {
           $elemMatch: {
             $or: [
               { start_time: { $lte: start }, end_time: { $gt: start } },
-              { start_time: { $lt: end },   end_time: { $gte: end }  },
+              { start_time: { $lt: end }, end_time: { $gte: end } },
               { start_time: { $gte: start }, end_time: { $lte: end } },
             ],
           },
@@ -42,10 +42,9 @@ exports.createBooking = async (req, res) => {
         status: { $in: ["PENDING", "CONFIRMED"] },
       });
 
-      if (conflictingBooking) {
-        const startVN = new Date(start).toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" });
-        const endVN = new Date(end).toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" });
-
+      if (conflict) {
+        const startVN = start.toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" });
+        const endVN = end.toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" });
         return res.status(409).json({
           message: `Lịch của mentor bị trùng với buổi từ ${startVN} đến ${endVN}`,
         });
@@ -58,7 +57,7 @@ exports.createBooking = async (req, res) => {
     const sessions = session_times.length;
     const price = mentor.price * totalDuration;
 
-    // Khởi tạo session_times
+    // Chuẩn hoá session_times
     const formattedSessions = session_times.map(s => ({
       start_time: new Date(s.start_time),
       end_time: new Date(s.end_time),
@@ -68,6 +67,7 @@ exports.createBooking = async (req, res) => {
       note: "",
     }));
 
+    // Tạo booking
     const newBooking = new Booking({
       mentee: menteeId,
       mentor: mentorId,
@@ -79,33 +79,38 @@ exports.createBooking = async (req, res) => {
       paymentStatus: "PENDING",
       note,
     });
-
     await newBooking.save();
 
-    // Tạo link thanh toán PayOS cho booking
+    // Tạo link thanh toán PayOS
     let paymentLink = null;
     try {
       paymentLink = await payosSvc.createPaymentForBooking(newBooking._id);
-      // createPaymentForBooking sẽ ghi order_code, payment_link_url vào booking
-    } catch (e) {
-      console.error("Create PayOS link failed:", e?.message || e);
-      // Không chặn flow — cho phép user tạo link lại sau qua API recreatePaymentLink
+
+      // Ghi vào booking (bổ sung cho PayOS)
+      if (paymentLink) {
+        newBooking.order_code = paymentLink.orderCode;
+        newBooking.payment_link_url = paymentLink.checkoutUrl;
+        newBooking.payos_status = "PENDING";
+        await newBooking.save();
+      }
+    } catch (err) {
+      console.error("[PayOS] Create link failed:", err?.response?.data || err?.message);
+      // Không chặn flow — user có thể tạo lại link sau
     }
 
-    const populatedBooking = await Booking.findById(newBooking._id)
+    const populated = await Booking.findById(newBooking._id)
       .populate("mentee", "full_name email")
       .populate("mentor", "full_name job_title company price");
 
     return res.status(201).json({
       message: "Tạo booking thành công",
-      booking: populatedBooking,
+      booking: populated,
       payment: paymentLink
         ? { orderCode: paymentLink.orderCode, checkoutUrl: paymentLink.checkoutUrl }
         : null,
     });
-
   } catch (error) {
-    console.error(error);
+    console.error("Create booking error:", error);
     return res.status(500).json({ message: "Lỗi server" });
   }
 };
@@ -514,44 +519,44 @@ exports.getApplicationDetail = async (req, res) => {
   }
 };
 
-// ---------------------- CANCEL BOOKING (Hủy & hủy link PayOS nếu chưa thanh toán) ----------------------
+// ---------------------- CANCEL BOOKING ----------------------
 exports.cancelBooking = async (req, res) => {
   try {
     const menteeId = req.user.id;
-    const { id } = req.params; // bookingId
-    const booking = await Booking.findOne({ _id: id, mentee: menteeId });
+    const { id } = req.params;
 
+    const booking = await Booking.findOne({ _id: id, mentee: menteeId });
     if (!booking) return res.status(404).json({ message: "Booking không tồn tại" });
+
     if (booking.paymentStatus === "PAID") {
       return res.status(400).json({ message: "Booking đã thanh toán — cần quy trình hoàn tiền riêng" });
     }
 
-    // Hủy link thanh toán nếu đã tạo
     if (booking.order_code) {
       try {
         await payosSvc.cancelPaymentLink(booking.order_code, "User cancelled booking");
-      } catch (e) {
-        console.warn("Cancel PayOS link warning:", e?.message || e);
+      } catch (err) {
+        console.warn("[PayOS] Cancel link warning:", err?.message);
       }
     }
 
     booking.status = "CANCELLED";
     booking.paymentStatus = "FAILED";
+    booking.payos_status = "CANCELLED";
     await booking.save();
 
     return res.json({ message: "Đã hủy booking", bookingId: booking._id });
-  } catch (e) {
-    console.error(e);
+  } catch (err) {
+    console.error(err);
     return res.status(500).json({ message: "Lỗi server" });
   }
 };
 
-// ---------------------- RECREATE PAYMENT LINK (tạo lại link nếu mất tab/chưa thanh toán) ----------------------
-// controller/booking.controller.js
+// ---------------------- RECREATE PAYMENT LINK ----------------------
 exports.recreatePaymentLink = async (req, res) => {
   try {
     const menteeId = req.user.id;
-    const { id } = req.params; // bookingId
+    const { id } = req.params;
 
     const booking = await Booking.findOne({ _id: id, mentee: menteeId });
     if (!booking) return res.status(404).json({ message: "Booking không tồn tại" });
@@ -559,16 +564,21 @@ exports.recreatePaymentLink = async (req, res) => {
       return res.status(400).json({ message: "Booking đã thanh toán" });
     }
 
-    // ép tạo orderCode mới để tránh trùng
     const link = await payosSvc.createPaymentForBooking(booking._id, { forceNew: true });
+
+    if (link) {
+      booking.order_code = link.orderCode;
+      booking.payment_link_url = link.checkoutUrl;
+      booking.payos_status = "PENDING";
+      await booking.save();
+    }
+
     return res.json({ ok: true, ...link });
-  } catch (e) {
-    // LOG chi tiết lên console
-    console.error("recreatePaymentLink error:", e?.response?.data || e);
-    // trả lỗi rõ ràng cho Postman
+  } catch (err) {
+    console.error("Recreate PayOS link error:", err?.response?.data || err);
     return res.status(400).json({
-      message: e?.message || 'Create payment link failed',
-      payos: e?.response?.data || undefined
+      message: err?.message || "Create payment link failed",
+      payos: err?.response?.data || undefined,
     });
   }
 };

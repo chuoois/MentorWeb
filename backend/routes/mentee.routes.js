@@ -15,7 +15,7 @@ router.post("/forgot-password", c.forgotPassword);
 // POST /api/mentees/login-with-google
 router.post("/login-with-google", c.loginWithGoogle);
 
-// GET /api/mentees/:id
+// GET /api/mentees/:idt
 router.get("/", authMiddleware, c.getProfile);
 
 // PUT /api/mentees/update/:id
