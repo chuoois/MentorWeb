@@ -123,20 +123,44 @@ exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    const mentor = await Mentor.findOne({ email }).populate("role");
-    if (!mentor) return res.status(400).json({ message: "Email hoặc mật khẩu không đúng" });
+    // Kiểm tra dữ liệu đầu vào
+    if (!email || !password) {
+      return res.status(400).json({ message: "Vui lòng cung cấp email và mật khẩu" });
+    }
 
+    // Kiểm tra kết nối database và truy vấn Mentor
+    const mentor = await Mentor.findOne({ email }).populate("role");
+    if (!mentor) {
+      return res.status(400).json({ message: "Email hoặc mật khẩu không đúng" });
+    }
+
+    // Kiểm tra trạng thái tài khoản
     if (mentor.status === "BANNED") {
       return res.status(403).json({ message: "Tài khoản bị khóa" });
     }
 
+    // Kiểm tra mật khẩu
+    if (!mentor.password_hash) {
+      console.error("Lỗi: password_hash không tồn tại cho mentor", mentor);
+      return res.status(500).json({ message: "Lỗi dữ liệu người dùng" });
+    }
     const isMatch = await bcrypt.compare(password, mentor.password_hash);
-    if (!isMatch) return res.status(400).json({ message: "Email hoặc mật khẩu không đúng" });
+    if (!isMatch) {
+      return res.status(400).json({ message: "Email hoặc mật khẩu không đúng" });
+    }
 
-    const token = jwt.sign({ id: mentor._id, role: mentor.role.name }, JWT_SECRET, {
-      expiresIn: JWT_EXPIRES_IN,
+    // Kiểm tra JWT_SECRET
+    if (!process.env.JWT_SECRET) {
+      console.error("Lỗi: JWT_SECRET không được thiết lập");
+      return res.status(500).json({ message: "Lỗi cấu hình server" });
+    }
+
+    // Tạo token
+    const token = jwt.sign({ id: mentor._id, role: mentor.role.name }, process.env.JWT_SECRET, {
+      expiresIn: process.env.JWT_EXPIRES_IN || "1d",
     });
 
+    // Trả về phản hồi
     res.json({
       message: "Đăng nhập thành công",
       token,
@@ -152,11 +176,10 @@ exports.login = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Lỗi server" });
+    console.error("Lỗi trong hàm login:", error);
+    res.status(500).json({ message: "Lỗi server", error: error.message });
   }
 };
-
 // ---------------------- LIST ACTIVE MENTORS ----------------------
 exports.listActiveMentors = async (req, res) => {
   try {

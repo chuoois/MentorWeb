@@ -1,43 +1,34 @@
 const Booking = require("../models/booking.model");
 const Mentor = require("../models/mentor.model");
 
-;// ---------------------- GET ALL APPLICATIONS OF A MENTOR ----------------------
+// ---------------------- GET ALL APPLICATIONS OF A MENTOR ----------------------
 exports.getMentorApplications = async (req, res) => {
   try {
-    // Nếu mentor đã đăng nhập, lấy id từ token
-    const mentorId = req.user?.id || req.params.mentorId;
+    const mentorId = req.user.id;
 
-    // Kiểm tra mentor có tồn tại không
     const mentor = await Mentor.findById(mentorId);
     if (!mentor) {
       return res.status(404).json({ success: false, message: "Mentor không tồn tại" });
     }
 
-    // Lấy toàn bộ booking gửi đến mentor này (mọi trạng thái)
     const bookings = await Booking.find({ mentor: mentorId })
-      .populate("mentee", "full_name email avatar_url gpa university major")
+      .populate("mentee", "full_name email avatar_url gpa experience motivation")
       .sort({ createdAt: -1 })
       .lean();
 
-    if (bookings.length === 0) {
-      return res.status(200).json({ success: true, data: [] });
-    }
-
-    // Chuẩn hóa dữ liệu trả về (cho FE hiển thị list)
     const formatted = bookings.map((b) => ({
       id: b._id,
       program: b.note || "Không có ghi chú",
       status: b.status,
-      priority: b.priority || "MEDIUM",
       submittedDate: b.createdAt,
       mentee: {
-        id: b.mentee?._id,
+        id: b.mentee?._id || null,
         fullName: b.mentee?.full_name || "N/A",
         email: b.mentee?.email || "N/A",
         avatar: b.mentee?.avatar_url || null,
         gpa: b.mentee?.gpa || null,
-        university: b.mentee?.university || null,
-        major: b.mentee?.major || null,
+        experience: b.mentee?.experience || null,
+        motivation: b.mentee?.motivation || null
       },
     }));
 
@@ -47,7 +38,7 @@ exports.getMentorApplications = async (req, res) => {
       data: formatted,
     });
   } catch (error) {
-    console.error("Error fetching mentor applications:", error);
+    console.error("Lỗi khi lấy danh sách đơn:", error);
     res.status(500).json({ success: false, message: "Lỗi server khi lấy danh sách đơn" });
   }
 };
@@ -59,7 +50,7 @@ exports.getApplicationDetail = async (req, res) => {
 
     const booking = await Booking.findById(applicationId)
       .populate("mentor", "full_name email job_title company avatar_url price")
-      .populate("mentee", "full_name email avatar_url gpa university major experience motivation")
+      .populate("mentee", "full_name email avatar_url gpa experience motivation")
       .lean();
 
     if (!booking) {
@@ -89,8 +80,6 @@ exports.getApplicationDetail = async (req, res) => {
         email: booking.mentee?.email,
         avatar: booking.mentee?.avatar_url,
         gpa: booking.mentee?.gpa,
-        university: booking.mentee?.university,
-        major: booking.mentee?.major,
         experience: booking.mentee?.experience,
         motivation: booking.mentee?.motivation,
       },
@@ -113,8 +102,6 @@ exports.getApplicationDetail = async (req, res) => {
     res.status(500).json({ success: false, message: "Lỗi server khi lấy chi tiết đơn" });
   }
 };
-
-
 
 // Mentor xác nhận hoặc từ chối đơn đăng ký
 // PATCH /api/mentors/applications/:bookingId/status

@@ -47,8 +47,8 @@ const BookingService = {
     return response.data;
   },
 
-  cancelBooking: async (bookingId, sessionIndex) => {
-    const response = await api.patch(`/api/bookings/${bookingId}/session/${sessionIndex}`);
+  updateSessionByMentor: async (bookingId, sessionIndex, data) => {
+    const response = await api.patch(`/api/bookings/${bookingId}/session/${sessionIndex}`, data);
     return response.data;
   },
 };

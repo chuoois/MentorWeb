@@ -57,7 +57,7 @@ const LoginFormContent = ({ type }) => {
         password: values.password,
       };
 
-      // Sau khi gọi API login
+      // Gọi API đăng nhập
       const res =
         type === "mentee"
           ? await MenteeService.login(data)
@@ -65,13 +65,19 @@ const LoginFormContent = ({ type }) => {
 
       // Lưu token
       localStorage.setItem("token", res.token);
-      // Lưu thông tin mentee
+      // Lưu thông tin người dùng
       const currentUser = type === "mentee" ? res.mentee : res.mentor;
+      console.log(currentUser);
 
       // Toast
       toast.success(`Xin chào ${currentUser.full_name || "bạn"}!`);
 
-      navigate(type === "/" ? "/applications" : "/");
+      // Chuyển hướng dựa trên vai trò người dùng
+      if (currentUser.role === "MENTOR") {
+        navigate("/applications"); // Trang dành cho mentor
+      } else {
+        navigate("/"); // Trang dành cho mentee
+      }
     } catch (err) {
       console.error("Login error:", err);
       const msg =
