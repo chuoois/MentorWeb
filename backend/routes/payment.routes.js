@@ -1,12 +1,16 @@
-// routes/payments.routes.js
-const router = require('express').Router();
-const c = require('../controller/payment.controller');
-// Tạo link thanh toán cho booking
-router.post('/bookings/:id/link', c.createLinkForBooking);
-// Xem thông tin (optional)
-router.get('/orders/:orderCode', c.getPaymentInfo);
-// Webhook nhận kết quả thanh toán (POST từ PayOS)
-router.post('/webhook', c.webhook);
-router.get('/webhook', (req, res) => res.status(200).json({ ok: true }));
-router.get('/confirm', c.confirmByOrder);
+const express = require('express');
+const router = express.Router();
+const paymentsController = require('../controller/payment.controller');
+
+// ⚠️ Phải dùng express.raw() cho webhook PayOS
+router.post(
+  '/webhook',
+  express.raw({ type: 'application/json' }),
+  paymentsController.webhook
+);
+
+// Các route khác (nếu có)
+router.get('/:orderCode', paymentsController.getPaymentInfo);
+router.post('/booking/:id', paymentsController.createLinkForBooking);
+
 module.exports = router;
