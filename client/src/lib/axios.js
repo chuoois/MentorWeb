@@ -1,8 +1,7 @@
-// src/lib/axios.js
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "mentor-web-back-end.vercel.app",
+  baseURL: "https://mentor-web-back-end.vercel.app", 
   headers: {
     "Content-Type": "application/json",
   },
