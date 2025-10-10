@@ -10,7 +10,6 @@ const path = require('path');
 // Middleware phải khai báo trước routes
 app.use(cors());
 app.use(express.json()); // parse JSON body
-const dirname = path.resolve();
 
 const paymentsController = require('./controller/payment.controller');
 app.post(
@@ -22,13 +21,6 @@ app.post(
 // Routes
 app.use('/api', routes);
 
-if (process.env.NODE_ENV === 'production') {
-  server.use(express.static(path.join(dirname, '../client/dist')));
-
-  server.get('*', (req, res) => {
-    res.sendFile(path.join(dirname, '../client/dist/index.html'));
-  });
-}
 // 404 cho các route không khớp
 app.use((req, res) => {
   res.status(404).json({ ok: false, error: 'Not Found' });
