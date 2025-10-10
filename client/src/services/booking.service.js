@@ -8,12 +8,22 @@ const BookingService = {
   },
 
   getBookedSlots: async (mentorId) => {
-    const response = await api.get(`/api/bookings/${mentorId}`);
+    const response = await api.get(`/api/bookings/mentor/${mentorId}/booked-slots`);
+    return response.data;
+  },
+
+  cancelBooking: async (bookingId) => {
+    const response = await api.patch(`/api/bookings/${bookingId}/cancel`);
     return response.data;
   },
 
   getMenteeBookings: async () => {
     const response = await api.get(`/api/bookings/mentee`);
+    return response.data;
+  },
+
+  getMenteeBookedSlots: async () => {
+    const response = await api.get(`/api/bookings/mentor/applications`);
     return response.data;
   },
 
@@ -42,13 +52,18 @@ const BookingService = {
     return response.data;
   },
 
-  updateApplicationStatus: async (bookingId, data) => {
-    const response = await api.patch(`/api/bookings/applications/${bookingId}/status`, data);
+  updateApplicationStatus: async (data) => {
+    const response = await api.patch(`/api/bookings/applications/status`, data);
     return response.data;
   },
 
-  updateSessionByMentor: async (bookingId, sessionIndex, data) => {
-    const response = await api.patch(`/api/bookings/${bookingId}/session/${sessionIndex}`, data);
+  updateSessionByMentor: async (data) => {
+    const response = await api.patch(`/api/bookings/applications/session`, data);
+    return response.data;
+  },
+
+  getTeachProgress: async () => {
+    const response = await api.get('/api/bookings/mentor/progress');
     return response.data;
   },
 };

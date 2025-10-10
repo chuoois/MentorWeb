@@ -11,7 +11,8 @@ exports.getMentorApplications = async (req, res) => {
       return res.status(404).json({ success: false, message: "Mentor không tồn tại" });
     }
 
-    const bookings = await Booking.find({ mentor: mentorId })
+    // 🔹 Chỉ lấy các booking có paymentStatus = "PAID"
+    const bookings = await Booking.find({ mentor: mentorId, paymentStatus: "PAID" })
       .populate("mentee", "full_name email avatar_url gpa experience motivation")
       .sort({ createdAt: -1 })
       .lean();
@@ -20,6 +21,7 @@ exports.getMentorApplications = async (req, res) => {
       id: b._id,
       program: b.note || "Không có ghi chú",
       status: b.status,
+      paymentStatus: b.paymentStatus, // có thể thêm nếu muốn hiển thị
       submittedDate: b.createdAt,
       mentee: {
         id: b.mentee?._id || null,
@@ -28,7 +30,7 @@ exports.getMentorApplications = async (req, res) => {
         avatar: b.mentee?.avatar_url || null,
         gpa: b.mentee?.gpa || null,
         experience: b.mentee?.experience || null,
-        motivation: b.mentee?.motivation || null
+        motivation: b.mentee?.motivation || null,
       },
     }));
 
@@ -40,6 +42,39 @@ exports.getMentorApplications = async (req, res) => {
   } catch (error) {
     console.error("Lỗi khi lấy danh sách đơn:", error);
     res.status(500).json({ success: false, message: "Lỗi server khi lấy danh sách đơn" });
+  }
+};
+
+exports.getMentorBookedSlots = async (req, res) => {
+  try {
+    const mentorId = req.user.id;
+
+    const bookings = await Booking.find({
+      mentor: mentorId,
+      status: { $in: ["PENDING", "CONFIRMED", "COMPLETED"] },
+      paymentStatus: "PAID",
+    })
+      .select("session_times status note mentee price duration sessions paymentStatus")
+      .populate("mentee", "full_name email")
+      .lean();
+
+    res.status(200).json({
+      mentor: { id: mentorId },
+      bookedSlots: bookings.map(b => ({
+        id: b._id,
+        session_times: b.session_times,
+        status: b.status,
+        note: b.note,
+        duration: b.duration,
+        sessions: b.sessions,
+        price: b.price,
+        paymentStatus: b.paymentStatus,
+        mentee: b.mentee,
+      })),
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Lỗi server" });
   }
 };
 
@@ -103,16 +138,12 @@ exports.getApplicationDetail = async (req, res) => {
   }
 };
 
-// Mentor xác nhận hoặc từ chối đơn đăng ký
-// PATCH /api/mentors/applications/:bookingId/status
 exports.updateApplicationStatus = async (req, res) => {
   try {
-    const { bookingId } = req.params;
-    const { status, cancel_reason } = req.body; // status = CONFIRMED | CANCELLED
+    const { applicationId, status, cancel_reason } = req.body; // Changed to get applicationId from body
 
-    // Chỉ cho phép mentor của đơn đó chỉnh sửa
     const mentorId = req.user.id;
-    const booking = await Booking.findOne({ _id: bookingId, mentor: mentorId });
+    const booking = await Booking.findOne({ _id: applicationId, mentor: mentorId });
     if (!booking) {
       return res.status(404).json({ success: false, message: "Không tìm thấy đơn của mentor này" });
     }
@@ -122,28 +153,28 @@ exports.updateApplicationStatus = async (req, res) => {
     }
 
     booking.status = status;
-    if (status === "CANCELLED") booking.cancel_reason = cancel_reason || "Mentor từ chối không ghi lý do";
-    await booking.save();
+    if (status === "CANCELLED") {
+      booking.cancel_reason = cancel_reason || "Mentor từ chối không ghi lý do";
+    }
 
-    res.json({ success: true, message: `Cập nhật trạng thái đơn thành công (${status})`, data: booking });
+    await booking.save();
+    res.json({
+      success: true,
+      message: `Cập nhật trạng thái đơn thành công (${status})`,
+      data: booking,
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ success: false, message: "Lỗi server khi cập nhật trạng thái đơn" });
   }
 };
 
-
-// Thêm link buổi học (meeting_link)
-// Thêm note nhận xét
-// Tick xác nhận buổi học đã hoàn thành (mentor_confirmed = true, status = "COMPLETED"
-// PATCH /api/bookings/:bookingId/session/:sessionIndex
 exports.updateSessionByMentor = async (req, res) => {
   try {
-    const { bookingId, sessionIndex } = req.params;
-    const { meeting_link, note, markCompleted } = req.body; // markCompleted = true/false
-    const mentorId = req.user.id;
+    const { applicationId, sessionIndex, meeting_link, note, markCompleted } = req.body; // Changed to get all params from body
 
-    const booking = await Booking.findOne({ _id: bookingId, mentor: mentorId });
+    const mentorId = req.user.id;
+    const booking = await Booking.findOne({ _id: applicationId, mentor: mentorId });
     if (!booking) {
       return res.status(404).json({ success: false, message: "Không tìm thấy booking của mentor này" });
     }

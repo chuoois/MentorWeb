@@ -21,11 +21,15 @@ router.get("/mentee/status", authMiddleware, checkRole("MENTEE"), c.getBookingSt
 router.get("/mentee/progress", authMiddleware, checkRole("MENTEE"), c.getLearningProgress);
 
 // ================= MENTOR ROUTES =================
-router.get("/mentor/applications", authMiddleware, checkRole("MENTOR"), cx.getMentorApplications);
-router.get("/mentor/applications/:applicationId", authMiddleware, checkRole("MENTOR"), cx.getApplicationDetail);
+router.get("/applications", authMiddleware, checkRole("MENTOR"), cx.getMentorApplications);
+router.patch("/applications/status", authMiddleware, checkRole("MENTOR"), cx.updateApplicationStatus);
+router.patch("/applications/session", authMiddleware, checkRole("MENTOR"), cx.updateSessionByMentor);
+router.get("/applications/:applicationId", authMiddleware, checkRole("MENTOR"), cx.getApplicationDetail);
+router.get("/mentor/applications", authMiddleware, checkRole("MENTOR"), cx.getMentorBookedSlots);
+router.post("/mentor/progress", authMiddleware, checkRole("MENTOR"), c.getTeachProgress);
 
 // ================= PUBLIC =================
 // (Phải để cuối cùng để tránh nuốt các route trên)
-router.get("/:mentorId", c.getBookedSlots);
+router.get("/mentor/:mentorId/booked-slots", c.getBookedSlots);
 
 module.exports = router;

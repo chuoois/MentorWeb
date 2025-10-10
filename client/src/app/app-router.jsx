@@ -1,4 +1,4 @@
-import { createBrowserRouter, Outlet } from "react-router-dom"
+import { createBrowserRouter, Outlet } from "react-router-dom";
 
 // Layouts
 import {
@@ -6,8 +6,8 @@ import {
   HomeLayout,
   MentorLayout,
   AdminLayout,
-  MenteeLayout
-} from "@/components/layouts"
+  MenteeLayout,
+} from "@/components/layouts";
 
 // Pages
 import {
@@ -23,22 +23,22 @@ import {
   SettingsMentorPage,
   ChatMentorPage,
   MentorList,
-  // ListMenteeApply,
   AdminDashboard,
   MentorManagement,
   MenteesManagement,
-  // WebsiteStatistic,
-  // AnalysisPage,
-  // MentorVerification,
   MenteeSchedulePage,
   MenteeProfilePage,
   MenteeApplicationPage,
   LearningProgressPage,
-  AdminLogin 
-} from "@/pages"
+  AdminLogin,
+  PaymentCancelSuccessPage,
+  MentorSchedulePage,
+  LearningProgressMentorPage,
+  MentorVerification
+} from "@/pages";
 
 // Layout trống (không có header/footer)
-const BlankLayout = () => <Outlet />
+const BlankLayout = () => <Outlet />;
 
 export const router = createBrowserRouter([
   // Auth routes
@@ -50,7 +50,6 @@ export const router = createBrowserRouter([
       { path: "signup", element: <MenteeRegisterPage /> },
       { path: "password_reset", element: <ForgotPasswordPage /> },
       { path: "adminlogin", element: <AdminLogin /> },
-
     ],
   },
 
@@ -63,9 +62,10 @@ export const router = createBrowserRouter([
       { path: "mentor-apply", element: <MentorApplicationFormPage /> },
       { path: "/", element: <MentorHome /> },
       { path: "mentor/:id", element: <MentorDetail /> },
-      { path: "/listmentor", element: <MentorList /> }
+      { path: "/listmentor", element: <MentorList /> },
     ],
   },
+
   // Mentee routes
   {
     path: "/mentee",
@@ -75,27 +75,32 @@ export const router = createBrowserRouter([
       { path: "progress", element: <LearningProgressPage /> },
       { path: "schedule", element: <MenteeSchedulePage /> },
       { path: "messages", element: <div>Tin nhắn</div> },
-      { path: "profile", element: <MenteeProfilePage /> }
+      { path: "profile", element: <MenteeProfilePage /> },
     ],
   },
-  // Mentor apply success
+
+  // Mentor apply success and payment cancel success
   {
-    path: "/mentor-apply",
+    path: "/",
     element: <BlankLayout />,
     children: [
-      { path: "success", element: <MentorApplicationSubmittedPage /> },
+      { path: "mentor-apply/success", element: <MentorApplicationSubmittedPage /> },
+      { path: "payment-result", element: <PaymentCancelSuccessPage /> },
     ],
   },
+
   // Mentor routes
   {
     path: "/",
     element: <MentorLayout />,
     children: [
       { path: "applications", element: <ApplicationsPage /> },
-      { path: "chat", element: <ChatMentorPage /> },
+      { path: "progress", element: <LearningProgressMentorPage /> },
+      { path: "schedule", element: <MentorSchedulePage /> },
       { path: "settings", element: <SettingsMentorPage /> },
     ],
   },
+
   // Admin routes
   {
     path: "/admin",
@@ -103,8 +108,7 @@ export const router = createBrowserRouter([
     children: [
       { path: "dashboard", element: <AdminDashboard /> },
       { path: "mentors", element: <MentorManagement /> },
-      { path: "mentees", element: <MenteesManagement /> },
-      { path: "applications", element: <ApplicationsPage /> },
+      { path: "mentees", element: <MenteesManagement /> }
     ],
   },
-])
+]);

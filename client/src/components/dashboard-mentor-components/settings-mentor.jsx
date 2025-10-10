@@ -22,14 +22,6 @@ export const SettingsPage = () => {
     console.log("Saving profile:", profileData)
   }
 
-  const handleSignOut = () => {
-    console.log("Signing out...")
-  }
-
-  const handleDeactivate = () => {
-    console.log("Deactivating account...")
-  }
-
   return (
     <div className="flex h-full flex-col lg:flex-row">
       {/* Sidebar */}
@@ -48,24 +40,6 @@ export const SettingsPage = () => {
           </Button>
 
           <Separator className="my-4" />
-
-          <Button
-            onClick={handleSignOut}
-            variant="ghost"
-            className="w-full justify-start gap-3 h-10 text-destructive hover:bg-destructive/10 hover:text-destructive"
-          >
-            <LogOut className="w-4 h-4" />
-            <span>Đăng xuất</span>
-          </Button>
-
-          <Button
-            onClick={handleDeactivate}
-            variant="ghost"
-            className="w-full justify-start gap-3 h-10 text-orange-600 hover:bg-orange-100 hover:text-orange-700"
-          >
-            <Ban className="w-4 h-4" />
-            <span>Vô hiệu hóa tài khoản</span>
-          </Button>
         </nav>
       </div>
 

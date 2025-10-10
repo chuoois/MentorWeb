@@ -1,11 +1,11 @@
-import { MessageCircle, FileText, Settings, User, X } from "lucide-react"
+import { BookOpen, FileText, Settings, LogOut, X, CalendarDays } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Link, useLocation } from "react-router-dom"
+import { Link, useLocation, useNavigate } from "react-router-dom"
 
 const navigation = [
-  { name: "Trò chuyện", icon: MessageCircle, path: "/chat" },
+  { name: "Tiến độ", icon: BookOpen, path: "/progress" },
+  { name: "Lịch hẹn", icon: CalendarDays, path: "/schedule" }, // ✅ Thêm mục Lịch
   { name: "Đơn ứng tuyển", icon: FileText, path: "/applications" },
   { name: "Cài đặt", icon: Settings, path: "/settings" },
 ]
@@ -13,6 +13,16 @@ const navigation = [
 export const Sidebar = ({ onClose }) => {
   const location = useLocation()
   const currentPath = location.pathname
+  const navigate = useNavigate()
+
+  const handleLogout = () => {
+    // Xóa thông tin đăng nhập (tùy cách bạn lưu)
+    localStorage.removeItem("token")
+    sessionStorage.clear()
+
+    // Chuyển hướng về trang đăng nhập
+    navigate("/mentor")
+  }
 
   return (
     <div className="w-64 h-full bg-sidebar border-r border-sidebar-border flex flex-col">
@@ -62,22 +72,16 @@ export const Sidebar = ({ onClose }) => {
         </div>
       </nav>
 
-      {/* Hồ sơ người dùng */}
+      {/* Nút đăng xuất */}
       <div className="p-4 border-t border-sidebar-border">
-        <div className="flex items-center gap-3">
-          <Avatar className="w-8 h-8">
-            <AvatarImage src="/placeholder.svg?key=fdqic" />
-            <AvatarFallback>
-              <User className="w-4 h-4" />
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-sidebar-foreground truncate">
-              TS. Sarah Johnson
-            </p>
-            <p className="text-xs text-muted-foreground truncate">Cố vấn cao cấp</p>
-          </div>
-        </div>
+        <Button
+          variant="ghost"
+          className="w-full justify-start gap-3 text-red-500 hover:bg-red-100"
+          onClick={handleLogout}
+        >
+          <LogOut className="w-4 h-4" />
+          Đăng xuất
+        </Button>
       </div>
     </div>
   )

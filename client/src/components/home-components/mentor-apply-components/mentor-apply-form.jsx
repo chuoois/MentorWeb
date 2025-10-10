@@ -355,10 +355,10 @@ export const MentorApplicationForm = () => {
                             <SelectValue placeholder="Chọn ngành" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="tech">Kỹ thuật & Dữ liệu</SelectItem>
-                            <SelectItem value="ux">UX & Thiết kế</SelectItem>
-                            <SelectItem value="business">Kinh doanh & Quản lý</SelectItem>
-                            <SelectItem value="product">Sản phẩm & Tiếp thị</SelectItem>
+                            <SelectItem value="Kỹ thuật & Dữ liệu">Kỹ thuật & Dữ liệu</SelectItem>
+                            <SelectItem value="UX & Thiết kế">UX & Thiết kế</SelectItem>
+                            <SelectItem value="Kinh doanh & Quản lý">Kinh doanh & Quản lý</SelectItem>
+                            <SelectItem value="Sản phẩm & Tiếp thị">Sản phẩm & Tiếp thị</SelectItem>
                           </SelectContent>
                         </Select>
                       )}

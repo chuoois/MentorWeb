@@ -77,6 +77,7 @@ exports.createBooking = async (req, res) => {
       price,
       status: "PENDING",
       paymentStatus: "PENDING",
+      paymentforMentor:"PENDING",
       note,
     });
     await newBooking.save();
@@ -409,13 +410,140 @@ exports.getLearningProgress = async (req, res) => {
 
 };
 
+exports.getTeachProgress = async (req, res) => {
+  try {
+    const mentorId = req.user.id;
+    const { status, menteeName, page = 1, limit = 10 } = req.query;
+
+    // Build query with paymentStatus filter
+    const query = {
+      mentor: mentorId,
+      status: { $in: ["PENDING", "CONFIRMED", "COMPLETED"] },
+      paymentStatus: "PAID",
+    };
+    if (status) query.status = status;
+
+    // Mentee name filter
+    const menteeFilter = menteeName
+      ? { full_name: { $regex: menteeName, $options: "i" } }
+      : {};
+
+    // Get total count for pagination
+    const total = await Booking.countDocuments(query);
+
+    const bookings = await Booking.find(query)
+      .select("session_times status note mentee price duration sessions paymentStatus createdAt updatedAt")
+      .populate({
+        path: "mentee",
+        match: menteeFilter,
+        select: "full_name email avatar_url gpa experience motivation",
+      })
+      .skip((page - 1) * limit)
+      .limit(parseInt(limit))
+      .lean();
+
+    // Filter out bookings without mentee
+    const filteredBookings = bookings.filter((b) => b.mentee);
+
+    if (filteredBookings.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Không tìm thấy booking nào phù hợp",
+      });
+    }
+
+    // Calculate teaching progress
+    const teachingProgress = filteredBookings.map((booking) => {
+      const completedSessions = booking.session_times.filter(
+        (s) => s.status === "COMPLETED"
+      ).length;
+
+      const progressPercentage =
+        booking.sessions > 0
+          ? ((completedSessions / booking.sessions) * 100).toFixed(2)
+          : 0;
+
+      const sessionDetails = booking.session_times.map((s) => ({
+        startTime: s.start_time,
+        endTime: s.end_time,
+        status: s.status,
+        meetingLink: s.meeting_link || null,
+        menteeNote: s.note || null,
+        mentorConfirmed: s.mentor_confirmed,
+      }));
+
+      return {
+        bookingId: booking._id,
+        mentee: {
+          id: booking.mentee._id,
+          fullName: booking.mentee.full_name || "N/A",
+          email: booking.mentee.email || "N/A",
+          avatarUrl: booking.mentee.avatar_url || null,
+          gpa: booking.mentee.gpa || null,
+          experience: booking.mentee.experience || "N/A",
+          motivation: booking.mentee.motivation || "N/A",
+        },
+        totalSessions: booking.sessions,
+        completedSessions,
+        progressPercentage: parseFloat(progressPercentage),
+        status: booking.status,
+        paymentStatus: booking.paymentStatus || "N/A",
+        price: booking.price,
+        duration: booking.duration,
+        note: booking.note || null,
+        sessionDetails,
+        createdAt: booking.createdAt,
+        updatedAt: booking.updatedAt,
+      };
+    });
+
+    // Tổng quan tiến độ giảng dạy
+    const totalBookings = filteredBookings.length;
+    const totalSessions = filteredBookings.reduce((sum, b) => sum + b.sessions, 0);
+    const totalCompletedSessions = teachingProgress.reduce(
+      (sum, b) => sum + b.completedSessions,
+      0
+    );
+    const overallProgressPercentage =
+      totalSessions > 0
+        ? ((totalCompletedSessions / totalSessions) * 100).toFixed(2)
+        : 0;
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        overallProgress: {
+          totalBookings,
+          totalSessions,
+          totalCompletedSessions,
+          overallProgressPercentage: parseFloat(overallProgressPercentage),
+        },
+        bookings: teachingProgress,
+      },
+      pagination: {
+        total,
+        page: parseInt(page),
+        limit: parseInt(limit),
+        totalPages: Math.ceil(total / limit),
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching teaching progress:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi server khi lấy tiến độ giảng dạy",
+      error: error.message,
+    });
+  }
+};
+
 // ---------------------- CANCEL BOOKING ----------------------
 exports.cancelBooking = async (req, res) => {
   try {
     const menteeId = req.user.id;
     const { id } = req.params;
 
-    const booking = await Booking.findOne({ _id: id, mentee: menteeId });
+    const booking = await Booking.findOne({ payment_link_id: id, mentee: menteeId });
     if (!booking) return res.status(404).json({ message: "Booking không tồn tại" });
 
     if (booking.paymentStatus === "PAID") {

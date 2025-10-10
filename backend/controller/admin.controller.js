@@ -20,20 +20,12 @@ exports.login = async (req, res) => {
     const valid = await bcrypt.compare(password, admin.password_hash);
     if (!valid) return res.status(401).json({ success: false, message: "Invalid credentials" });
 
-    const token = jwt.sign({ id: admin._id, role: "ADMIN" }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+    const token = jwt.sign({ id: admin._id, role: admin.role.name }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
 
     res.json({
       success: true,
       message: "Login successful",
-      data: {
-        token,
-        admin: {
-          id: admin._id,
-          email: admin.email,
-          full_name: admin.full_name,
-          role: admin.role?.name || "ADMIN",
-        },
-      },
+      data: { token },
     });
   } catch (err) {
     console.error(err);
@@ -62,7 +54,10 @@ exports.getMentors = async (req, res) => {
 
     const total = await Mentor.countDocuments(query);
     const mentors = await Mentor.find(query)
-      .populate("role")
+      .select(
+        "full_name email avatar_url job_title company category skill bio location price status createdAt role"
+      )
+      .populate("role", "name description") // chỉ lấy name và description trong role
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
       .limit(limit);

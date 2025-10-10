@@ -70,7 +70,7 @@ export const AdminLoginPage = () => {
       const token = res?.data?.data?.token || res?.data?.token
       if (token) {
         // 🔐 Lưu token CHỈ TRONG PHIÊN (đóng tab là mất, không auto-login lại)
-        sessionStorage.setItem("admin_token", token)
+        localStorage.setItem("token", token)
       }
 
       // Remember me = chỉ lưu EMAIL bằng cookie

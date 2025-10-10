@@ -7,12 +7,12 @@ const { authMiddleware, checkRole } = require("../middleware/auth.middleware");
 router.post("/login", c.login);
 
 // MENTOR MANAGEMENT
-router.get("/mentors", authMiddleware, checkRole("ADMIN"), c.getMentors);
+router.get("/mentors", authMiddleware, c.getMentors);
 router.get("/mentors/:id", authMiddleware, checkRole("ADMIN"), c.getMentorDetail);
 router.put("/mentors/:id/status", authMiddleware, checkRole("ADMIN"), c.changeMentorStatus);
 
 // MENTEE MANAGEMENT
-router.get("/mentees", authMiddleware, checkRole("ADMIN"), c.getMentees);
+router.get("/mentees", authMiddleware, c.getMentees);
 router.get("/mentees/:id", authMiddleware, checkRole("ADMIN"), c.getMenteeDetail);
 
 module.exports = router;

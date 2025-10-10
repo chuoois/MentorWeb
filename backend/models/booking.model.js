@@ -38,6 +38,12 @@ const bookingSchema = new mongoose.Schema({
     index: true,
   },
 
+  paymentforMentor: {
+    type: String,
+    enum: ["PENDING", "PAID"],
+    default: "PENDING",
+  },
+
   note: { type: String },
   cancel_reason: { type: String },
 

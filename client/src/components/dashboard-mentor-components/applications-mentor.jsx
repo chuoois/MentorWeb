@@ -358,10 +358,6 @@ export const Applications = () => {
                           </p>
                         </div>
                         <div>
-                          <label className="text-sm font-medium">Chương trình</label>
-                          <p className="text-muted-foreground">{selectedApplication.program || "Không có ghi chú"}</p>
-                        </div>
-                        <div>
                           <label className="text-sm font-medium">Thời lượng mỗi buổi</label>
                           <p className="text-muted-foreground">{selectedApplication.duration || "N/A"} giờ</p>
                         </div>
@@ -382,14 +378,6 @@ export const Applications = () => {
                                 ? "Đã thanh toán"
                                 : "Thất bại"}
                           </p>
-                        </div>
-                        <div>
-                          <label className="text-sm font-medium">Mentor</label>
-                          <p className="text-muted-foreground">{selectedApplication.mentor?.fullName}</p>
-                        </div>
-                        <div>
-                          <label className="text-sm font-medium">Công ty</label>
-                          <p className="text-muted-foreground">{selectedApplication.mentor?.company || "N/A"}</p>
                         </div>
                       </div>
                     </CardContent>
