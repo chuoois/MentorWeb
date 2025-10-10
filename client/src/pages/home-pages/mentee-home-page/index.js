@@ -5,4 +5,4 @@ export * from './mentee-schedule';
 export * from './mentee-profile-page';
 export * from './mentee-application-page';
 export * from './mentee-learning-progress';
-export * from './mentee-payment-cancel-page';
+export * from './mentee-payment-page';

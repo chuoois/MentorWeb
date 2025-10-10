@@ -53,7 +53,7 @@ const BookingService = {
   },
 
   updateApplicationStatus: async (data) => {
-    const response = await api.patch(`/api/bookings/applications/status`, data);
+    const response = await api.patch(`/api/bookings/applications/action/status`, data);
     return response.data;
   },
 
@@ -63,7 +63,7 @@ const BookingService = {
   },
 
   getTeachProgress: async () => {
-    const response = await api.get('/api/bookings/mentor/progress');
+    const response = await api.get('/api/bookings/mentor/learning/progress');
     return response.data;
   },
 };

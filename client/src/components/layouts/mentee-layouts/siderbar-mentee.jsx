@@ -15,7 +15,6 @@ export const Sidebar = () => {
     { path: "/mentee/applications", label: "Đơn xét duyệt", icon: <Users className="w-4 h-4" /> },
     { path: "/mentee/progress", label: "Tiến độ học tập", icon: <BookOpen className="w-4 h-4" /> },
     { path: "/mentee/schedule", label: "Lịch học", icon: <Calendar className="w-4 h-4" /> },
-    { path: "/mentee/messages", label: "Tin nhắn", icon: <MessageSquare className="w-4 h-4" /> },
     { path: "/mentee/profile", label: "Hồ sơ", icon: <User className="w-4 h-4" /> },
   ];
 

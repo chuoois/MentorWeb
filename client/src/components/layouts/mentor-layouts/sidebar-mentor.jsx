@@ -4,10 +4,9 @@ import { Button } from "@/components/ui/button"
 import { Link, useLocation, useNavigate } from "react-router-dom"
 
 const navigation = [
-  { name: "Tiến độ", icon: BookOpen, path: "/progress" },
-  { name: "Lịch hẹn", icon: CalendarDays, path: "/schedule" }, // ✅ Thêm mục Lịch
   { name: "Đơn ứng tuyển", icon: FileText, path: "/applications" },
-  { name: "Cài đặt", icon: Settings, path: "/settings" },
+  { name: "Tiến độ", icon: BookOpen, path: "/progress" },
+  { name: "Lịch hẹn", icon: CalendarDays, path: "/schedule" },
 ]
 
 export const Sidebar = ({ onClose }) => {

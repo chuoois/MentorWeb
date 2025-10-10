@@ -141,6 +141,7 @@ exports.getApplicationDetail = async (req, res) => {
 exports.updateApplicationStatus = async (req, res) => {
   try {
     const { applicationId, status, cancel_reason } = req.body; // Changed to get applicationId from body
+    console.log(req.body);
 
     const mentorId = req.user.id;
     const booking = await Booking.findOne({ _id: applicationId, mentor: mentorId });

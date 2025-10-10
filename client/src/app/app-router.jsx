@@ -31,10 +31,9 @@ import {
   MenteeApplicationPage,
   LearningProgressPage,
   AdminLogin,
-  PaymentCancelSuccessPage,
+  PaymentResultPage,
   MentorSchedulePage,
-  LearningProgressMentorPage,
-  MentorVerification
+  LearningProgressMentorPage
 } from "@/pages";
 
 // Layout trống (không có header/footer)
@@ -74,7 +73,6 @@ export const router = createBrowserRouter([
       { path: "applications", element: <MenteeApplicationPage /> },
       { path: "progress", element: <LearningProgressPage /> },
       { path: "schedule", element: <MenteeSchedulePage /> },
-      { path: "messages", element: <div>Tin nhắn</div> },
       { path: "profile", element: <MenteeProfilePage /> },
     ],
   },
@@ -85,7 +83,7 @@ export const router = createBrowserRouter([
     element: <BlankLayout />,
     children: [
       { path: "mentor-apply/success", element: <MentorApplicationSubmittedPage /> },
-      { path: "payment-result", element: <PaymentCancelSuccessPage /> },
+      { path: "payment-result", element: <PaymentResultPage /> },
     ],
   },
 
@@ -96,8 +94,7 @@ export const router = createBrowserRouter([
     children: [
       { path: "applications", element: <ApplicationsPage /> },
       { path: "progress", element: <LearningProgressMentorPage /> },
-      { path: "schedule", element: <MentorSchedulePage /> },
-      { path: "settings", element: <SettingsMentorPage /> },
+      { path: "schedule", element: <MentorSchedulePage /> }
     ],
   },
 

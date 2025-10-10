@@ -103,6 +103,7 @@ export const Applications = () => {
     try {
       setLoading(true);
       const response = await BookingService.getApplicationDetails(application.id);
+      console.log("Application details:", response.data.id);
       setSelectedApplication(response.data);
       setShowApplicationsList(false);
     } catch (err) {
