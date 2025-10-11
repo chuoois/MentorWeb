@@ -27,8 +27,6 @@ export const MentorApplicationSubmitted = () => {
             Thông thường, bạn sẽ nhận được kết quả trong vòng{" "}
             <span className="font-medium">5–10 ngày làm việc</span>.
             <br />
-            <br />
-            Bạn sẽ nhận được email tại địa chỉ đã đăng ký với các bước tiếp theo.
           </p>
 
           {/* Tiếp theo */}

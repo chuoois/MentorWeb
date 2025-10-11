@@ -45,6 +45,7 @@ exports.getMentorApplications = async (req, res) => {
   }
 };
 
+
 exports.getMentorBookedSlots = async (req, res) => {
   try {
     const mentorId = req.user.id;
@@ -140,7 +141,7 @@ exports.getApplicationDetail = async (req, res) => {
 
 exports.updateApplicationStatus = async (req, res) => {
   try {
-    const { applicationId, status, cancel_reason } = req.body; // Changed to get applicationId from body
+    const { applicationId, status, cancel_reason } = req.body; 
     console.log(req.body);
 
     const mentorId = req.user.id;

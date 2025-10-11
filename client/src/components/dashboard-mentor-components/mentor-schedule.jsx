@@ -5,7 +5,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ChevronLeft, ChevronRight, Calendar, Clock, User, Link } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "react-hot-toast";
 
 // Map status to colors and labels with new color scheme
 const statusConfig = {
@@ -28,6 +28,11 @@ const statusConfig = {
     bg: "bg-red-400",
     text: "Đã hủy",
     badge: "bg-red-100 text-red-700",
+  },
+  UPCOMING: { // Added UPCOMING status to match API response
+    bg: "bg-yellow-400",
+    text: "Sắp diễn ra",
+    badge: "bg-yellow-100 text-yellow-700",
   },
 };
 
@@ -53,19 +58,25 @@ const hours = Array.from({ length: 15 }, (_, i) => i + 8);
 
 // Normalize and flatten session_times into individual bookings
 const normalizeBookings = (bookings) => {
+  // Ensure bookings is an array; return empty array if not
+  if (!Array.isArray(bookings)) {
+    console.warn("normalizeBookings: Expected an array but received:", bookings);
+    return [];
+  }
+
   const normalized = [];
   bookings.forEach((booking) => {
-    if (booking.session_times && booking.session_times.length > 0) {
+    if (booking.session_times && Array.isArray(booking.session_times)) {
       booking.session_times.forEach((session, index) => {
         normalized.push({
           ...booking,
-          _id: `${booking._id}_${index}`, // Unique ID for each session
+          _id: `${booking.id}_${index}`, // Use booking.id instead of booking._id to match API
           start_time: session.start_time,
           end_time: session.end_time,
           session_status: session.status,
           meeting_link: session.meeting_link || "",
           note: session.note || "",
-          original_booking_id: booking._id,
+          original_booking_id: booking.id, // Use booking.id
           session_index: index,
         });
       });
@@ -76,7 +87,7 @@ const normalizeBookings = (bookings) => {
 
 // Group consecutive bookings with improved logic
 const groupConsecutiveBookings = (bookings) => {
-  if (!bookings || bookings.length === 0) return [];
+  if (!bookings || !Array.isArray(bookings) || bookings.length === 0) return [];
 
   const sortedBookings = [...bookings].sort(
     (a, b) => new Date(a.start_time) - new Date(b.start_time)
@@ -141,18 +152,21 @@ export const MentorSchedule = () => {
   const [note, setNote] = useState("");
   const [cancelReason, setCancelReason] = useState("");
 
-  // Fetch bookings using the API from the first code
+  // Fetch bookings using the API
   useEffect(() => {
     const fetchBookings = async () => {
       try {
         setLoading(true);
-        const response = await BookingService.getMentorApplications();
-        const bookingsList = response.data || [];
+        const response = await BookingService.getMentorBookedSlots();
+        console.log("API Response:", response); // Debug: Log the response
+        // Extract bookedSlots array from response
+        const bookingsList = Array.isArray(response.bookedSlots) ? response.bookedSlots : [];
         const normalizedBookings = normalizeBookings(bookingsList);
         setBookings(normalizedBookings);
       } catch (error) {
-        console.error(error);
+        console.error("Error fetching bookings:", error);
         toast.error("Không thể tải danh sách booking");
+        setBookings([]); // Set empty array on error
       } finally {
         setLoading(false);
       }
@@ -205,34 +219,7 @@ export const MentorSchedule = () => {
     setCurrentDate(new Date());
   };
 
-  // Handle updating application status
-  const handleUpdateStatus = async (status) => {
-    if (!selectedBooking) return;
-    try {
-      const data = {
-        applicationId: selectedBooking.original_booking_id,
-        status,
-        ...(status === "CANCELLED" && cancelReason
-          ? { cancel_reason: cancelReason }
-          : {}),
-      };
-      const response = await BookingService.updateApplicationStatus(data);
-      setBookings((prev) =>
-        prev.map((b) =>
-          b.original_booking_id === selectedBooking.original_booking_id
-            ? { ...b, session_status: status, status }
-            : b
-        )
-      );
-      setSelectedBooking(null);
-      toast.success(`Cập nhật trạng thái thành công: ${status}`);
-    } catch (error) {
-      console.error(error);
-      toast.error("Lỗi khi cập nhật trạng thái");
-    }
-  };
-
-  // Handle updating session details using the API from the first code
+  // Handle updating session details
   const handleUpdateSession = async () => {
     if (!selectedBooking || selectedBooking.session_index === null) return;
     try {
@@ -260,7 +247,7 @@ export const MentorSchedule = () => {
     }
   };
 
-  // Handle marking session as completed using the API from the first code
+  // Handle marking session as completed
   const handleMarkCompleted = async () => {
     if (!selectedBooking || selectedBooking.session_index === null) return;
     try {
@@ -649,22 +636,6 @@ export const MentorSchedule = () => {
                       className="mt-1"
                       rows={3}
                     />
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      onClick={() => handleUpdateStatus("CONFIRMED")}
-                      className="flex-1 text-white hover:opacity-90"
-                      style={{ backgroundColor: "#4CAF50", color: "#FFFFFF" }}
-                    >
-                      Xác nhận
-                    </Button>
-                    <Button
-                      onClick={() => handleUpdateStatus("CANCELLED")}
-                      className="flex-1 text-white hover:opacity-90"
-                      style={{ backgroundColor: "#EF5350", color: "#FFFFFF" }}
-                    >
-                      Hủy
-                    </Button>
                   </div>
                 </>
               )}

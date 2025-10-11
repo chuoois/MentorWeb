@@ -71,7 +71,6 @@ bookingSchema.methods.markPaid = function (payosData) {
   this.payos_status = "PAID";
   this.payment_meta = payosData || this.payment_meta;
   this.payment_at = new Date();
-  if (this.status === "PENDING") this.status = "CONFIRMED";
   return this;
 };
 

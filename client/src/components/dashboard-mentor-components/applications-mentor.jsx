@@ -86,7 +86,7 @@ export const Applications = () => {
         const response = await BookingService.getMentorApplications();
         setApplications(response.data);
       } catch (err) {
-        console.error("Error fetching applications:", err);
+        console.error("Lỗi khi tải danh sách đơn đăng ký:", err);
         setError("Không thể tải danh sách đơn đăng ký. Vui lòng thử lại sau.");
         toast.error("Lỗi khi tải đơn đăng ký!");
         setApplications([]);
@@ -103,11 +103,11 @@ export const Applications = () => {
     try {
       setLoading(true);
       const response = await BookingService.getApplicationDetails(application.id);
-      console.log("Application details:", response.data.id);
+      console.log("Chi tiết đơn đăng ký:", response.data.id);
       setSelectedApplication(response.data);
       setShowApplicationsList(false);
     } catch (err) {
-      console.error("Error fetching application details:", err);
+      console.error("Lỗi khi tải chi tiết đơn đăng ký:", err);
       toast.error("Lỗi khi tải chi tiết đơn đăng ký!");
     } finally {
       setLoading(false);
@@ -117,18 +117,21 @@ export const Applications = () => {
   // Filter applications
   const filteredApplications = Array.isArray(applications)
     ? applications.filter((app) => {
-      const matchesStatus =
-        statusFilter === "all" || app.status.toLowerCase() === statusFilter.toLowerCase();
-      const matchesSearch =
-        (app.mentee?.fullName?.toLowerCase().includes(searchQuery.toLowerCase()) || false) ||
-        (app.program?.toLowerCase().includes(searchQuery.toLowerCase()) || false);
-      return matchesStatus && matchesSearch;
-    })
+        const matchesStatus =
+          statusFilter === "all" || app.status.toLowerCase() === statusFilter.toLowerCase();
+        const matchesSearch =
+          (app.mentee?.fullName?.toLowerCase().includes(searchQuery.toLowerCase()) || false) ||
+          (app.program?.toLowerCase().includes(searchQuery.toLowerCase()) || false);
+        return matchesStatus && matchesSearch;
+      })
     : [];
 
   const handleStatusChange = async (applicationId, newStatus) => {
     try {
-      let data = { status: newStatus.toUpperCase() };
+      const data = {
+        applicationId: applicationId,
+        status: newStatus.toUpperCase(),
+      };
 
       if (newStatus.toLowerCase() === "cancelled") {
         const cancelReason = prompt("Vui lòng nhập lý do từ chối:");
@@ -139,7 +142,8 @@ export const Applications = () => {
         data.cancel_reason = cancelReason;
       }
 
-      await BookingService.updateApplicationStatus(applicationId, data);
+      console.log("Payload gửi đi:", data); // Debug payload
+      await BookingService.updateApplicationStatus(data);
 
       setApplications((prev) =>
         prev.map((app) =>
@@ -153,7 +157,7 @@ export const Applications = () => {
 
       toast.success(`Đã cập nhật trạng thái thành ${getStatusLabel(newStatus)}`);
     } catch (err) {
-      console.error("Error updating status:", err);
+      console.error("Lỗi khi cập nhật trạng thái:", err.response?.data || err.message);
       toast.error("Lỗi khi cập nhật trạng thái!");
     }
   };
@@ -376,8 +380,8 @@ export const Applications = () => {
                             {selectedApplication.paymentStatus === "PENDING"
                               ? "Đang chờ"
                               : selectedApplication.paymentStatus === "PAID"
-                                ? "Đã thanh toán"
-                                : "Thất bại"}
+                              ? "Đã thanh toán"
+                              : "Thất bại"}
                           </p>
                         </div>
                       </div>

@@ -6,8 +6,6 @@ import BookingService from "@/services/booking.service";
 import OtherService from "@/services/other.service"; // Import OtherService để gọi webhook
 import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
-import { format } from "date-fns";
-import { vi } from "date-fns/locale";
 
 export const PaymentResult = () => {
   const [loading, setLoading] = useState(true);
@@ -145,37 +143,6 @@ export const PaymentResult = () => {
                 {bookingData?.orderCode || "N/A"}
               </p>
             </div>
-            {isSuccess && (
-              <>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <p className="text-sm text-gray-500">Số tiền</p>
-                  <p className="text-base font-medium" style={{ color: "#2C3E50" }}>
-                    {bookingData?.amount?.toLocaleString("vi-VN", {
-                      style: "currency",
-                      currency: "VND",
-                    })}
-                  </p>
-                </div>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <p className="text-sm text-gray-500">Mentor</p>
-                  <p className="text-base font-medium" style={{ color: "#2C3E50" }}>
-                    {bookingData?.booking?.mentor?.full_name || "N/A"}
-                  </p>
-                </div>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <p className="text-sm text-gray-500">Thời gian</p>
-                  <p className="text-base font-medium" style={{ color: "#2C3E50" }}>
-                    {bookingData?.booking?.session_times?.map((slot) => (
-                      <span key={slot.start_time}>
-                        {format(new Date(slot.start_time), "dd/MM/yyyy HH:mm", { locale: vi })} -{" "}
-                        {format(new Date(slot.end_time), "HH:mm", { locale: vi })}
-                        <br />
-                      </span>
-                    ))}
-                  </p>
-                </div>
-              </>
-            )}
           </div>
           <div className="mt-4">
             <p className="text-sm text-gray-500">Trạng thái</p>
