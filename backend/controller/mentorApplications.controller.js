@@ -172,19 +172,29 @@ exports.updateApplicationStatus = async (req, res) => {
 
 exports.updateSessionByMentor = async (req, res) => {
   try {
-    const { applicationId, sessionIndex, meeting_link, note, markCompleted } = req.body; // Changed to get all params from body
+    // ✅ Lấy applicationId từ PARAMS chứ không phải body
+    const { applicationId } = req.params;
+    const { sessionIndex, meeting_link, note, markCompleted } = req.body;
 
     const mentorId = req.user.id;
     const booking = await Booking.findOne({ _id: applicationId, mentor: mentorId });
+
     if (!booking) {
-      return res.status(404).json({ success: false, message: "Không tìm thấy booking của mentor này" });
+      return res.status(404).json({
+        success: false,
+        message: "Không tìm thấy booking của mentor này",
+      });
     }
 
     const session = booking.session_times[sessionIndex];
     if (!session) {
-      return res.status(404).json({ success: false, message: "Không tìm thấy session này" });
+      return res.status(404).json({
+        success: false,
+        message: "Không tìm thấy session này",
+      });
     }
 
+    // ✅ Cập nhật dữ liệu session
     if (meeting_link !== undefined) session.meeting_link = meeting_link;
     if (note !== undefined) session.note = note;
     if (markCompleted) {
@@ -193,9 +203,17 @@ exports.updateSessionByMentor = async (req, res) => {
     }
 
     await booking.save();
-    res.json({ success: true, message: "Cập nhật session thành công", data: session });
+
+    res.json({
+      success: true,
+      message: "Cập nhật session thành công",
+      data: session,
+    });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ success: false, message: "Lỗi server khi cập nhật session" });
+    res.status(500).json({
+      success: false,
+      message: "Lỗi server khi cập nhật session",
+    });
   }
 };

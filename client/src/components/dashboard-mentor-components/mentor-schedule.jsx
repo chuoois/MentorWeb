@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import BookingService from "@/services/booking.service";
 import { Button } from "@/components/ui/button";
@@ -6,6 +5,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ChevronLeft, ChevronRight, Calendar, Clock, User, Link } from "lucide-react";
+import { toast } from "sonner";
 
 // Map status to colors and labels with new color scheme
 const statusConfig = {
@@ -38,7 +38,7 @@ const getWeekDays = (date) => {
   const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
   startOfWeek.setDate(startOfWeek.getDate() + diff);
   startOfWeek.setHours(0, 0, 0, 0);
-  
+
   const days = [];
   for (let i = 0; i < 7; i++) {
     const day = new Date(startOfWeek);
@@ -59,27 +59,15 @@ const normalizeBookings = (bookings) => {
       booking.session_times.forEach((session, index) => {
         normalized.push({
           ...booking,
-          _id: session._id || booking.id || booking._id,
+          _id: `${booking._id}_${index}`, // Unique ID for each session
           start_time: session.start_time,
           end_time: session.end_time,
           session_status: session.status,
-          meeting_link: session.meeting_link,
-          note: session.note,
-          original_booking_id: booking.id || booking._id,
+          meeting_link: session.meeting_link || "",
+          note: session.note || "",
+          original_booking_id: booking._id,
           session_index: index,
         });
-      });
-    } else {
-      normalized.push({
-        ...booking,
-        _id: booking.id || booking._id,
-        start_time: booking.start_time || null,
-        end_time: booking.end_time || null,
-        session_status: booking.status,
-        meeting_link: booking.meeting_link || "",
-        note: booking.note || "",
-        original_booking_id: booking.id || booking._id,
-        session_index: null,
       });
     }
   });
@@ -89,11 +77,11 @@ const normalizeBookings = (bookings) => {
 // Group consecutive bookings with improved logic
 const groupConsecutiveBookings = (bookings) => {
   if (!bookings || bookings.length === 0) return [];
-  
-  const sortedBookings = [...bookings].sort((a, b) => 
-    new Date(a.start_time) - new Date(b.start_time)
+
+  const sortedBookings = [...bookings].sort(
+    (a, b) => new Date(a.start_time) - new Date(b.start_time)
   );
-  
+
   const grouped = [];
   let currentGroup = null;
 
@@ -153,17 +141,18 @@ export const MentorSchedule = () => {
   const [note, setNote] = useState("");
   const [cancelReason, setCancelReason] = useState("");
 
+  // Fetch bookings using the API from the first code
   useEffect(() => {
     const fetchBookings = async () => {
       try {
         setLoading(true);
-        const data = await BookingService.getMentorBookedSlots();
-        console.log(data);
-        const bookingsList = data.bookedSlots || [];
+        const response = await BookingService.getMentorApplications();
+        const bookingsList = response.data || [];
         const normalizedBookings = normalizeBookings(bookingsList);
         setBookings(normalizedBookings);
       } catch (error) {
         console.error(error);
+        toast.error("Không thể tải danh sách booking");
       } finally {
         setLoading(false);
       }
@@ -186,8 +175,16 @@ export const MentorSchedule = () => {
   const getBookingsForDay = (day) => {
     return groupedBookings.filter((b) => {
       const bookingStart = new Date(b.start_time);
-      const localDate = new Date(bookingStart.getFullYear(), bookingStart.getMonth(), bookingStart.getDate());
-      const checkDate = new Date(day.getFullYear(), day.getMonth(), day.getDate());
+      const localDate = new Date(
+        bookingStart.getFullYear(),
+        bookingStart.getMonth(),
+        bookingStart.getDate()
+      );
+      const checkDate = new Date(
+        day.getFullYear(),
+        day.getMonth(),
+        day.getDate()
+      );
       return localDate.getTime() === checkDate.getTime();
     });
   };
@@ -215,10 +212,11 @@ export const MentorSchedule = () => {
       const data = {
         applicationId: selectedBooking.original_booking_id,
         status,
-        ...(status === "CANCELLED" && cancelReason ? { cancel_reason: cancelReason } : {}),
+        ...(status === "CANCELLED" && cancelReason
+          ? { cancel_reason: cancelReason }
+          : {}),
       };
       const response = await BookingService.updateApplicationStatus(data);
-      // Update bookings state
       setBookings((prev) =>
         prev.map((b) =>
           b.original_booking_id === selectedBooking.original_booking_id
@@ -227,52 +225,52 @@ export const MentorSchedule = () => {
         )
       );
       setSelectedBooking(null);
-      alert(`Cập nhật trạng thái thành công: ${status}`);
+      toast.success(`Cập nhật trạng thái thành công: ${status}`);
     } catch (error) {
       console.error(error);
-      alert("Lỗi khi cập nhật trạng thái");
+      toast.error("Lỗi khi cập nhật trạng thái");
     }
   };
 
-  // Handle updating session details
+  // Handle updating session details using the API from the first code
   const handleUpdateSession = async () => {
     if (!selectedBooking || selectedBooking.session_index === null) return;
     try {
-      const data = {
-        applicationId: selectedBooking.original_booking_id,
-        sessionIndex: selectedBooking.session_index,
-        meeting_link: meetingLink,
-        note,
-        markCompleted: false,
-      };
-      const response = await BookingService.updateSessionByMentor(data);
-      // Update bookings state
+      const response = await BookingService.updateSessionByMentor(
+        selectedBooking.original_booking_id,
+        {
+          sessionIndex: selectedBooking.session_index,
+          meeting_link: meetingLink,
+          note,
+          markCompleted: false,
+        }
+      );
       setBookings((prev) =>
         prev.map((b) =>
           b._id === selectedBooking._id
-            ? { ...b, meeting_link: response.data.meeting_link, note: response.data.note }
+            ? { ...b, meeting_link: meetingLink, note }
             : b
         )
       );
       setSelectedBooking(null);
-      alert("Cập nhật session thành công");
+      toast.success(response.message || "Cập nhật buổi học thành công");
     } catch (error) {
       console.error(error);
-      alert("Lỗi khi cập nhật session");
+      toast.error("Cập nhật buổi học thất bại");
     }
   };
 
-  // Handle marking session as completed
+  // Handle marking session as completed using the API from the first code
   const handleMarkCompleted = async () => {
     if (!selectedBooking || selectedBooking.session_index === null) return;
     try {
-      const data = {
-        applicationId: selectedBooking.original_booking_id,
-        sessionIndex: selectedBooking.session_index,
-        markCompleted: true,
-      };
-      const response = await BookingService.updateSessionByMentor(data);
-      // Update bookings state
+      const response = await BookingService.updateSessionByMentor(
+        selectedBooking.original_booking_id,
+        {
+          sessionIndex: selectedBooking.session_index,
+          markCompleted: true,
+        }
+      );
       setBookings((prev) =>
         prev.map((b) =>
           b._id === selectedBooking._id
@@ -281,17 +279,17 @@ export const MentorSchedule = () => {
         )
       );
       setSelectedBooking(null);
-      alert("Đánh dấu session hoàn thành thành công");
+      toast.success(response.message || "Đánh dấu hoàn thành thành công");
     } catch (error) {
       console.error(error);
-      alert("Lỗi khi đánh dấu session hoàn thành");
+      toast.error("Không thể đánh dấu hoàn thành");
     }
   };
 
   if (loading) {
     return (
       <div className="flex flex-col justify-center items-center h-64 space-y-4">
-        <Spinner className="w-12 h-12" style={{ color: '#F9C5D5' }} />
+        <Spinner className="w-12 h-12" style={{ color: "#F9C5D5" }} />
         <p className="text-gray-500">Đang tải lịch của bạn...</p>
       </div>
     );
@@ -303,42 +301,45 @@ export const MentorSchedule = () => {
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="p-3 rounded-lg" style={{ backgroundColor: '#F9C5D5' }}>
-              <Calendar className="w-6 h-6" style={{ color: '#2C3E50' }} />
+            <div className="p-3 rounded-lg" style={{ backgroundColor: "#F9C5D5" }}>
+              <Calendar className="w-6 h-6" style={{ color: "#2C3E50" }} />
             </div>
             <div>
-              <h2 className="text-2xl font-bold" style={{ color: '#333333' }}>Lịch của bạn</h2>
+              <h2 className="text-2xl font-bold" style={{ color: "#333333" }}>
+                Lịch của bạn
+              </h2>
               <p className="text-sm text-gray-500 mt-1">
-                Tuần từ {weekDays[0].toLocaleDateString("vi-VN")} - {weekDays[6].toLocaleDateString("vi-VN")}
+                Tuần từ {weekDays[0].toLocaleDateString("vi-VN")} -{" "}
+                {weekDays[6].toLocaleDateString("vi-VN")}
               </p>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-2">
-            <Button 
-              onClick={prevWeek} 
-              variant="outline" 
-              size="sm" 
+            <Button
+              onClick={prevWeek}
+              variant="outline"
+              size="sm"
               className="gap-1 border-gray-300 hover:bg-gray-50"
-              style={{ color: '#2C3E50' }}
+              style={{ color: "#2C3E50" }}
             >
               <ChevronLeft className="w-4 h-4" />
               <span className="hidden sm:inline">Trước</span>
             </Button>
-            <Button 
-              onClick={goToToday} 
+            <Button
+              onClick={goToToday}
               size="sm"
               className="text-white hover:opacity-90"
-              style={{ backgroundColor: '#F9C5D5', color: '#2C3E50' }}
+              style={{ backgroundColor: "#F9C5D5", color: "#2C3E50" }}
             >
               Hôm nay
             </Button>
-            <Button 
-              onClick={nextWeek} 
-              variant="outline" 
-              size="sm" 
+            <Button
+              onClick={nextWeek}
+              variant="outline"
+              size="sm"
               className="gap-1 border-gray-300 hover:bg-gray-50"
-              style={{ color: '#2C3E50' }}
+              style={{ color: "#2C3E50" }}
             >
               <span className="hidden sm:inline">Sau</span>
               <ChevronRight className="w-4 h-4" />
@@ -351,7 +352,9 @@ export const MentorSchedule = () => {
           {Object.entries(statusConfig).map(([status, config]) => (
             <div key={status} className="flex items-center gap-2">
               <div className={`w-3 h-3 rounded ${config.bg}`}></div>
-              <span className="text-xs" style={{ color: '#333333' }}>{config.text}</span>
+              <span className="text-xs" style={{ color: "#333333" }}>
+                {config.text}
+              </span>
             </div>
           ))}
         </div>
@@ -362,27 +365,30 @@ export const MentorSchedule = () => {
         <div className="overflow-x-auto">
           <div className="inline-block min-w-full">
             <div className="grid grid-cols-[60px_repeat(7,minmax(100px,1fr))] border-b border-gray-200">
-              <div className="border-r border-gray-200" style={{ backgroundColor: '#F9F9F9' }}></div>
-              
+              <div
+                className="border-r border-gray-200"
+                style={{ backgroundColor: "#F9F9F9" }}
+              ></div>
+
               {weekDays.map((day, dayIndex) => {
                 const today = isToday(day);
                 return (
                   <div
                     key={dayIndex}
                     className={`py-4 text-center border-r border-gray-200 last:border-r-0`}
-                    style={{ 
-                      backgroundColor: today ? '#F9C5D5' : '#F9F9F9'
+                    style={{
+                      backgroundColor: today ? "#F9C5D5" : "#F9F9F9",
                     }}
                   >
-                    <div 
+                    <div
                       className="text-xs font-medium uppercase tracking-wider"
-                      style={{ color: today ? '#2C3E50' : '#666666' }}
+                      style={{ color: today ? "#2C3E50" : "#666666" }}
                     >
                       {day.toLocaleDateString("vi-VN", { weekday: "short" })}
                     </div>
-                    <div 
+                    <div
                       className="text-lg font-bold mt-1"
-                      style={{ color: today ? '#2C3E50' : '#333333' }}
+                      style={{ color: today ? "#2C3E50" : "#333333" }}
                     >
                       {day.getDate()}
                     </div>
@@ -392,7 +398,10 @@ export const MentorSchedule = () => {
             </div>
 
             <div className="grid grid-cols-[60px_repeat(7,minmax(100px,1fr))]">
-              <div className="border-r border-gray-200" style={{ backgroundColor: '#F9F9F9' }}>
+              <div
+                className="border-r border-gray-200"
+                style={{ backgroundColor: "#F9F9F9" }}
+              >
                 {hours.map((hour) => (
                   <div
                     key={hour}
@@ -409,7 +418,7 @@ export const MentorSchedule = () => {
                   <div
                     key={dayIndex}
                     className="border-r border-gray-200 last:border-r-0 relative"
-                    style={{ backgroundColor: today ? '#FFF5F8' : 'transparent' }}
+                    style={{ backgroundColor: today ? "#FFF5F8" : "transparent" }}
                   >
                     {hours.map((hour) => (
                       <div
@@ -427,10 +436,13 @@ export const MentorSchedule = () => {
                           const startMinutes = bookingStart.getMinutes();
                           const duration = (bookingEnd - bookingStart) / (1000 * 60);
                           if (startHour < 8 || startHour >= 23) return null;
-                          
-                          const topOffset = ((startHour - 8) * 80 + (startMinutes / 60) * 80);
+
+                          const topOffset =
+                            (startHour - 8) * 80 + (startMinutes / 60) * 80;
                           const height = (duration / 60) * 80;
-                          const config = statusConfig[b.session_status] || statusConfig.PENDING;
+                          const config =
+                            statusConfig[b.session_status] ||
+                            statusConfig.PENDING;
 
                           return (
                             <div
@@ -485,7 +497,9 @@ export const MentorSchedule = () => {
       {bookings.length === 0 && (
         <div className="text-center py-12 bg-white rounded-xl shadow-sm border border-gray-200 mt-6">
           <Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <p className="text-lg font-medium" style={{ color: '#333333' }}>Chưa có lịch hẹn nào</p>
+          <p className="text-lg font-medium" style={{ color: "#333333" }}>
+            Chưa có lịch hẹn nào
+          </p>
           <p className="text-gray-400 text-sm mt-2">Lịch hẹn học tập</p>
         </div>
       )}
@@ -500,7 +514,9 @@ export const MentorSchedule = () => {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start justify-between mb-4">
-              <h3 className="text-xl font-bold" style={{ color: '#333333' }}>Chi tiết lịch hẹn</h3>
+              <h3 className="text-xl font-bold" style={{ color: "#333333" }}>
+                Chi tiết lịch hẹn
+              </h3>
               <button
                 onClick={() => setSelectedBooking(null)}
                 className="text-gray-400 hover:text-gray-600"
@@ -511,15 +527,22 @@ export const MentorSchedule = () => {
 
             <div className="space-y-4">
               <div>
-                <label className="text-sm font-medium text-gray-500">Mentee</label>
-                <p className="text-base font-medium mt-1" style={{ color: '#333333' }}>
+                <label className="text-sm font-medium text-gray-500">
+                  Mentee
+                </label>
+                <p
+                  className="text-base font-medium mt-1"
+                  style={{ color: "#333333" }}
+                >
                   {selectedBooking.mentee?.full_name || "Chưa xác định"}
                 </p>
               </div>
 
               <div>
-                <label className="text-sm font-medium text-gray-500">Thời gian</label>
-                <p className="text-base mt-1" style={{ color: '#333333' }}>
+                <label className="text-sm font-medium text-gray-500">
+                  Thời gian
+                </label>
+                <p className="text-base mt-1" style={{ color: "#333333" }}>
                   {new Date(selectedBooking.start_time).toLocaleString("vi-VN", {
                     weekday: "long",
                     year: "numeric",
@@ -527,30 +550,47 @@ export const MentorSchedule = () => {
                     day: "numeric",
                   })}
                 </p>
-                <p className="text-base font-medium mt-1" style={{ color: '#2C3E50' }}>
-                  {new Date(selectedBooking.start_time).toLocaleTimeString("vi-VN", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}{" "}
+                <p
+                  className="text-base font-medium mt-1"
+                  style={{ color: "#2C3E50" }}
+                >
+                  {new Date(selectedBooking.start_time).toLocaleTimeString(
+                    "vi-VN",
+                    {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    }
+                  )}{" "}
                   -{" "}
-                  {new Date(selectedBooking.end_time).toLocaleTimeString("vi-VN", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
+                  {new Date(selectedBooking.end_time).toLocaleTimeString(
+                    "vi-VN",
+                    {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    }
+                  )}
                 </p>
               </div>
 
               <div>
-                <label className="text-sm font-medium text-gray-500">Trạng thái phiên</label>
-                <div className={`inline-block px-3 py-1 rounded-full text-sm font-medium mt-1 ${
-                  statusConfig[selectedBooking.session_status]?.badge || "bg-gray-100 text-gray-800"
-                }`}>
-                  {statusConfig[selectedBooking.session_status]?.text || selectedBooking.session_status}
+                <label className="text-sm font-medium text-gray-500">
+                  Trạng thái phiên
+                </label>
+                <div
+                  className={`inline-block px-3 py-1 rounded-full text-sm font-medium mt-1 ${
+                    statusConfig[selectedBooking.session_status]?.badge ||
+                    "bg-gray-100 text-gray-800"
+                  }`}
+                >
+                  {statusConfig[selectedBooking.session_status]?.text ||
+                    selectedBooking.session_status}
                 </div>
               </div>
 
               <div>
-                <label className="text-sm font-medium text-gray-500">Link họp</label>
+                <label className="text-sm font-medium text-gray-500">
+                  Link họp
+                </label>
                 <Input
                   value={meetingLink}
                   onChange={(e) => setMeetingLink(e.target.value)}
@@ -560,7 +600,9 @@ export const MentorSchedule = () => {
               </div>
 
               <div>
-                <label className="text-sm font-medium text-gray-500">Ghi chú</label>
+                <label className="text-sm font-medium text-gray-500">
+                  Ghi chú
+                </label>
                 <Textarea
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
@@ -575,7 +617,7 @@ export const MentorSchedule = () => {
                   <Button
                     onClick={handleUpdateSession}
                     className="w-full text-white hover:opacity-90"
-                    style={{ backgroundColor: '#F9C5D5', color: '#2C3E50' }}
+                    style={{ backgroundColor: "#F9C5D5", color: "#2C3E50" }}
                   >
                     Cập nhật session
                   </Button>
@@ -587,7 +629,7 @@ export const MentorSchedule = () => {
                   <Button
                     onClick={handleMarkCompleted}
                     className="w-full text-white hover:opacity-90"
-                    style={{ backgroundColor: '#4CAF50', color: '#FFFFFF' }}
+                    style={{ backgroundColor: "#4CAF50", color: "#FFFFFF" }}
                   >
                     Đánh dấu hoàn thành
                   </Button>
@@ -597,7 +639,9 @@ export const MentorSchedule = () => {
               {selectedBooking.status === "PENDING" && (
                 <>
                   <div>
-                    <label className="text-sm font-medium text-gray-500">Lý do hủy (nếu hủy)</label>
+                    <label className="text-sm font-medium text-gray-500">
+                      Lý do hủy (nếu hủy)
+                    </label>
                     <Textarea
                       value={cancelReason}
                       onChange={(e) => setCancelReason(e.target.value)}
@@ -610,14 +654,14 @@ export const MentorSchedule = () => {
                     <Button
                       onClick={() => handleUpdateStatus("CONFIRMED")}
                       className="flex-1 text-white hover:opacity-90"
-                      style={{ backgroundColor: '#4CAF50', color: '#FFFFFF' }}
+                      style={{ backgroundColor: "#4CAF50", color: "#FFFFFF" }}
                     >
                       Xác nhận
                     </Button>
                     <Button
                       onClick={() => handleUpdateStatus("CANCELLED")}
                       className="flex-1 text-white hover:opacity-90"
-                      style={{ backgroundColor: '#EF5350', color: '#FFFFFF' }}
+                      style={{ backgroundColor: "#EF5350", color: "#FFFFFF" }}
                     >
                       Hủy
                     </Button>
@@ -626,63 +670,109 @@ export const MentorSchedule = () => {
               )}
 
               <div>
-                <label className="text-sm font-medium text-gray-500">Thông tin khác</label>
-                <div className="mt-1 space-y-1 text-sm" style={{ color: '#333333' }}>
-                  <p>Thời lượng: <span className="font-medium">{selectedBooking.duration} giờ</span></p>
+                <label className="text-sm font-medium text-gray-500">
+                  Thông tin khác
+                </label>
+                <div
+                  className="mt-1 space-y-1 text-sm"
+                  style={{ color: "#333333" }}
+                >
+                  <p>
+                    Thời lượng:{" "}
+                    <span className="font-medium">
+                      {selectedBooking.duration
+                        ? `${selectedBooking.duration} giờ`
+                        : "Chưa xác định"}
+                    </span>
+                  </p>
                   {selectedBooking.sessions && (
-                    <p>Số buổi: <span className="font-medium">{selectedBooking.sessions} buổi</span></p>
+                    <p>
+                      Số buổi:{" "}
+                      <span className="font-medium">
+                        {selectedBooking.sessions} buổi
+                      </span>
+                    </p>
                   )}
-                  <p>Giá: <span className="font-medium" style={{ color: '#2C3E50' }}>{selectedBooking.price?.toLocaleString('vi-VN')} VNĐ</span></p>
+                  <p>
+                    Giá:{" "}
+                    <span
+                      className="font-medium"
+                      style={{ color: "#2C3E50" }}
+                    >
+                      {selectedBooking.price
+                        ? selectedBooking.price.toLocaleString("vi-VN")
+                        : "Chưa xác định"}{" "}
+                      VNĐ
+                    </span>
+                  </p>
                 </div>
               </div>
 
-              {selectedBooking.original_bookings && selectedBooking.original_bookings.length > 1 && (
-                <div>
-                  <label className="text-sm font-medium text-gray-500">
-                    Các phiên liên quan ({selectedBooking.original_bookings.length} phiên)
-                  </label>
-                  <div className="mt-2 space-y-2">
-                    {selectedBooking.original_bookings.map((session, index) => (
-                      <div key={index} className="border-t pt-2">
-                        <p className="text-sm font-medium" style={{ color: '#333333' }}>
-                          Phiên {index + 1}: {new Date(session.start_time).toLocaleTimeString("vi-VN", {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })} - {new Date(session.end_time).toLocaleTimeString("vi-VN", {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                        </p>
-                        <div className={`inline-block px-3 py-1 rounded-full text-xs font-medium mt-1 ${
-                          statusConfig[session.session_status]?.badge || "bg-gray-100 text-gray-800"
-                        }`}>
-                          {statusConfig[session.session_status]?.text || session.session_status}
-                        </div>
-                        {session.meeting_link && (
-                          <div className="mt-1 flex items-center gap-2">
-                            <Link className="w-4 h-4 text-gray-500" />
-                            <a
-                              href={session.meeting_link}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-blue-600 hover:underline truncate text-xs"
-                            >
-                              {session.meeting_link}
-                            </a>
+              {selectedBooking.original_bookings &&
+                selectedBooking.original_bookings.length > 1 && (
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">
+                      Các phiên liên quan (
+                      {selectedBooking.original_bookings.length} phiên)
+                    </label>
+                    <div className="mt-2 space-y-2">
+                      {selectedBooking.original_bookings.map((session, index) => (
+                        <div key={index} className="border-t pt-2">
+                          <p
+                            className="text-sm font-medium"
+                            style={{ color: "#333333" }}
+                          >
+                            Phiên {index + 1}:{" "}
+                            {new Date(session.start_time).toLocaleTimeString(
+                              "vi-VN",
+                              {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              }
+                            )}{" "}
+                            -{" "}
+                            {new Date(session.end_time).toLocaleTimeString(
+                              "vi-VN",
+                              {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              }
+                            )}
+                          </p>
+                          <div
+                            className={`inline-block px-3 py-1 rounded-full text-xs font-medium mt-1 ${
+                              statusConfig[session.session_status]?.badge ||
+                              "bg-gray-100 text-gray-800"
+                            }`}
+                          >
+                            {statusConfig[session.session_status]?.text ||
+                              session.session_status}
                           </div>
-                        )}
-                      </div>
-                    ))}
+                          {session.meeting_link && (
+                            <div className="mt-1 flex items-center gap-2">
+                              <Link className="w-4 h-4 text-gray-500" />
+                              <a
+                                href={session.meeting_link}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 hover:underline truncate text-xs"
+                              >
+                                {session.meeting_link}
+                              </a>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
             </div>
 
             <div className="mt-6">
               <Button
                 onClick={() => setSelectedBooking(null)}
                 className="w-full text-white hover:opacity-90"
-                style={{ backgroundColor: '#F9C5D5', color: '#2C3E50' }}
+                style={{ backgroundColor: "#F9C5D5", color: "#2C3E50" }}
               >
                 Đóng
               </Button>
