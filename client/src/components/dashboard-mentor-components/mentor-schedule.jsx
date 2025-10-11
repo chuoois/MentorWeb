@@ -157,7 +157,7 @@ export const MentorSchedule = () => {
     const fetchBookings = async () => {
       try {
         setLoading(true);
-        const data = await BookingService.getMenteeBookedSlots();
+        const data = await BookingService.getMentorBookedSlots();
         console.log(data);
         const bookingsList = data.bookedSlots || [];
         const normalizedBookings = normalizeBookings(bookingsList);
