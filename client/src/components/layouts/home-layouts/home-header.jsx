@@ -42,9 +42,6 @@ export const Header = () => {
           <Link to="/listmentor" className="text-[#2C3E50] hover:text-white transition-colors font-medium">
             Xem toàn bộ Mentor
           </Link>
-          <Link to="/news" className="text-[#2C3E50] hover:text-white transition-colors font-medium">
-            Tin tức
-          </Link>
 
           {/* Nếu chưa login → Trở thành Mentor | Nếu login → Trang cá nhân */}
           {!isLoggedIn ? (
@@ -103,9 +100,6 @@ export const Header = () => {
           </Link>
           <Link to="/listmentor" className="block text-[#2C3E50] hover:text-white font-medium" onClick={() => setIsMenuOpen(false)}>
             Xem toàn bộ Mentor
-          </Link>
-          <Link to="/news" className="block text-[#2C3E50] hover:text-white font-medium" onClick={() => setIsMenuOpen(false)}>
-            Tin tức
           </Link>
 
           {/* Mobile: đổi Trở thành Mentor ↔ Trang cá nhân */}
