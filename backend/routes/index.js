@@ -13,5 +13,6 @@ router.use('/bookings', bookingRoutes);
 router.use("/comments", commentRoutes);
 router.use('/payments', paymentsRoutes);
 router.use("/admin", adminRoutes);
+router.use('/ai', require('./ai.routes'));
 
 module.exports = router;

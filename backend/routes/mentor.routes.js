@@ -11,6 +11,9 @@ router.post("/login", c.login);
 // GET /api/mentors/
 router.get("/", c.listActiveMentors);
 
+// POST /api/mentors/recommend
+router.post("/recommend", c.recommend);
+
 // GET /api/mentors/:id
 router.get("/:id", c.getMentorByID);
 

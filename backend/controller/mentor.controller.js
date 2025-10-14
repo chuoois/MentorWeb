@@ -347,3 +347,92 @@ exports.getMentorByID = async (req, res) => {
     res.status(500).json({ message: "Lỗi server" });
   }
 };
+
+// ---------------------- RECOMMEND MENTORS ----------------------
+// Input (req.body):
+// - skills: string | string[] (kỹ năng mong muốn)
+// - budgetMin: number (VND)
+// - budgetMax: number (VND)
+// - location: string (tùy chọn)
+// - limit: number (mặc định 10)
+exports.recommend = async (req, res) => {
+  try {
+    const {
+      skills,
+      budgetMin,
+      budgetMax,
+      location,
+      limit = 10,
+    } = req.body || {};
+
+    const normalizedSkills = Array.isArray(skills)
+      ? skills
+          .map((s) => String(s || "").toLowerCase().trim())
+          .filter((s) => s.length > 0)
+      : String(skills || "")
+          .split(/[,;/]/)
+          .map((s) => s.toLowerCase().trim())
+          .filter((s) => s.length > 0);
+
+    const priceFilter = {};
+    if (budgetMin !== undefined && budgetMin !== null) priceFilter.$gte = Number(budgetMin);
+    if (budgetMax !== undefined && budgetMax !== null) priceFilter.$lte = Number(budgetMax);
+
+    const query = { status: 'ACTIVE' };
+    if (Object.keys(priceFilter).length) query.price = priceFilter;
+    if (location) query.location = { $regex: location, $options: 'i' };
+
+    const mentors = await Mentor.find(query).select('-password_hash').lean();
+
+    const scored = mentors.map((m) => {
+      const mentorSkills = String(m.skill || '')
+        .toLowerCase()
+        .split(/[,;/]/)
+        .map((s) => s.trim())
+        .filter((s) => s.length > 0);
+
+      let skillMatches = 0;
+      if (normalizedSkills.length > 0) {
+        const mentorSkillSet = new Set(mentorSkills);
+        for (const s of normalizedSkills) if (mentorSkillSet.has(s)) skillMatches += 1;
+      }
+
+      const skillScore = normalizedSkills.length > 0
+        ? skillMatches / normalizedSkills.length
+        : 0;
+
+      let budgetScore = 0;
+      if (m.price != null) {
+        const price = Number(m.price);
+        const minOk = budgetMin == null || price >= Number(budgetMin);
+        const maxOk = budgetMax == null || price <= Number(budgetMax);
+        budgetScore = minOk && maxOk ? 1 : 0;
+      }
+
+      const finalScore = skillScore * 0.7 + budgetScore * 0.3;
+
+      return {
+        mentor: m,
+        score: Number(finalScore.toFixed(4)),
+        breakdown: {
+          skillScore: Number(skillScore.toFixed(4)),
+          budgetScore: Number(budgetScore.toFixed(4)),
+          matchedSkills: mentorSkills.filter((s) => normalizedSkills.includes(s)),
+        },
+      };
+    });
+
+    scored.sort((a, b) => b.score - a.score);
+    const result = scored.slice(0, Number(limit));
+
+    return res.json({
+      ok: true,
+      total: scored.length,
+      returned: result.length,
+      data: result,
+    });
+  } catch (error) {
+    console.error('recommend error:', error);
+    res.status(500).json({ ok: false, message: 'Server error', error: error.message });
+  }
+};
