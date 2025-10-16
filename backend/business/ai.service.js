@@ -1,65 +1,65 @@
-// backend/business/ai.service.js
-require('dotenv').config();
+// business/ai.service.js
+const { GoogleGenerativeAI } = require("@google/generative-ai");
+const Mentor = require("../models/mentor.model");
 
-let _client; // cache singleton
+class AiService {
+  constructor() {
+    this.client = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    this.model = this.client.getGenerativeModel({ model: "models/gemini-2.5-flash" });
+  }
 
-async function getClient() {
-  if (_client) return _client;
-  const { GoogleGenAI } = await import('@google/genai'); // ESM -> dynamic import cho CJS
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) throw new Error('Missing GEMINI_API_KEY');
-  _client = new GoogleGenAI({ apiKey });
-  return _client;
+  async getMentorContext() {
+  const mentors = await Mentor.find({ status: "ACTIVE" })
+    .select("_id full_name job_title company category skill bio location price")
+    .lean();
+
+  // Đưa dữ liệu JSON dạng đơn giản cho AI
+  return JSON.stringify(mentors, null, 2);
 }
 
-/** Chat ngắn gọn */
-exports.askGemini = async (prompt) => {
-  const client = await getClient();
-  const res = await client.models.generateContent({
-    model: 'gemini-2.5-flash',
-    contents: prompt || 'Xin chào từ MentorWeb!',
-  });
-  // SDK mới: .response.text()
-  return res?.response?.text() ?? '';
-};
+  async chatMentorAdvisor(userMessage) {
+  const contextJson = await this.getMentorContext();
 
-/** Structured JSON: ép model trả JSON theo schema */
-exports.generateIdeaJson = async (topic) => {
-  const client = await getClient();
-  const res = await client.models.generateContent({
-    model: 'gemini-2.5-flash',
-    contents: `Hãy tạo một ý tưởng về: ${topic}`,
-    generationConfig: {
-      responseMimeType: 'application/json',
-      responseSchema: {
-        type: 'object',
-        properties: {
-          title: { type: 'string' },
-          tags: { type: 'array', items: { type: 'string' } },
-          summary: { type: 'string' }
-        },
-        required: ['title','tags','summary'],
-        additionalProperties: false
-      },
-      // Nếu muốn tiết kiệm chi phí/tốc độ:
-      // thinkingConfig: { thinkingBudget: 0 }
-    }
-  });
-  const text = res?.response?.text() ?? '{}';
-  return JSON.parse(text);
-};
+  const prompt = `
+  Bạn là AI tư vấn chọn mentor phù hợp cho mentee.
+  Dưới đây là danh sách mentor dưới dạng JSON:
 
-/** Vision (ảnh inline base64) */
-exports.describeImageBase64 = async (base64, mime = 'image/jpeg') => {
-  const client = await getClient();
-  const res = await client.models.generateContent({
-    model: 'gemini-2.5-flash',
-    contents: [
-      { role: 'user', parts: [
-        { text: 'Mô tả ngắn gọn bức ảnh này.' },
-        { inlineData: { mimeType: mime, data: base64 } }
-      ] }
+  mentors = ${contextJson}
+
+  - Mỗi mentor có "_id", "full_name", "job_title", "skill", "bio", "price", "location".
+  - Dựa trên yêu cầu mentee, hãy chọn mentor phù hợp nhất.
+  - Trả về kết quả ở định dạng JSON có dạng như sau:
+
+  {
+    "recommended": {
+      "_id": "...",
+      "full_name": "...",
+      "reason": "...",
+      "link": "/api/mentors/<_id>"
+    },
+    "alternatives": [
+      { "_id": "...", "full_name": "...", "reason": "...", "link": "/api/mentors/<_id>" },
+      ...
     ]
-  });
-  return res?.response?.text() ?? '';
-};
+  }
+
+  Yêu cầu của mentee: ${userMessage}
+  `;
+
+  const result = await this.model.generateContent(prompt);
+
+  // Trả về JSON đã parse
+  const text = result.response.text().trim();
+
+  try {
+    const json = JSON.parse(text);
+    return json;
+  } catch {
+    // Nếu Gemini trả text không chuẩn JSON, trả về raw text
+    return { raw: text };
+  }
+}
+}
+
+// 👇 Đây là phần QUAN TRỌNG
+module.exports = new AiService();
