@@ -1,13 +1,14 @@
-import { HeroSection, FeatureSection, MentorGrid, TestimonialSection, MentorshipTimeline, CTASection, StatsSection} from '@/components/home-components';
+import {HeroSection, StatsSection, FeaturesBento, MentorshipTimeline, WhyJoinNow, EarlySupporters, CTASection  } from '@/components/home-components';
 
 export const MentorHome = () => {
   return (
     <>
       <HeroSection />
-      <FeatureSection />
+      <StatsSection />
+      <FeaturesBento />
       <MentorshipTimeline />
-      <MentorGrid />
-      <TestimonialSection />
+      <WhyJoinNow />
+      <EarlySupporters />
       <CTASection />
     </>
   )

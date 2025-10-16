@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 export const AuthLeftLogo = () => {
   return (
     <div className="hidden lg:flex w-full h-full bg-[#2C3E50] items-center justify-center">
@@ -35,7 +37,9 @@ export const AuthLeftLogo = () => {
 
         {/* Brand name */}
         <div className="text-center mt-6">
-          <h2 className="text-2xl font-bold text-white">MentorConnect</h2>
+          <Link to="/">
+            <h2 className="text-2xl font-bold text-white">MentorHub</h2>
+          </Link>
           <p className="text-sm text-gray-300 mt-2">Find your perfect mentor</p>
         </div>
       </div>

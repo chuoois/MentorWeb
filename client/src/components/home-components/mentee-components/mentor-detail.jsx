@@ -41,72 +41,42 @@ import BookingService from "@/services/booking.service";
 import CommentService from "@/services/comment.service";
 import { Skeleton } from "@/components/ui/skeleton";
 
-// MentorSkeleton component (unchanged)
+// MentorSkeleton component
 const MentorSkeleton = () => (
-  <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-pulse">
-    <div className="lg:col-span-2 space-y-6">
-      <Card>
-        <CardContent className="p-8">
-          <div className="flex flex-col md:flex-row gap-6">
-            <Skeleton className="w-32 h-32 rounded-full" />
-            <div className="flex-1 space-y-4">
-              <Skeleton className="h-8 w-1/2" />
-              <Skeleton className="h-6 w-3/4" />
-              <Skeleton className="h-4 w-1/3" />
+  <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+    <div className="lg:col-span-3 space-y-4">
+      <Card className="border-0 bg-white dark:bg-gray-900 shadow-sm">
+        <CardContent className="p-4">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <Skeleton className="w-24 h-24 rounded-full bg-gray-200 dark:bg-gray-700" />
+            <div className="flex-1 space-y-2">
+              <Skeleton className="h-6 w-1/2 bg-gray-200 dark:bg-gray-700" />
+              <Skeleton className="h-4 w-3/4 bg-gray-200 dark:bg-gray-700" />
+              <Skeleton className="h-3 w-1/3 bg-gray-200 dark:bg-gray-700" />
               <div className="flex gap-2">
-                <Skeleton className="h-6 w-20" />
-                <Skeleton className="h-6 w-20" />
+                <Skeleton className="h-4 w-12 bg-gray-200 dark:bg-gray-700" />
+                <Skeleton className="h-4 w-12 bg-gray-200 dark:bg-gray-700" />
               </div>
             </div>
           </div>
         </CardContent>
       </Card>
-      <Card>
-        <CardContent className="p-8">
-          <Skeleton className="h-6 w-1/3 mb-4" />
-          <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-4 w-3/4" />
-        </CardContent>
-      </Card>
-      <Card>
-        <CardContent className="p-8">
-          <Skeleton className="h-6 w-1/3 mb-4" />
-          <div className="flex flex-wrap gap-2">
-            <Skeleton className="h-6 w-16" />
-            <Skeleton className="h-6 w-20" />
-          </div>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardContent className="p-8">
-          <Skeleton className="h-6 w-1/3 mb-4" />
-          <div className="space-y-4">
-            <div className="flex items-center gap-3">
-              <Skeleton className="w-12 h-12 rounded-full" />
-              <div className="flex-1 space-y-2">
-                <Skeleton className="h-4 w-1/2" />
-                <Skeleton className="h-3 w-3/4" />
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <Skeleton className="w-12 h-12 rounded-full" />
-              <div className="flex-1 space-y-2">
-                <Skeleton className="h-4 w-1/2" />
-                <Skeleton className="h-3 w-3/4" />
-              </div>
-            </div>
-          </div>
+      <Card className="border-0 bg-white dark:bg-gray-900 shadow-sm">
+        <CardContent className="p-4">
+          <Skeleton className="h-4 w-1/3 mb-2 bg-gray-200 dark:bg-gray-700" />
+          <Skeleton className="h-3 w-full bg-gray-200 dark:bg-gray-700" />
+          <Skeleton className="h-3 w-3/4 bg-gray-200 dark:bg-gray-700" />
         </CardContent>
       </Card>
     </div>
-    <Card className="lg:col-span-1">
+    <Card className="lg:col-span-2 border-0 bg-white dark:bg-gray-900 shadow-sm">
       <CardHeader>
-        <Skeleton className="h-6 w-1/3" />
+        <Skeleton className="h-4 w-1/3 bg-gray-200 dark:bg-gray-700" />
       </CardHeader>
-      <CardContent className="space-y-4">
-        <Skeleton className="h-6 w-1/2" />
-        <Skeleton className="h-40 w-full" />
-        <Skeleton className="h-10 w-full" />
+      <CardContent className="space-y-2">
+        <Skeleton className="h-4 w-1/2 bg-gray-200 dark:bg-gray-700" />
+        <Skeleton className="h-32 w-full bg-gray-200 dark:bg-gray-700" />
+        <Skeleton className="h-6 w-full bg-gray-200 dark:bg-gray-700" />
       </CardContent>
     </Card>
   </div>
@@ -154,9 +124,9 @@ export const MentorDetailPage = () => {
 
   const generateAvailableSlots = useCallback(
     (date) => {
-      const slots = [];
-      const startHour = 9;
-      const endHour = 17;
+      const slots = new Set();
+      const startHour = 8;
+      const endHour = 20;
       const interval = 0.5;
 
       for (let hour = startHour; hour <= endHour - sessionDuration; hour += interval) {
@@ -176,10 +146,12 @@ export const MentorDetailPage = () => {
         );
 
         if (!isBooked && endTime.getHours() <= endHour) {
-          slots.push({ start: startTime, end: endTime });
+          const slotKey = `${format(startTime, "HH:mm")}-${format(endTime, "HH:mm")}`;
+          slots.add(JSON.stringify({ start: startTime, end: endTime }));
         }
       }
-      return slots;
+
+      return Array.from(slots).map((slot) => JSON.parse(slot));
     },
     [sessionDuration, bookedSlots]
   );
@@ -246,13 +218,11 @@ export const MentorDetailPage = () => {
       return;
     }
 
-    // Format session_times for backend
     const sessionTimes = allSlots.map((slot) => ({
       start_time: slot.start.toISOString(),
       end_time: slot.end.toISOString(),
     }));
 
-    // Confirmation prompt
     const sessionTimesText = allSlots
       .map(
         (slot) =>
@@ -275,18 +245,13 @@ export const MentorDetailPage = () => {
         session_times: sessionTimes,
         note,
       };
-      // Create booking
       const bookingResponse = await BookingService.createBooking(bookingData);
-      console.log("Booking response:", bookingResponse);
       toast.success("Đặt lịch thành công! Đang chuyển hướng đến trang thanh toán...");
-
-      // Check if payment link exists and redirect
       const paymentLink = bookingResponse.payment?.checkoutUrl;
       if (paymentLink) {
-        window.location.href = paymentLink; // Redirect to the payment page
+        window.location.href = paymentLink;
       } else {
         toast.error("Không thể tạo link thanh toán. Vui lòng thử lại sau.");
-        // Optionally, navigate to a booking confirmation page or allow retry
         navigate(`/booking-confirmation/${bookingResponse.booking._id}`);
       }
     } catch (error) {
@@ -301,8 +266,8 @@ export const MentorDetailPage = () => {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-pink-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-        <div className="max-w-7xl mx-auto px-4 py-8">
+      <main className="min-h-screen bg-[#FFFFFF] dark:bg-gray-900">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <MentorSkeleton />
         </div>
       </main>
@@ -311,14 +276,15 @@ export const MentorDetailPage = () => {
 
   if (!mentor) {
     return (
-      <main className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-pink-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+      <main className="min-h-screen bg-[#FFFFFF] dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center p-6 bg-white dark:bg-gray-900 rounded-xl shadow-sm">
+          <h1 className="text-xl font-semibold text-[#2C3E50] dark:text-white mb-3">
             Không tìm thấy mentor
           </h1>
-          <Link to="/">
-            <Button className="bg-[#2C3E50] hover:bg-[#1a252f] text-white">
-              Quay về trang chủ
+          <Link to="/listmentor">
+            <Button className="bg-[#2C3E50] hover:bg-[#1a252f] text-white px-4 py-1.5 rounded-md text-sm shadow-sm hover:shadow-md transition-all duration-200">
+              <ArrowLeft className="h-3.5 w-3.5 mr-1" />
+              Quay về danh sách Mentor
             </Button>
           </Link>
         </div>
@@ -326,7 +292,6 @@ export const MentorDetailPage = () => {
     );
   }
 
-  // Calculate total duration and price
   const totalSlots = Object.values(selectedSlots).flat().length;
   const totalDuration = totalSlots * sessionDuration;
   const calculatedPrice = (mentor.price * totalDuration).toLocaleString("vi-VN", {
@@ -334,114 +299,61 @@ export const MentorDetailPage = () => {
     currency: "VND",
   });
 
-  // Sort comments by creation date (newest first)
   const sortedComments = [...comments].sort(
     (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
   );
 
-  // Generate available slots for the current selected date
   const availableSlots = generateAvailableSlots(selectedDate);
 
-  // Rest of the component remains unchanged
   return (
-    <main className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-pink-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <main className="min-h-screen bg-[#FFFFFF] dark:bg-gray-900">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Link
           to="/listmentor"
-          className="inline-flex items-center gap-2 text-[#333333] dark:text-gray-300 hover:text-[#2C3E50] dark:hover:text-[#F9C5D5] mb-6 transition-all duration-200 font-medium group"
+          className="inline-flex items-center gap-1.5 text-[#2C3E50] dark:text-gray-200 hover:text-[#F9C5D5] mb-4 text-sm font-medium transition-all duration-200 group"
         >
-          <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
-          Quay lại
+          <ArrowLeft className="h-3.5 w-3.5 group-hover:-translate-x-0.5 transition-transform" />
+          Quay lại danh sách Mentor
         </Link>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
-          {/* Main Content (unchanged) */}
-          <div className="lg:col-span-2 space-y-6">
-            <Card className="shadow-xl hover:shadow-2xl transition-all duration-300 border-0 overflow-hidden bg-white">
-              <div className="absolute top-0 left-0 w-full h-2 bg-[#F9C5D5]"></div>
-              <CardContent className="p-6 sm:p-8">
-                <div className="flex flex-col sm:flex-row gap-6">
-                  <div className="relative">
-                    <Avatar className="w-28 h-28 sm:w-36 sm:h-36 ring-4 ring-[#F9C5D5]/30">
-                      <AvatarImage
-                        src={mentor.avatar_url || "/placeholder.svg"}
-                        alt={mentor.full_name}
-                      />
-                      <AvatarFallback className="text-2xl bg-[#F9C5D5] text-[#2C3E50]">
-                        {mentor.full_name?.charAt(0)}
-                      </AvatarFallback>
-                    </Avatar>
-                  </div>
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+          <div className="lg:col-span-3 space-y-4">
+            {/* Mentor Info */}
+            <Card className="border-0 bg-white dark:bg-gray-900 shadow-sm rounded-xl overflow-hidden">
+              <CardContent className="p-4 sm:p-6">
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <Avatar className="w-20 h-20 sm:w-24 sm:h-24 ring-2 ring-[#F9C5D5]/20 hover:ring-[#F9C5D5]/40 transition-all duration-200">
+                    <AvatarImage
+                      src={mentor.avatar_url || "/placeholder.svg"}
+                      alt={mentor.full_name}
+                      className="object-cover"
+                    />
+                    <AvatarFallback className="text-lg bg-[#F9C5D5] text-[#2C3E50]">
+                      {mentor.full_name?.charAt(0)}
+                    </AvatarFallback>
+                  </Avatar>
                   <div className="flex-1">
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <h1 className="text-2xl sm:text-3xl font-bold text-[#2C3E50] dark:text-white mb-2">
-                          {mentor.full_name}
-                        </h1>
-                        <p className="text-lg font-semibold text-[#333333] dark:text-gray-300 mb-1">
-                          {mentor.job_title}
-                        </p>
-                        <p className="text-sm text-gray-600 dark:text-gray-400 flex items-center gap-2">
-                          <Award className="h-4 w-4 text-[#F9C5D5]" />
-                          {mentor.company} · {mentor.current_position}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex flex-wrap gap-4 mb-4 p-4 bg-gradient-to-r from-pink-50 to-white rounded-xl border border-[#F9C5D5]/20">
-                      <div className="flex items-center gap-2">
-                        <div className="bg-[#F9C5D5]/20 p-2 rounded-full">
-                          <Star className="h-4 w-4 fill-[#F9C5D5] text-[#F9C5D5]" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-bold text-[#2C3E50] dark:text-white">
-                            {mentor.rating || 0}
-                          </p>
-                          <p className="text-xs text-gray-600">Rating</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="bg-[#2C3E50]/10 p-2 rounded-full">
-                          <Users className="h-4 w-4 text-[#2C3E50]" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-bold text-[#2C3E50] dark:text-white">
-                            {mentor.sessions || 0}
-                          </p>
-                          <p className="text-xs text-gray-600">Sessions</p>
-                        </div>
-                      </div>
-                      {mentor.location && (
-                        <div className="flex items-center gap-2">
-                          <div className="bg-[#F9C5D5]/20 p-2 rounded-full">
-                            <MapPin className="h-4 w-4 text-[#2C3E50]" />
-                          </div>
-                          <div>
-                            <p className="text-sm font-bold text-[#2C3E50] dark:text-white">
-                              {mentor.location}
-                            </p>
-                            <p className="text-xs text-gray-600">Location</p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex flex-wrap gap-2 mb-6">
+                    <h1 className="text-xl sm:text-2xl font-semibold text-[#2C3E50] dark:text-white mb-1">
+                      {mentor.full_name}
+                    </h1>
+                    <p className="text-sm text-[#333333] dark:text-gray-300 mb-1">
+                      {mentor.job_title}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                      <Award className="h-3 w-3 text-[#F9C5D5]" />
+                      {mentor.company} · {mentor.current_position}
+                    </p>
+                    <div className="flex flex-wrap gap-2 mt-3">
                       {(mentor.category || "").split(",").map((category, idx) => (
                         <Badge
                           key={idx}
-                          className="bg-[#F9C5D5] text-[#2C3E50] border-0 px-3 py-1 hover:shadow-md transition-shadow font-medium"
+                          className="bg-[#F9C5D5] text-[#2C3E50] text-xs px-2 py-0.5 hover:bg-[#F9C5D5]/80 transition-all duration-200"
                         >
                           {category.trim()}
                         </Badge>
                       ))}
                     </div>
-                    <div className="flex flex-wrap gap-3">
-                      <Button
-                        size="sm"
-                        className="bg-[#2C3E50] hover:bg-[#1a252f] text-white shadow-md hover:shadow-lg transition-all"
-                      >
-                        <MessageCircle className="h-4 w-4 mr-2" />
-                        Nhắn tin
-                      </Button>
+                    <div className="flex flex-wrap gap-2 mt-3">
                       {mentor.linkedin_url && (
                         <Button
                           size="sm"
@@ -449,10 +361,13 @@ export const MentorDetailPage = () => {
                           as="a"
                           href={mentor.linkedin_url}
                           target="_blank"
-                          className="border-[#F9C5D5] text-[#2C3E50] hover:bg-[#F9C5D5]/10"
+                          className="border-[#F9C5D5] text-[#2C3E50] hover:bg-[#F9C5D5]/10 px-3 py-1 text-xs rounded-md transition-all duration-200 relative group"
                         >
-                          <Linkedin className="h-4 w-4 mr-2" />
+                          <Linkedin className="h-3 w-3 mr-1" />
                           LinkedIn
+                          <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-1.5 hidden group-hover:block text-xs text-white bg-[#2C3E50] px-2 py-0.5 rounded">
+                            Xem LinkedIn
+                          </span>
                         </Button>
                       )}
                       {mentor.personal_link_url && (
@@ -462,10 +377,13 @@ export const MentorDetailPage = () => {
                           as="a"
                           href={mentor.personal_link_url}
                           target="_blank"
-                          className="border-[#F9C5D5] text-[#2C3E50] hover:bg-[#F9C5D5]/10"
+                          className="border-[#F9C5D5] text-[#2C3E50] hover:bg-[#F9C5D5]/10 px-3 py-1 text-xs rounded-md transition-all duration-200 relative group"
                         >
-                          <Globe className="h-4 w-4 mr-2" />
+                          <Globe className="h-3 w-3 mr-1" />
                           Website
+                          <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-1.5 hidden group-hover:block text-xs text-white bg-[#2C3E50] px-2 py-0.5 rounded">
+                            Xem website
+                          </span>
                         </Button>
                       )}
                     </div>
@@ -474,34 +392,34 @@ export const MentorDetailPage = () => {
               </CardContent>
             </Card>
 
-            <Card className="shadow-lg hover:shadow-xl transition-shadow border-0 bg-white">
-              <CardHeader className="border-b border-[#F9C5D5]/20">
-                <CardTitle className="text-xl flex items-center gap-2 text-[#2C3E50]">
-                  <TrendingUp className="h-5 w-5 text-[#F9C5D5]" />
+            {/* Bio */}
+            <Card className="border-0 bg-white dark:bg-gray-900 shadow-sm rounded-xl">
+              <CardHeader className="p-4 border-b border-[#F9C5D5]/10">
+                <CardTitle className="text-base flex items-center gap-1 text-[#2C3E50] dark:text-white">
+                  <TrendingUp className="h-3.5 w-3.5 text-[#F9C5D5]" />
                   Giới thiệu
                 </CardTitle>
               </CardHeader>
-              <CardContent className="pt-6">
-                <p className="text-[#333333] dark:text-gray-300 leading-relaxed">
-                  {mentor.bio}
-                </p>
+              <CardContent className="p-4 text-sm text-[#333333] dark:text-gray-300">
+                {mentor.bio}
               </CardContent>
             </Card>
 
+            {/* Skills */}
             {mentor.skill && (
-              <Card className="shadow-lg hover:shadow-xl transition-shadow border-0 bg-white">
-                <CardHeader className="border-b border-[#F9C5D5]/20">
-                  <CardTitle className="text-xl flex items-center gap-2 text-[#2C3E50]">
-                    <Award className="h-5 w-5 text-[#F9C5D5]" />
-                    Kỹ năng chuyên môn
+              <Card className="border-0 bg-white dark:bg-gray-900 shadow-sm rounded-xl">
+                <CardHeader className="p-4 border-b border-[#F9C5D5]/10">
+                  <CardTitle className="text-base flex items-center gap-1 text-[#2C3E50] dark:text-white">
+                    <Award className="h-3.5 w-3.5 text-[#F9C5D5]" />
+                    Kỹ năng
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="pt-6">
+                <CardContent className="p-4">
                   <div className="flex flex-wrap gap-2">
                     {(mentor.skill || "").split(",").map((skill, idx) => (
                       <Badge
                         key={idx}
-                        className="bg-white border-2 border-[#F9C5D5] text-[#2C3E50] px-4 py-2 text-sm hover:bg-[#F9C5D5] hover:text-white transition-all font-medium"
+                        className="bg-white dark:bg-gray-800 border-[#F9C5D5] border text-[#2C3E50] dark:text-gray-200 text-xs px-2 py-0.5 hover:bg-[#F9C5D5] hover:text-white transition-all duration-200"
                       >
                         {skill.trim()}
                       </Badge>
@@ -511,70 +429,66 @@ export const MentorDetailPage = () => {
               </Card>
             )}
 
-            <Card className="shadow-lg hover:shadow-xl transition-shadow border-0 bg-white">
-              <CardHeader className="border-b border-[#F9C5D5]/20">
-                <CardTitle className="text-xl flex items-center gap-2 text-[#2C3E50]">
-                  <MessageCircle className="h-5 w-5 text-[#F9C5D5]" />
+            {/* Comments */}
+            <Card className="border-0 bg-white dark:bg-gray-900 shadow-sm rounded-xl">
+              <CardHeader className="p-4 border-b border-[#F9C5D5]/10">
+                <CardTitle className="text-base flex items-center gap-1 text-[#2C3E50] dark:text-white">
+                  <MessageCircle className="h-3.5 w-3.5 text-[#F9C5D5]" />
                   Bình luận ({sortedComments.length})
                 </CardTitle>
               </CardHeader>
-              <CardContent className="pt-6">
+              <CardContent className="p-4">
                 {commentsLoading ? (
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-3">
-                      <Skeleton className="w-12 h-12 rounded-full" />
-                      <div className="flex-1 space-y-2">
-                        <Skeleton className="h-4 w-1/2" />
-                        <Skeleton className="h-3 w-3/4" />
+                  <div className="space-y-3">
+                    {[...Array(2)].map((_, i) => (
+                      <div key={i} className="flex gap-3">
+                        <Skeleton className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700" />
+                        <div className="flex-1 space-y-1">
+                          <Skeleton className="h-3 w-1/3 bg-gray-200 dark:bg-gray-700" />
+                          <Skeleton className="h-2 w-2/3 bg-gray-200 dark:bg-gray-700" />
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <Skeleton className="w-12 h-12 rounded-full" />
-                      <div className="flex-1 space-y-2">
-                        <Skeleton className="h-4 w-1/2" />
-                        <Skeleton className="h-3 w-3/4" />
-                      </div>
-                    </div>
+                    ))}
                   </div>
                 ) : sortedComments.length > 0 ? (
-                  <div className="space-y-6 max-h-96 overflow-y-auto">
+                  <div className="space-y-3 max-h-80 overflow-y-auto">
                     {sortedComments.map((comment, idx) => (
-                      <div key={comment._id || idx} className="flex gap-4">
-                        <Avatar className="w-12 h-12 flex-shrink-0">
+                      <div key={comment._id || idx} className="flex gap-3 border-b border-[#F9C5D5]/10 pb-3 last:border-b-0">
+                        <Avatar className="w-8 h-8">
                           <AvatarImage
                             src={comment.mentee?.avatar_url || "/placeholder.svg"}
                             alt={comment.mentee?.full_name}
                           />
-                          <AvatarFallback className="bg-[#F9C5D5] text-[#2C3E50]">
+                          <AvatarFallback className="bg-[#F9C5D5] text-[#2C3E50] text-xs">
                             {comment.mentee?.full_name?.charAt(0) || "U"}
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
-                            <p className="text-sm font-semibold text-[#2C3E50]">
+                            <p className="text-xs font-medium text-[#2C3E50] dark:text-gray-200">
                               {comment.mentee?.full_name || "Người dùng"}
                             </p>
-                            <p className="text-xs text-gray-500">
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
                               {format(new Date(comment.createdAt), "dd/MM/yyyy HH:mm", { locale: vi })}
                             </p>
                           </div>
-                          <div className="flex items-center gap-1 mb-2">
+                          <div className="flex items-center gap-1 mb-1">
                             {[...Array(5)].map((_, i) => (
                               <Star
                                 key={i}
-                                className={`h-4 w-4 ${i < comment.rating
+                                className={`h-3 w-3 ${i < comment.rating
                                   ? "fill-[#F9C5D5] text-[#F9C5D5]"
-                                  : "text-gray-300"
+                                  : "text-gray-300 dark:text-gray-600"
                                   }`}
                               />
                             ))}
                           </div>
-                          <p className="text-[#333333] dark:text-gray-300 text-sm leading-relaxed">
+                          <p className="text-xs text-[#333333] dark:text-gray-300">
                             {comment.content}
                           </p>
                           {comment.booking && (
-                            <p className="text-xs text-gray-400 mt-1">
-                              Từ buổi booking: {comment.booking.sessions} sessions
+                            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                              Buổi: {comment.booking.sessions} sessions
                             </p>
                           )}
                         </div>
@@ -582,33 +496,32 @@ export const MentorDetailPage = () => {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-gray-500 text-center py-8">
-                    Chưa có bình luận nào cho mentor này.
+                  <p className="text-xs text-gray-500 dark:text-gray-400 text-center py-6">
+                    Chưa có bình luận nào.
                   </p>
                 )}
               </CardContent>
             </Card>
           </div>
 
-          {/* Sidebar Booking */}
-          <div>
-            <Card className="sticky top-8 shadow-xl border-0 overflow-hidden bg-white">
-              <div className="absolute top-0 left-0 w-full h-1 bg-[#F9C5D5]"></div>
-              <CardHeader className="bg-[#2C3E50] text-white">
-                <CardTitle className="text-xl flex items-center gap-2">
-                  <Calendar className="h-5 w-5" />
+          {/* Booking Section */}
+          <div className="lg:col-span-2">
+            <Card className="sticky top-4 border-0 bg-white dark:bg-gray-900 shadow-sm rounded-xl">
+              <CardHeader className="p-4 bg-gradient-to-r from-[#F9C5D5]/20 to-[#2C3E50]/10">
+                <CardTitle className="text-base flex items-center gap-1 text-[#2C3E50] dark:text-white">
+                  <Calendar className="h-3.5 w-3.5 text-[#F9C5D5]" />
                   Đặt lịch mentoring
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-6 p-6">
-                <div className="bg-gradient-to-br from-pink-50 to-white p-5 rounded-xl border-2 border-[#F9C5D5]">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-sm font-medium text-[#333333]">
+              <CardContent className="p-4 space-y-4">
+                <div className="bg-[#F9C5D5]/5 p-3 rounded-md">
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="text-xs font-medium text-[#333333] dark:text-gray-200">
                       Tổng chi phí
                     </span>
                     <div className="flex items-center gap-1">
-                      <DollarSign className="h-4 w-4 text-[#F9C5D5]" />
-                      <span className="text-2xl font-bold text-[#2C3E50]">
+                      <DollarSign className="h-3 w-3 text-[#F9C5D5]" />
+                      <span className="text-base font-semibold text-[#2C3E50] dark:text-white">
                         {totalSlots > 0
                           ? calculatedPrice
                           : `${mentor.price?.toLocaleString("vi-VN", {
@@ -618,14 +531,14 @@ export const MentorDetailPage = () => {
                       </span>
                     </div>
                   </div>
-                  <p className="text-xs text-gray-600">
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
                     {sessionDuration} giờ × {totalSlots} buổi
                   </p>
                 </div>
 
                 <div>
-                  <label className="flex items-center gap-2 text-sm font-semibold text-[#2C3E50] mb-3">
-                    <Clock className="h-4 w-4 text-[#F9C5D5]" />
+                  <label className="text-xs font-medium text-[#2C3E50] dark:text-gray-200 flex items-center gap-1 mb-1">
+                    <Clock className="h-3 w-3 text-[#F9C5D5]" />
                     Thời lượng mỗi buổi
                   </label>
                   <select
@@ -634,7 +547,7 @@ export const MentorDetailPage = () => {
                       setSessionDuration(parseFloat(e.target.value));
                       setSelectedSlots({});
                     }}
-                    className="w-full p-3 border-2 border-[#F9C5D5]/30 rounded-lg bg-white text-[#333333] focus:border-[#F9C5D5] focus:ring-2 focus:ring-[#F9C5D5]/20 transition-all"
+                    className="w-full p-2 border border-[#F9C5D5]/20 rounded-md bg-white dark:bg-gray-800 text-xs text-[#333333] dark:text-gray-200 focus:border-[#F9C5D5] focus:ring-1 focus:ring-[#F9C5D5]/20 transition-all duration-200"
                   >
                     {durationOptions.map((d) => (
                       <option key={d} value={d}>
@@ -645,27 +558,27 @@ export const MentorDetailPage = () => {
                 </div>
 
                 <div>
-                  <label className="flex items-center gap-2 text-sm font-semibold text-[#2C3E50] mb-3">
-                    <Calendar className="h-4 w-4 text-[#F9C5D5]" />
+                  <label className="text-xs font-medium text-[#2C3E50] dark:text-gray-200 flex items-center gap-1 mb-1">
+                    <Calendar className="h-3 w-3 text-[#F9C5D5]" />
                     Chọn ngày
                   </label>
-                  <p className="text-xs text-gray-500 mb-2">
-                    Lịch chỉ có thể đặt từ ngày {format(addDays(new Date(), 5), "dd/MM/yyyy")} trở đi.
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                    Đặt từ {format(addDays(new Date(), 5), "dd/MM/yyyy")} trở đi
                   </p>
-                  <div className="flex flex-wrap gap-2 mb-3">
+                  <div className="flex flex-wrap gap-2 mb-2">
                     {selectedDays.map((day, idx) => (
                       <Button
                         key={idx}
                         variant={format(day, "yyyy-MM-dd") === format(selectedDate, "yyyy-MM-dd") ? "default" : "outline"}
-                        className={`text-sm ${format(day, "yyyy-MM-dd") === format(selectedDate, "yyyy-MM-dd")
-                          ? "bg-[#2C3E50] text-white"
-                          : "border-[#F9C5D5] text-[#2C3E50] hover:bg-[#F9C5D5]/10"
-                          }`}
+                        className={`text-xs px-2 py-1 rounded-md ${format(day, "yyyy-MM-dd") === format(selectedDate, "yyyy-MM-dd")
+                          ? "bg-[#2C3E50] text-white hover:bg-[#1a252f]"
+                          : "border-[#F9C5D5] text-[#2C3E50] dark:text-gray-200 hover:bg-[#F9C5D5]/10"
+                          } transition-all duration-200`}
                         onClick={() => setSelectedDate(day)}
                       >
-                        {format(day, "dd/MM/yyyy", { locale: vi })}
+                        {format(day, "dd/MM", { locale: vi })}
                         <X
-                          className="h-4 w-4 ml-2"
+                          className="h-3 w-3 ml-1 hover:text-red-500 transition-colors"
                           onClick={(e) => {
                             e.stopPropagation();
                             handleRemoveDate(day);
@@ -686,51 +599,63 @@ export const MentorDetailPage = () => {
                     minDate={addDays(new Date(), 5)}
                     dateFormat="dd/MM/yyyy"
                     locale={vi}
-                    className="w-full p-3 border-2 border-[#F9C5D5]/30 rounded-lg bg-white text-[#333333] focus:border-[#F9C5D5] focus:ring-2 focus:ring-[#F9C5D5]/20 transition-all"
+                    className="w-full p-2 border border-[#F9C5D5]/20 rounded-md bg-white dark:bg-gray-800 text-xs text-[#333333] dark:text-gray-200 focus:border-[#F9C5D5] focus:ring-1 focus:ring-[#F9C5D5]/20 transition-all duration-200"
                   />
                   <Button
                     onClick={handleAddDate}
                     variant="outline"
-                    className="mt-3 w-full border-2 border-dashed border-[#F9C5D5] text-[#2C3E50] hover:bg-[#F9C5D5]/10 transition-all"
+                    className="mt-2 w-full border-[#F9C5D5] text-[#2C3E50] dark:text-gray-200 hover:bg-[#F9C5D5]/10 text-xs py-1 rounded-md transition-all duration-200"
                   >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Thêm ngày khác
+                    <Plus className="h-3 w-3 mr-1" />
+                    Thêm ngày
                   </Button>
                 </div>
 
                 <div>
-                  <label className="flex items-center justify-between text-sm font-semibold text-[#2C3E50] mb-3">
-                    <span className="flex items-center gap-2">
-                      <Clock className="h-4 w-4 text-[#F9C5D5]" />
-                      Khung giờ khả dụng ({format(selectedDate, "dd/MM/yyyy")})
+                  <label className="text-xs font-medium text-[#2C3E50] dark:text-gray-200 flex items-center justify-between mb-1">
+                    <span className="flex items-center gap-1">
+                      <Clock className="h-3 w-3 text-[#F9C5D5]" />
+                      Khung giờ ({format(selectedDate, "dd/MM")})
                     </span>
-                    <Badge variant="secondary" className="text-xs bg-[#F9C5D5]/20 text-[#2C3E50]">
+                    <Badge className="bg-[#F9C5D5]/20 text-[#2C3E50] dark:text-gray-200 text-xs border-none">
                       {availableSlots.length} slot
                     </Badge>
                   </label>
-                  <div className="grid grid-cols-2 gap-2 max-h-64 overflow-y-auto p-2 bg-pink-50/50 rounded-lg">
+                  <div className="max-h-64 overflow-y-auto space-y-1.5 p-2 bg-[#F9C5D5]/5 rounded-md">
                     {availableSlots.length > 0 ? (
-                      availableSlots.map((slot, idx) => {
-                        const dateKey = format(selectedDate, "yyyy-MM-dd");
-                        const isSelected = (selectedSlots[dateKey] || []).some(
-                          (s) => s.start.getTime() === slot.start.getTime()
-                        );
-                        return (
-                          <Button
-                            key={idx}
-                            variant={isSelected ? "default" : "outline"}
-                            className={`w-full transition-all duration-200 ${isSelected
-                              ? "bg-[#2C3E50] hover:bg-[#1a252f] text-white shadow-md scale-105"
-                              : "border-[#F9C5D5]/50 text-[#333333] hover:bg-[#F9C5D5]/20 hover:border-[#F9C5D5]"
-                              }`}
-                            onClick={() => handleSlotSelect(slot)}
-                          >
-                            {format(slot.start, "HH:mm")} - {format(slot.end, "HH:mm")}
-                          </Button>
-                        );
-                      })
+                      [...new Set(availableSlots.map((slot) => `${format(slot.start, "HH:mm")}-${format(slot.end, "HH:mm")}`))]
+                        .map((timeRange, idx) => {
+                          const [startStr, endStr] = timeRange.split("-");
+                          const startTime = new Date(selectedDate);
+                          startTime.setHours(parseInt(startStr.split(":")[0]), parseInt(startStr.split(":")[1]));
+                          const endTime = new Date(startTime);
+                          endTime.setHours(parseInt(endStr.split(":")[0]), parseInt(endStr.split(":")[1]));
+                          const slot = { start: startTime, end: endTime };
+                          const dateKey = format(selectedDate, "yyyy-MM-dd");
+                          const isSelected = (selectedSlots[dateKey] || []).some(
+                            (s) => s.start.getTime() === slot.start.getTime()
+                          );
+                          return (
+                            <Button
+                              key={idx}
+                              variant={isSelected ? "default" : "outline"}
+                              className={`w-full justify-start text-xs py-1.5 rounded-md relative group ${isSelected
+                                ? "bg-[#2C3E50] text-white hover:bg-[#1a252f]"
+                                : "border-[#F9C5D5] text-[#2C3E50] dark:text-gray-200 hover:bg-[#F9C5D5]/10"
+                                } transition-all duration-200`}
+                              onClick={() => handleSlotSelect(slot)}
+                            >
+                              <span className="w-16 text-left">{format(slot.start, "HH:mm")}</span>
+                              <span className="text-gray-500 dark:text-gray-400 mx-2">→</span>
+                              <span>{format(slot.end, "HH:mm")}</span>
+                              <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-1.5 hidden group-hover:block text-xs text-white bg-[#2C3E50] px-2 py-0.5 rounded">
+                                {isSelected ? "Bỏ chọn" : "Chọn"}
+                              </span>
+                            </Button>
+                          );
+                        })
                     ) : (
-                      <p className="col-span-2 text-center text-sm text-gray-500 py-4">
+                      <p className="text-xs text-gray-500 dark:text-gray-400 text-center py-3">
                         Không có khung giờ trống
                       </p>
                     )}
@@ -738,19 +663,21 @@ export const MentorDetailPage = () => {
                 </div>
 
                 {totalSlots > 0 && (
-                  <div className="bg-[#F9C5D5]/10 p-4 rounded-lg border-2 border-[#F9C5D5]/30">
-                    <label className="text-sm font-semibold text-[#2C3E50] mb-3 flex items-center justify-between">
-                      <span>Đã chọn ({totalSlots})</span>
+                  <div className="bg-[#F9C5D5]/5 p-2 rounded-md">
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="text-xs font-medium text-[#2C3E50] dark:text-gray-200">
+                        Đã chọn ({totalSlots})
+                      </span>
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => setSelectedSlots({})}
-                        className="text-xs text-red-500 hover:text-red-700 hover:bg-red-50"
+                        className="text-xs text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 px-2 py-0.5"
                       >
                         Xóa tất cả
                       </Button>
-                    </label>
-                    <div className="space-y-2 max-h-40 overflow-y-auto">
+                    </div>
+                    <div className="space-y-1 max-h-32 overflow-y-auto">
                       {Object.entries(selectedSlots)
                         .sort(([dateA], [dateB]) => new Date(dateA) - new Date(dateB))
                         .map(([date, slots]) =>
@@ -759,18 +686,15 @@ export const MentorDetailPage = () => {
                             .map((slot, idx) => (
                               <div
                                 key={`${date}-${idx}`}
-                                className="flex items-center justify-between bg-white p-2 rounded-lg text-sm border border-[#F9C5D5]/30"
+                                className="flex items-center justify-between bg-white dark:bg-gray-800 p-1.5 rounded-md text-xs"
                               >
-                                <span className="text-[#333333]">
-                                  {format(slot.start, "HH:mm")} - {format(slot.end, "HH:mm")}
-                                  <span className="text-xs text-gray-500 ml-2">
-                                    {format(new Date(date), "dd/MM", { locale: vi })}
-                                  </span>
+                                <span className="text-[#333333] dark:text-gray-200">
+                                  {format(slot.start, "HH:mm")} - {format(slot.end, "HH:mm")} · {format(new Date(date), "dd/MM")}
                                 </span>
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  className="h-6 w-6 p-0 hover:bg-red-100"
+                                  className="h-5 w-5 p-0 hover:bg-red-50 dark:hover:bg-red-900/10"
                                   onClick={() =>
                                     setSelectedSlots((prev) => {
                                       const slotsForDate = prev[date].filter(
@@ -793,32 +717,35 @@ export const MentorDetailPage = () => {
                 )}
 
                 <div>
-                  <label className="text-sm font-semibold text-[#2C3E50] mb-2 block">
-                    Ghi chú cho mentor
+                  <label className="text-xs font-medium text-[#2C3E50] dark:text-gray-200 mb-1 block">
+                    Ghi chú
                   </label>
                   <Textarea
                     value={note}
                     onChange={(e) => setNote(e.target.value)}
-                    placeholder="Chia sẻ mục tiêu hoặc câu hỏi bạn muốn thảo luận..."
-                    className="w-full bg-white text-[#333333] border-[#F9C5D5]/30 min-h-[80px] focus:border-[#F9C5D5] focus:ring-2 focus:ring-[#F9C5D5]/20 transition-all"
+                    placeholder="Mục tiêu hoặc câu hỏi bạn muốn thảo luận..."
+                    className="w-full bg-white dark:bg-gray-800 text-xs text-[#333333] dark:text-gray-200 border-[#F9C5D5]/20 min-h-[70px] rounded-md focus:border-[#F9C5D5] focus:ring-1 focus:ring-[#F9C5D5]/20 transition-all duration-200"
                   />
                 </div>
 
                 <Button
                   onClick={handleSubmit}
                   disabled={loading || totalSlots === 0}
-                  className="w-full bg-[#2C3E50] hover:bg-[#1a252f] text-white py-6 text-base font-semibold shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full bg-[#2C3E50] hover:bg-[#1a252f] text-white py-2 text-xs font-medium rounded-md transition-all duration-200 disabled:opacity-50 relative group"
                 >
                   {loading ? (
                     "Đang xử lý..."
                   ) : totalSlots === 0 ? (
-                    "Chọn khung giờ để tiếp tục"
+                    "Chọn khung giờ"
                   ) : (
                     <>
-                      <CheckCircle className="h-5 w-5 mr-2" />
-                      Xác nhận đặt lịch - {calculatedPrice}
+                      <CheckCircle className="h-3 w-3 mr-1" />
+                      Xác nhận - {calculatedPrice}
                     </>
                   )}
+                  <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-1.5 hidden group-hover:block text-xs text-white bg-[#2C3E50] px-2 py-0.5 rounded">
+                    Xác nhận đặt lịch
+                  </span>
                 </Button>
               </CardContent>
             </Card>

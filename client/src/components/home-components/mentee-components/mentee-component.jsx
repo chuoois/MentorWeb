@@ -1,10 +1,9 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom"; // Import useNavigate
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Link } from "react-router-dom";
 import {
   Users,
   Calendar,
@@ -19,233 +18,160 @@ import {
   Play,
   Check,
   ArrowRight,
-  ChevronLeft,
-  ChevronRight,
+  Sparkles,
+  Video,
+  Zap,
+  Award,
+  Target,
+  BookOpen,
+  Brain,
+  Heart,
+  Rocket,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 
-// 🎨 Màu sắc theo HomeRegisterMentor
 const colors = {
-  primary: "#F9C5D5", // hồng nhạt
-  secondary: "#FFFFFF", // trắng
-  accent: "#2C3E50", // xanh đậm
-  text: "#333333", // chữ đậm
+  primary: "#F9C5D5", // Hồng pastel
+  secondary: "#FFFFFF", // Trắng
+  accent: "#2C3E50", // Xanh navy
+  text: "#333333", // Xám đậm
 };
 
-// ---------------- DỮ LIỆU GIẢ ----------------
-export const fakeData = {
+// Dữ liệu giả không thay đổi
+const fakeData = {
+  stats: [
+    { number: "Mới ra mắt", label: "Nền tảng kết nối mentor Việt Nam", icon: Rocket },
+    { number: "Miễn phí", label: "Đăng ký và tìm kiếm mentor", icon: Heart },
+    { number: "100%", label: "Mentor được xác thực kỹ lưỡng", icon: Shield },
+  ],
   features: [
     {
       icon: Users,
-      title: "Hàng nghìn mentor",
-      description:
-        "Kết nối với mentor từ Google, Meta, Amazon và nhiều công ty hàng đầu khác.",
+      title: "Kết nối trực tiếp",
+      description: "Gặp gỡ mentor qua video call hoặc chat - không qua trung gian",
     },
     {
-      icon: Calendar,
-      title: "Lịch học linh hoạt",
-      description:
-        "Đặt buổi học phù hợp với lịch của bạn, có sẵn 24/7 trên toàn thế giới.",
+      icon: Brain,
+      title: "Tìm kiếm thông minh",
+      description: "Lọc theo kỹ năng, ngành nghề và kinh nghiệm mong muốn",
     },
     {
-      icon: MessageCircle,
-      title: "Trò chuyện riêng",
-      description:
-        "Trao đổi trực tiếp với mentor qua tin nhắn và cuộc gọi video.",
+      icon: Video,
+      title: "Học linh hoạt",
+      description: "Đặt lịch theo thời gian của bạn, không bị ràng buộc",
     },
     {
-      icon: Trophy,
-      title: "Theo dõi tiến độ",
-      description:
-        "Đặt mục tiêu và theo dõi sự phát triển sự nghiệp theo thời gian.",
-    },
-    {
-      icon: Shield,
-      title: "Đảm bảo chất lượng",
-      description: "Tất cả mentor đều được xác minh và đánh giá bởi mentee.",
-    },
-    {
-      icon: Clock,
-      title: "Hỗ trợ 24/7",
-      description: "Đội ngũ hỗ trợ luôn sẵn sàng giúp bạn bất cứ lúc nào.",
+      icon: Target,
+      title: "Phát triển bền vững",
+      description: "Xây dựng kế hoạch dài hạn cùng mentor phù hợp",
     },
   ],
   mentors: [
     {
       id: 1,
       name: "Minh Anh Nguyen",
-      title: "Senior Product Manager tại Google",
+      title: "Senior Product Manager",
       company: "Google",
-      location: "TP. Hồ Chí Minh",
-      rating: 4.9,
-      sessions: 150,
+      location: "TP.HCM",
+      rating: 5.0,
+      sessions: 0,
       price: "2,500,000",
-      image:
-        "https://anhgaixinhonline.com/wp-content/uploads/2025/02/anh-gai-xinh-cute-1.jpg",
-      skills: ["Chiến lược sản phẩm", "Lãnh đạo", "Phân tích"],
+      image: "https://i.pravatar.cc/150?img=1",
+      skills: ["Product Strategy", "Leadership", "Analytics"],
       available: true,
+      verified: true,
+      isNew: true,
     },
     {
       id: 2,
       name: "Duc Huy Tran",
-      title: "Engineering Manager tại Meta",
+      title: "Engineering Manager",
       company: "Meta",
       location: "Hà Nội",
-      rating: 4.8,
-      sessions: 89,
+      rating: 5.0,
+      sessions: 0,
       price: "3,000,000",
-      image:
-        "https://anhgaixinhonline.com/wp-content/uploads/2025/02/anh-gai-xinh-cute-1.jpg",
-      skills: ["Kỹ thuật phần mềm", "Quản lý nhóm", "Thiết kế hệ thống"],
+      image: "https://i.pravatar.cc/150?img=2",
+      skills: ["Software Engineering", "Team Management"],
       available: true,
+      verified: true,
+      isNew: true,
     },
     {
       id: 3,
       name: "Mai Le",
-      title: "UX Design Lead tại Shopee",
+      title: "UX Design Lead",
       company: "Shopee",
-      location: "TP. Hồ Chí Minh",
-      rating: 4.9,
-      sessions: 203,
+      location: "TP.HCM",
+      rating: 5.0,
+      sessions: 0,
       price: "2,200,000",
-      image:
-        "https://anhgaixinhonline.com/wp-content/uploads/2025/02/anh-gai-xinh-cute-1.jpg",
-      skills: ["Thiết kế UX", "Design System", "Nghiên cứu người dùng"],
-      available: false,
+      image: "https://i.pravatar.cc/150?img=3",
+      skills: ["UX Design", "Design System"],
+      available: true,
+      verified: true,
+      isNew: true,
     },
     {
       id: 4,
       name: "Khanh Pham",
-      title: "Data Scientist tại Grab",
+      title: "Data Scientist",
       company: "Grab",
       location: "Đà Nẵng",
-      rating: 4.7,
-      sessions: 120,
+      rating: 5.0,
+      sessions: 0,
       price: "2,800,000",
-      image:
-        "https://anhgaixinhonline.com/wp-content/uploads/2025/02/anh-gai-xinh-cute-1.jpg",
-      skills: ["Machine Learning", "Phân tích dữ liệu", "AI"],
+      image: "https://i.pravatar.cc/150?img=4",
+      skills: ["Machine Learning", "AI"],
       available: true,
-    },
-    {
-      id: 5,
-      name: "Thu Hoang",
-      title: "Marketing Director tại Unilever",
-      company: "Unilever",
-      location: "TP. Hồ Chí Minh",
-      rating: 4.9,
-      sessions: 175,
-      price: "3,200,000",
-      image:
-        "https://anhgaixinhonline.com/wp-content/uploads/2025/02/anh-gai-xinh-cute-1.jpg",
-      skills: ["Chiến lược thương hiệu", "Digital Marketing", "Truyền thông"],
-      available: true,
-    },
-    {
-      id: 6,
-      name: "Nam Bui",
-      title: "Fullstack Developer tại VNG",
-      company: "VNG",
-      location: "Hà Nội",
-      rating: 4.6,
-      sessions: 95,
-      price: "1,800,000",
-      image:
-        "https://anhgaixinhonline.com/wp-content/uploads/2025/02/anh-gai-xinh-cute-1.jpg",
-      skills: ["React", "Node.js", "Cloud"],
-      available: false,
+      verified: true,
+      isNew: true,
     },
   ],
-  testimonial: [
+  testimonials: [
     {
-      quote:
-        "Được tiếp cận với kiến thức và kinh nghiệm của mentor trên nền tảng này là cơ hội mà tôi không thể bỏ qua. Nhờ mentor, tôi đã đạt được mục tiêu gia nhập Tesla.",
+      quote: "Ý tưởng tuyệt vời! Việt Nam cần một nền tảng kết nối mentor chất lượng như thế này.",
       name: "Lan Pham",
-      title: "Kỹ sư phần mềm tại Tesla",
-      image:
-        "https://anhgaixinhonline.com/wp-content/uploads/2025/02/anh-gai-xinh-cute-1.jpg",
-      rating: 5,
-      companyLogo: "/tesla-logo.png",
+      title: "Product Designer",
+      image: "https://i.pravatar.cc/80?img=5",
+      role: "Early Supporter",
     },
     {
-      quote:
-        "Mentor đã giúp tôi định hướng sự nghiệp trong ngành Marketing quốc tế. Tôi tự tin ứng tuyển và hiện đang làm tại Unilever.",
+      quote: "Rất mong chờ được tham gia và kết nối với các mentor từ những công ty lớn.",
       name: "Nguyen Hoang",
-      title: "Chuyên viên Marketing tại Unilever",
-      image:
-        "https://anhgaixinhonline.com/wp-content/uploads/2025/02/anh-gai-xinh-cute-1.jpg",
-      rating: 5,
-      companyLogo: "/unilever-logo.png",
-    },
-    {
-      quote:
-        "Từ một sinh viên mới ra trường, tôi được mentor hướng dẫn cách phát triển kỹ năng quản lý dự án. Hiện tôi đã trở thành Project Manager tại một công ty công nghệ.",
-      name: "Minh Tran",
-      title: "Project Manager tại FPT Software",
-      image:
-        "https://anhgaixinhonline.com/wp-content/uploads/2025/02/anh-gai-xinh-cute-1.jpg",
-      rating: 4,
-      companyLogo: "/fpt-logo.png",
-    },
-    {
-      quote:
-        "Trước đây tôi khá mơ hồ về con đường học tập ở nước ngoài. Mentor đã chia sẻ kinh nghiệm thực tế và nhờ vậy tôi nhận học bổng toàn phần tại Anh.",
-      name: "Thao Le",
-      title: "Du học sinh tại University of Oxford",
-      image:
-        "https://anhgaixinhonline.com/wp-content/uploads/2025/02/anh-gai-xinh-cute-1.jpg",
-      rating: 5,
-      companyLogo: "/oxford-logo.png",
+      title: "Software Engineer",
+      image: "https://i.pravatar.cc/80?img=6",
+      role: "Early Supporter",
     },
   ],
 };
 
-// ---------------- HERO ----------------
-const benefits = [
-  "Học hỏi từ mentor chuyên nghiệp",
-  "Kết nối với nhiều lĩnh vực khác nhau",
-  "Phát triển cá nhân và sự nghiệp",
-];
-
+// ============ HERO SECTION ============
 export const HeroSection = () => {
-  const words = [
-    "Mentor chuyên nghiệp",
-    "Công nghệ thông tin",
-    "Marketing",
-    "Kỹ năng lãnh đạo",
-    "Thiết kế UX",
-  ];
-
-  const [displayedText, setDisplayedText] = useState("");
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [wordIndex, setWordIndex] = useState(0);
-  const [charIndex, setCharIndex] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
+  const [displayedText, setDisplayedText] = useState("");
+  const [wordIndex, setWordIndex] = useState(0);
   const navigate = useNavigate();
 
+  const words = ["phát triển", "kết nối", "học hỏi", "thành công"];
+
   useEffect(() => {
+    let timeout;
     const currentWord = words[wordIndex];
 
-    const interval = setInterval(() => {
-      if (!isDeleting) {
-        setDisplayedText(currentWord.slice(0, charIndex + 1));
-        setCharIndex((prev) => prev + 1);
+    if (displayedText.length < currentWord.length) {
+      timeout = setTimeout(() => {
+        setDisplayedText(currentWord.slice(0, displayedText.length + 1));
+      }, 100);
+    } else {
+      timeout = setTimeout(() => {
+        setDisplayedText("");
+        setWordIndex((prev) => (prev + 1) % words.length);
+      }, 2000);
+    }
 
-        if (charIndex + 1 === currentWord.length) {
-          setTimeout(() => setIsDeleting(true), 1000);
-        }
-      } else {
-        setDisplayedText(currentWord.slice(0, charIndex - 1));
-        setCharIndex((prev) => prev - 1);
-
-        if (charIndex - 1 === 0) {
-          setIsDeleting(false);
-          setWordIndex((prev) => (prev + 1) % words.length);
-        }
-      }
-    }, 120);
-
-    return () => clearInterval(interval);
-  }, [charIndex, isDeleting, wordIndex]);
+    return () => clearTimeout(timeout);
+  }, [displayedText, wordIndex]);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -257,81 +183,112 @@ export const HeroSection = () => {
   };
 
   return (
-    <section className="py-20" style={{ background: colors.primary }}>
-      <div className="container mx-auto px-6">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
-          {/* Nội dung bên trái */}
+    <section className="relative min-h-screen flex items-center overflow-hidden">
+      {/* Animated gradient background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-[#F9C5D5]/20 via-[#FFFFFF] to-[#2C3E50]/10">
+        <div className="absolute inset-0 opacity-30">
+          <div className="absolute top-20 left-20 w-96 h-96 bg-[#F9C5D5]/50 rounded-full mix-blend-multiply filter blur-3xl animate-pulse" />
+          <div className="absolute bottom-20 right-20 w-96 h-96 bg-[#2C3E50]/50 rounded-full mix-blend-multiply filter blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
+        </div>
+      </div>
+
+      <div className="container mx-auto px-6 py-20 relative z-10">
+        <div className="grid lg:grid-cols-2 gap-16 items-center">
+          {/* Left content */}
           <div className="space-y-8">
-            <h2
-              className="text-4xl lg:text-5xl font-bold leading-tight"
-              style={{ color: colors.text }}
-            >
-              Kết nối với Mentor hàng đầu.{" "}
-              <span style={{ color: colors.accent }}>
-                Khởi đầu hành trình phát triển của bạn.
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#F9C5D5] text-[#333333] shadow-lg">
+              <Sparkles className="w-4 h-4" />
+              <span className="text-sm font-medium">
+                Mới ra mắt tại Việt Nam
               </span>
-            </h2>
-
-            {/* Text typing effect */}
-            <h3
-              className="text-3xl lg:text-4xl font-semibold h-12"
-              style={{ color: colors.accent }}
-            >
-              {displayedText}
-              <span className="animate-pulse">|</span>
-            </h3>
-
-            <div className="space-y-4">
-              {benefits.map((item, index) => (
-                <div key={index} className="flex items-center space-x-3">
-                  <div
-                    className="w-7 h-7 bg-[#2C3E50] rounded-full flex items-center justify-center"
-                  >
-                    <Check className="w-4 h-4 text-white" />
-                  </div>
-                  <span style={{ color: colors.text }} className="text-base">
-                    {item}
-                  </span>
-                </div>
-              ))}
             </div>
 
-            {/* Search box */}
-            <div className="max-w-xl">
+            <h1 className="text-5xl lg:text-7xl font-bold leading-tight">
+              <span className="text-[#333333]">Cùng </span>
+              <span className="bg-gradient-to-r from-[#F9C5D5] to-[#2C3E50] bg-clip-text text-transparent">
+                {displayedText}
+                <span className="animate-pulse">|</span>
+              </span>
+              <br />
+              <span className="text-[#333333]">với Mentor</span>
+            </h1>
+
+            <p className="text-xl text-[#333333]/80 leading-relaxed">
+              Nền tảng kết nối bạn với các mentor giàu kinh nghiệm từ Google, Meta,
+              Shopee và nhiều công ty hàng đầu tại Việt Nam.
+            </p>
+
+            {/* Search bar */}
+            <div className="relative group">
+              <div className="absolute -inset-1 bg-gradient-to-r from-[#F9C5D5] to-[#2C3E50] rounded-2xl blur opacity-25 group-hover:opacity-40 transition" />
               <form onSubmit={handleSearch} className="relative">
-                <Search
-                  className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5"
-                  style={{ color: colors.text }}
-                />
+                <Search className="absolute left-6 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[#333333]/60" />
                 <Input
-                  placeholder="Tìm theo công ty, kỹ năng hoặc vai trò..."
-                  className="pl-12 pr-4 py-6 text-lg rounded-xl border"
-                  style={{
-                    backgroundColor: colors.secondary,
-                    color: colors.text,
-                  }}
+                  placeholder="Tìm theo kỹ năng, công ty hoặc vai trò..."
+                  className="pl-14 pr-40 py-7 text-lg rounded-2xl border-0 bg-[#FFFFFF] shadow-xl"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
                 <Button
                   type="submit"
-                  size="lg"
-                  className="absolute right-2 top-1/2 transform -translate-y-1/2 rounded-lg px-8"
-                  style={{ background: colors.accent, color: colors.secondary }}
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 px-8 py-6 rounded-xl bg-[#F9C5D5] hover:bg-[#F9C5D5]/80 text-[#333333]"
                 >
-                  Tìm mentor
+                  Khám phá
                 </Button>
               </form>
             </div>
+
+            {/* Value props */}
+            <div className="flex flex-wrap gap-4 items-center pt-4">
+              <div className="flex items-center gap-2 bg-[#FFFFFF] rounded-full px-4 py-2 shadow-md">
+                <Check className="w-4 h-4 text-[#2C3E50]" />
+                <span className="text-sm font-medium text-[#333333]">Miễn phí đăng ký</span>
+              </div>
+              <div className="flex items-center gap-2 bg-[#FFFFFF] rounded-full px-4 py-2 shadow-md">
+                <Check className="w-4 h-4 text-[#2C3E50]" />
+                <span className="text-sm font-medium text-[#333333]">Mentor được xác thực</span>
+              </div>
+              <div className="flex items-center gap-2 bg-[#FFFFFF] rounded-full px-4 py-2 shadow-md">
+                <Check className="w-4 h-4 text-[#2C3E50]" />
+                <span className="text-sm font-medium text-[#333333]">Bảo mật thông tin</span>
+              </div>
+            </div>
           </div>
 
-          {/* Ảnh mockup bên phải */}
-          <div className="relative flex justify-center lg:justify-end">
-            <img
-              src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/attachments/gen-images/public/mobile-app-mockup-showing-mentoring-interface-aD4pt8qMaAcMg2Jeb08MLSwvwHxVEI.jpg"
-              alt="Ứng dụng cố vấn trên di động"
-              className="w-full max-w-md lg:max-w-lg xl:max-w-xl h-auto rounded-2xl shadow-xl object-contain"
-            />
+          {/* Right visual */}
+          <div className="relative">
+            <div className="relative rounded-3xl overflow-hidden shadow-2xl">
+              <img
+                src="https://images.unsplash.com/photo-1552581234-26160f608093?w=800&h=1000&fit=crop"
+                alt="Mentoring"
+                className="w-full h-auto object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#2C3E50]/50 to-transparent" />
+
+              {/* Floating cards */}
+              <div className="absolute top-8 right-8 bg-[#FFFFFF]/90 backdrop-blur-md rounded-2xl p-4 shadow-xl animate-bounce" style={{ animationDuration: "3s" }}>
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-full bg-[#F9C5D5] flex items-center justify-center">
+                    <Rocket className="w-6 h-6 text-[#333333]" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-[#333333]">Mới ra mắt</p>
+                    <p className="text-xs text-[#333333]/80">Tham gia ngay!</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="absolute bottom-8 left-8 bg-[#FFFFFF]/90 backdrop-blur-md rounded-2xl p-4 shadow-xl">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-[#F9C5D5]" />
+                  <div>
+                    <p className="font-semibold text-[#333333]">Mentor chất lượng</p>
+                    <p className="text-xs text-[#333333]/80">100% xác thực</p>
+                  </div>
+                  <div className="w-2 h-2 bg-[#2C3E50] rounded-full animate-pulse ml-2" />
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -339,71 +296,253 @@ export const HeroSection = () => {
   );
 };
 
-// ---------------- FEATURE ----------------
-export const FeatureSection = () => {
+// ============ STATS SECTION ============
+export const StatsSection = () => {
   return (
-    <section className="py-20 px-4 bg-[#FDF7F9]">
-      <div className="max-w-7xl mx-auto">
-        <div className="grid lg:grid-cols-2 gap-16 items-center">
-          <div>
-            <h2
-              className="text-4xl font-bold mb-6"
-              style={{ color: colors.text }}
-            >
-              Tại sao chọn nền tảng của chúng tôi?
-            </h2>
-            <p className="text-xl mb-8" style={{ color: colors.text }}>
-              Chúng tôi kết nối bạn với các mentor giàu kinh nghiệm để giúp sự
-              nghiệp của bạn phát triển hiệu quả.
-            </p>
+    <section className="py-20 bg-[#2C3E50] relative overflow-hidden">
+      <div className="absolute inset-0 opacity-10">
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#F9C5D5]/50 rounded-full filter blur-3xl" />
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-[#FFFFFF]/50 rounded-full filter blur-3xl" />
+      </div>
 
-            <Button
-              size="lg"
-              className="mt-8"
-              style={{ background: colors.accent, color: colors.secondary }}
-            >
-              Bắt đầu ngay
-            </Button>
+      <div className="container mx-auto px-6 relative z-10">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl font-bold text-[#FFFFFF] mb-3">
+            Tại sao chọn chúng tôi?
+          </h2>
+          <p className="text-[#FFFFFF]/80 text-lg">
+            Nền tảng mentorship hiện đại đầu tiên tại Việt Nam
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {fakeData.stats.map((stat, idx) => (
+            <div key={idx} className="text-center group">
+              <div className="mb-4 flex justify-center">
+                <div className="w-20 h-20 rounded-2xl bg-[#FFFFFF]/10 backdrop-blur-sm flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <stat.icon className="w-10 h-10 text-[#F9C5D5]" />
+                </div>
+              </div>
+              <h3 className="text-3xl md:text-4xl font-bold text-[#FFFFFF] mb-3">
+                {stat.number}
+              </h3>
+              <p className="text-lg text-[#FFFFFF]/80">{stat.label}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+// ============ FEATURES BENTO GRID ============
+export const FeaturesBento = () => {
+  return (
+    <section className="py-32 px-6 bg-gradient-to-b from-[#FFFFFF] to-[#F9C5D5]/10">
+      <div className="max-w-7xl mx-auto">
+        <div className="text-center mb-16">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#F9C5D5]/20 mb-6">
+            <Zap className="w-4 h-4 text-[#2C3E50]" />
+            <span className="text-sm font-medium text-[#333333]">
+              Tính năng nổi bật
+            </span>
+          </div>
+          <h2 className="text-4xl font-bold mb-6"
+            style={{ color: colors.text }}>
+            Mentorship đơn giản và hiệu quả
+          </h2>
+        </div>
+
+        {/* Bento Grid Layout */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 auto-rows-fr">
+          {/* Large feature - spans 2 columns */}
+          <div className="lg:col-span-2 lg:row-span-2 bg-[#F9C5D5] rounded-3xl p-8 text-[#333333] relative overflow-hidden group cursor-pointer">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-[#FFFFFF]/20 rounded-full -translate-y-32 translate-x-32 group-hover:scale-150 transition-transform duration-700" />
+            <div className="relative z-10">
+              <Users className="w-12 h-12 mb-6 text-[#2C3E50]" />
+              <h3 className="text-3xl font-bold mb-4">
+                Mentor chất lượng
+                <br />
+                được tuyển chọn
+              </h3>
+              <p className="text-[#333333]/80 text-lg mb-6">
+                Chúng tôi xác thực kỹ lưỡng mỗi mentor để đảm bảo
+                bạn nhận được sự hướng dẫn tốt nhất
+              </p>
+              <Link to="/listmentor" className="flex items-center">
+                <Button className="bg-[#FFFFFF] text-[#333333] hover:bg-[#FFFFFF]/80">
+                  Tìm hiểu thêm
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </Link>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            {fakeData.features.map((feature, index) => (
-              <Card
-                key={index}
-                className="border hover:shadow-lg transition-shadow"
-                style={{
-                  background: colors.secondary,
-                  borderColor: `${colors.accent}20`,
-                }}
-              >
-                <CardContent className="p-6">
-                  <div
-                    className="w-12 h-12 rounded-lg flex items-center justify-center mb-4"
-                    style={{ background: colors.primary }}
-                  >
-                    <feature.icon
-                      className="h-6 w-6"
-                      style={{ color: colors.accent }}
+          {/* Regular features */}
+          {fakeData.features.map((feature, idx) => (
+            <Card
+              key={idx}
+              className="group cursor-pointer hover:shadow-2xl transition-all duration-300 border-0 bg-[#FFFFFF] rounded-3xl overflow-hidden"
+            >
+              <CardContent className="p-8 h-full flex flex-col">
+                <div className="w-16 h-16 rounded-2xl bg-[#F9C5D5]/20 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                  <feature.icon className="w-8 h-8 text-[#2C3E50]" />
+                </div>
+                <h3 className="text-xl font-bold text-[#333333] mb-3">
+                  {feature.title}
+                </h3>
+                <p className="text-[#333333]/80 flex-grow">
+                  {feature.description}
+                </p>
+              </CardContent>
+            </Card>
+          ))}
+
+          {/* CTA card */}
+          <div className="lg:col-span-2 bg-[#2C3E50] rounded-3xl p-8 text-[#FFFFFF] flex items-center justify-between group cursor-pointer hover:shadow-2xl transition-all">
+            <Link to="/mentor">
+              <div>
+                <h3 className="text-2xl font-bold mb-2">
+                  Bạn là mentor?
+                </h3>
+                <p className="text-[#FFFFFF]/80">
+                  Tham gia với chúng tôi và chia sẻ kinh nghiệm của bạn
+                </p>
+              </div>
+            </Link>
+            <ArrowRight className="w-8 h-8 text-[#F9C5D5] group-hover:translate-x-2 transition-transform" />
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+// ============ MENTOR SHOWCASE ============
+export const MentorShowcase = () => {
+  return (
+    <section className="py-32 px-6 bg-[#FFFFFF]">
+      <div className="max-w-7xl mx-auto">
+        <div className="text-center mb-16">
+          <h2 className="text-4xl lg:text-5xl font-bold text-[#333333] mb-4">
+            Gặp gỡ các mentor
+            <br />
+            <span className="bg-gradient-to-r from-[#F9C5D5] to-[#2C3E50] bg-clip-text text-transparent">
+              đầu tiên của chúng tôi
+            </span>
+          </h2>
+          <p className="text-xl text-[#333333]/80 mt-4">
+            Những chuyên gia đã sẵn sàng đồng hành cùng bạn
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          {fakeData.mentors.map((mentor) => (
+            <Card
+              key={mentor.id}
+              className="group cursor-pointer hover:shadow-2xl transition-all duration-500 border-0 rounded-3xl overflow-hidden bg-gradient-to-br from-[#FFFFFF] to-[#F9C5D5]/10"
+            >
+              <CardContent className="p-0">
+                {/* Image section */}
+                <div className="relative overflow-hidden">
+                  <div className="aspect-square bg-gradient-to-br from-[#F9C5D5]/50 to-[#2C3E50]/50 relative">
+                    <img
+                      src={mentor.image}
+                      alt={mentor.name}
+                      className="w-full h-full object-cover mix-blend-overlay opacity-90 group-hover:scale-110 transition-transform duration-700"
                     />
                   </div>
-                  <h3
-                    className="font-semibold text-lg mb-2"
-                    style={{ color: colors.text }}
-                  >
-                    {feature.title}
+
+                  {/* NEW badge */}
+                  {mentor.isNew && (
+                    <div className="absolute top-4 right-4 bg-[#F9C5D5] text-[#333333] px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 shadow-lg">
+                      <Sparkles className="w-3 h-3" />
+                      MỚI
+                    </div>
+                  )}
+
+                  {/* Online status */}
+                  {mentor.available && (
+                    <div className="absolute top-4 left-4 bg-[#2C3E50] text-[#FFFFFF] px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1 shadow-lg">
+                      <div className="w-2 h-2 bg-[#FFFFFF] rounded-full animate-pulse" />
+                      Online
+                    </div>
+                  )}
+
+                  {/* Verified badge */}
+                  {mentor.verified && (
+                    <div className="absolute bottom-4 left-4 bg-[#2C3E50] text-[#FFFFFF] p-2 rounded-full shadow-lg">
+                      <Check className="w-4 h-4" />
+                    </div>
+                  )}
+                </div>
+
+                {/* Content section */}
+                <div className="p-6">
+                  <h3 className="font-bold text-lg text-[#333333] mb-1">
+                    {mentor.name}
                   </h3>
-                  <p style={{ color: colors.text }}>{feature.description}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+
+                  <p className="text-sm text-[#333333]/80 mb-1">{mentor.title}</p>
+                  <p className="text-sm font-medium text-[#F9C5D5] mb-4">
+                    {mentor.company}
+                  </p>
+
+                  {/* Location */}
+                  <div className="flex items-center gap-2 text-sm text-[#333333]/80 mb-4">
+                    <MapPin className="w-4 h-4" />
+                    {mentor.location}
+                  </div>
+
+                  {/* Skills */}
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {mentor.skills.slice(0, 2).map((skill, idx) => (
+                      <Badge
+                        key={idx}
+                        className="text-xs bg-[#F9C5D5]/20 text-[#333333] hover:bg-[#F9C5D5]/40"
+                      >
+                        {skill}
+                      </Badge>
+                    ))}
+                  </div>
+
+                  {/* Price & CTA */}
+                  <div className="flex items-center justify-between pt-4 border-t border-[#F9C5D5]/20">
+                    <div>
+                      <p className="text-xs text-[#333333]/60">Từ</p>
+                      <p className="text-lg font-bold text-[#333333]">
+                        {mentor.price}₫
+                      </p>
+                    </div>
+                    <Button className="bg-[#F9C5D5] hover:bg-[#F9C5D5]/80 text-[#333333] rounded-xl">
+                      Xem hồ sơ
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        <div className="text-center mt-12">
+          <p className="text-[#333333]/80 mb-4">
+            Chúng tôi đang mở rộng mạng lưới mentor mỗi ngày
+          </p>
+          <Button
+            size="lg"
+            variant="outline"
+            className="rounded-full px-8 border-2 border-[#F9C5D5] hover:border-[#2C3E50] hover:text-[#2C3E50]"
+          >
+            Trở thành mentor
+            <ArrowRight className="w-4 h-4 ml-2" />
+          </Button>
         </div>
       </div>
     </section>
   );
 };
 
-// ---------------- MENTORSHIP TIMELINE ----------------
+// ============ HOW IT WORKS ============
 export const MentorshipTimeline = () => {
   return (
     <section className="py-20 px-4" style={{ background: colors.secondary }}>
@@ -702,115 +841,75 @@ export const MentorshipTimeline = () => {
   );
 };
 
-// ---------------- MENTOR GRID ----------------
-export const MentorGrid = () => {
+// ============ EARLY SUPPORTERS ============
+export const EarlySupporters = () => {
   return (
-    <section className="py-20 px-4 bg-[#FDF7F9]">
-      <div className="max-w-7xl mx-auto">
-        {/* Tiêu đề */}
-        <div className="text-center mb-12">
-          <h2 className="text-4xl font-bold mb-4 text-gray-800">
-            Mentor nổi bật
+    <section className="py-32 px-6 bg-[#FFFFFF]">
+      <div className="max-w-6xl mx-auto">
+        <div className="text-center mb-16">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#F9C5D5]/20 mb-6">
+            <Heart className="w-4 h-4 text-[#2C3E50]" />
+            <span className="text-sm font-medium text-[#333333]">
+              Cộng đồng
+            </span>
+          </div>
+          <h2 className="text-4xl font-bold mb-6"
+            style={{ color: colors.text }}>
+            Lời từ những người ủng hộ đầu tiên
           </h2>
-          <p className="text-xl max-w-2xl mx-auto text-gray-600">
-            Kết nối với các chuyên gia hàng đầu từ những công ty công nghệ lớn
+          <p className="text-xl text-[#333333]/80 mt-4">
+            Họ tin tưởng vào tầm nhìn của chúng tôi
           </p>
         </div>
 
-        {/* Grid Mentor */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {fakeData.mentors.map((mentor) => (
+        <div className="grid md:grid-cols-2 gap-8">
+          {fakeData.testimonials.map((testimonial, idx) => (
             <Card
-              key={mentor.id}
-              className="hover:shadow-xl transition-all duration-300 border rounded-2xl"
-              style={{ background: "#FFFFFF", borderColor: "#E5E7EB" }}
+              key={idx}
+              className="border-0 rounded-3xl bg-[#FFFFFF] shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden"
             >
-              <CardContent className="p-6">
-                {/* Avatar */}
-                <div className="relative mb-4">
+              <CardContent className="p-8">
+                <div className="flex items-center gap-2 mb-6">
+                  <Badge className="bg-[#F9C5D5] text-[#333333] border-0">
+                    {testimonial.role}
+                  </Badge>
+                </div>
+
+                <blockquote className="text-lg text-[#333333]/80 mb-6 leading-relaxed">
+                  "{testimonial.quote}"
+                </blockquote>
+
+                <div className="flex items-center gap-4">
                   <img
-                    src={mentor.image || "/placeholder.svg"}
-                    alt={mentor.name}
-                    className="w-20 h-20 rounded-full mx-auto object-cover"
+                    src={testimonial.image}
+                    alt={testimonial.name}
+                    className="w-14 h-14 rounded-full object-cover border-2 border-[#F9C5D5]/50"
                   />
-                  {mentor.available && (
-                    <div className="absolute -top-1 -right-1 w-6 h-6 bg-green-500 rounded-full border-2 border-white" />
-                  )}
-                </div>
-
-                {/* Thông tin mentor */}
-                <div className="text-center mb-4">
-                  <h3 className="font-bold text-lg mb-1 text-gray-800">
-                    {mentor.name}
-                  </h3>
-                  <p className="text-sm mb-2 text-gray-500">{mentor.title}</p>
-                  <div className="flex items-center justify-center gap-2 text-sm text-gray-600">
-                    <MapPin className="h-4 w-4" />
-                    {mentor.location}
+                  <div>
+                    <p className="font-bold text-[#333333]">
+                      {testimonial.name}
+                    </p>
+                    <p className="text-sm text-[#333333]/80">
+                      {testimonial.title}
+                    </p>
                   </div>
-                </div>
-
-                {/* Rating & Sessions */}
-                <div className="flex items-center justify-center gap-4 mb-4 text-sm text-gray-700">
-                  <div className="flex items-center gap-1">
-                    <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                    <span className="font-medium">{mentor.rating}</span>
-                  </div>
-                  <div>{mentor.sessions} phiên</div>
-                </div>
-
-                {/* Skills */}
-                <div className="flex flex-wrap gap-2 mb-4 justify-center">
-                  {mentor.skills.slice(0, 2).map((skill) => (
-                    <Badge
-                      key={skill}
-                      className="text-xs px-3 py-1 rounded-full"
-                      style={{ background: "#F9C5D5", color: "#333" }}
-                    >
-                      {skill}
-                    </Badge>
-                  ))}
-                  {mentor.skills.length > 2 && (
-                    <Badge
-                      variant="outline"
-                      className="text-xs px-3 py-1 rounded-full border"
-                      style={{ borderColor: "#2C3E50", color: "#2C3E50" }}
-                    >
-                      +{mentor.skills.length - 2}
-                    </Badge>
-                  )}
-                </div>
-
-                {/* Giá */}
-                <div className="text-center mb-4">
-                  <div className="text-2xl font-bold text-[#2C3E50]">
-                    {mentor.price}₫
-                  </div>
-                  <div className="text-sm text-gray-600">/ mỗi phiên 1 giờ</div>
-                </div>
-
-                {/* Nút */}
-                <div className="flex justify-center">
-                  <Link to={`/mentor/${mentor.id}`}>
-                    <Button className="bg-[#2C3E50] text-white hover:opacity-90 rounded-full px-6">
-                      Xem hồ sơ
-                    </Button>
-                  </Link>
                 </div>
               </CardContent>
             </Card>
           ))}
         </div>
 
-        {/* Nút xem tất cả */}
         <div className="text-center mt-12">
+          <p className="text-[#333333]/80 mb-4">
+            Hãy là một trong những người đầu tiên trải nghiệm nền tảng
+          </p>
           <Button
             size="lg"
             variant="outline"
-            className="px-8 rounded-full"
-            style={{ borderColor: "#2C3E50", color: "#2C3E50" }}
+            className="rounded-full px-8 border-2 border-[#F9C5D5] text-[#333333] hover:bg-[#F9C5D5]/10"
           >
-            Xem tất cả mentor
+            Tham gia ngay
+            <ArrowRight className="w-4 h-4 ml-2" />
           </Button>
         </div>
       </div>
@@ -818,132 +917,7 @@ export const MentorGrid = () => {
   );
 };
 
-// ---------------- STATS ----------------
-export const StatsSection = () => {
-  return (
-    <section className="py-20 px-4" style={{ background: colors.accent }}>
-      <div className="max-w-4xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center text-white">
-          {fakeData.stats.map((stat, index) => (
-            <div key={index}>
-              <div className="text-5xl md:text-6xl font-bold mb-2">
-                {stat.number}
-              </div>
-              <div className="text-xl opacity-80">{stat.label}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-};
-
-// ---------------- TESTIMONIAL ----------------
-export const TestimonialSection = () => {
-  const testimonials = fakeData.testimonial;
-  const [currentIndex, setCurrentIndex] = useState(0);
-
-  // Auto slide mỗi 4s
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % testimonials.length);
-    }, 4000);
-    return () => clearInterval(interval);
-  }, [testimonials.length]);
-
-  return (
-    <section
-      className="py-20 px-4"
-      style={{ backgroundColor: colors.secondary }}
-    >
-      <div className="max-w-6xl mx-auto">
-        {/* Tiêu đề */}
-        <div className="text-center mb-12">
-          <h2
-            className="text-3xl lg:text-4xl font-bold"
-            style={{ color: colors.accent }}
-          >
-            Vẫn còn phân vân? Hãy nghe từ mentee & mentor
-          </h2>
-          <p className="mt-4" style={{ color: `${colors.text}cc` }}>
-            Hàng ngàn người đã trải nghiệm mentorship 1-1 và để lại đánh giá
-            trung bình 4.9/5 cho mentor của chúng tôi.
-          </p>
-        </div>
-
-        {/* Carousel */}
-        <div className="relative overflow-hidden">
-          <div
-            className="flex transition-transform duration-700 ease-in-out items-stretch"
-            style={{
-              transform: `translateX(-${currentIndex * 100}%)`,
-              width: `${testimonials.length * 100}%`,
-            }}
-          >
-            {testimonials.map((t, idx) => (
-              <div
-                key={idx}
-                className="flex-shrink-0 px-4"
-                style={{ minWidth: "100%" }} // mỗi slide chiếm 100%
-              >
-                <div
-                  className="rounded-xl shadow-lg p-8 h-full flex flex-col justify-between"
-                  style={{ backgroundColor: colors.secondary }}
-                >
-                  <blockquote
-                    className="italic mb-6 text-lg leading-relaxed"
-                    style={{ color: colors.text }}
-                  >
-                    "{t.quote}"
-                  </blockquote>
-                  <div className="flex items-center gap-4">
-                    <img
-                      src={t.image}
-                      alt={t.name}
-                      className="w-16 h-16 rounded-full object-cover border-2"
-                      style={{ borderColor: colors.primary }}
-                    />
-                    <div>
-                      <div
-                        className="font-semibold text-xl"
-                        style={{ color: colors.accent }}
-                      >
-                        {t.name}
-                      </div>
-                      <div
-                        className="text-sm"
-                        style={{ color: `${colors.text}b3` }}
-                      >
-                        {t.title}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Pagination dots */}
-          <div className="flex justify-center mt-6 space-x-2">
-            {testimonials.map((_, i) => (
-              <span
-                key={i}
-                onClick={() => setCurrentIndex(i)}
-                className="w-3 h-3 rounded-full cursor-pointer transition"
-                style={{
-                  backgroundColor:
-                    i === currentIndex ? colors.accent : colors.primary,
-                }}
-              ></span>
-            ))}
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-};
-
-// ---------------- CTA ----------------
+// ============ CTA SECTION ============
 export const CTASection = () => {
   return (
     <section className="py-20 bg-[#F9C5D5]">
@@ -956,7 +930,7 @@ export const CTASection = () => {
           hỗ trợ bạn trên hành trình phát triển cá nhân và sự nghiệp.
         </p>
         <div className="flex justify-center">
-          <Link to="/mentors">
+          <Link to="/listmentor">
             <Button
               size="lg"
               className="bg-[#2C3E50] hover:bg-[#1A2634] text-white px-6 shadow-lg transition"
@@ -965,6 +939,95 @@ export const CTASection = () => {
               <ArrowRight className="ml-2 w-5 h-5" />
             </Button>
           </Link>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+// ============ WHY JOIN NOW ============
+export const WhyJoinNow = () => {
+  const benefits = [
+    {
+      icon: Trophy,
+      title: "Ưu đãi Early Bird",
+      description: "Giảm 20% cho buổi học đầu tiên - chỉ dành cho 100 người đầu tiên",
+      highlight: true,
+    },
+    {
+      icon: Users,
+      title: "Tham gia cộng đồng",
+      description: "Kết nối với những người cùng chí hướng từ ngày đầu",
+      highlight: false,
+    },
+    {
+      icon: Sparkles,
+      title: "Ảnh hưởng đến sản phẩm",
+      description: "Góp ý và giúp định hình tương lai của nền tảng",
+      highlight: false,
+    },
+    {
+      icon: Heart,
+      title: "Hỗ trợ tận tâm",
+      description: "Nhận hỗ trợ trực tiếp từ team để trải nghiệm tốt nhất",
+      highlight: false,
+    },
+  ];
+
+  return (
+    <section className="py-32 px-6 bg-gradient-to-b from-[#FFFFFF] to-[#F9C5D5]/10">
+      <div className="max-w-7xl mx-auto">
+        <div className="text-center mb-16">
+          <h2 className="text-4xl font-bold mb-6"
+            style={{ color: colors.text }}>
+            Tại sao nên tham gia ngay bây giờ?
+          </h2>
+          <p className="text-xl text-[#333333]/80 mt-4">
+            Những lợi ích đặc biệt dành cho người dùng đầu tiên
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {benefits.map((benefit, idx) => (
+            <Card
+              key={idx}
+              className={`group cursor-pointer hover:shadow-2xl transition-all duration-300 border-0 rounded-3xl overflow-hidden ${benefit.highlight
+                ? "bg-[#F9C5D5] text-[#333333]"
+                : "bg-[#FFFFFF]"
+                }`}
+            >
+              <CardContent className="p-8">
+                <div className="flex items-start gap-6">
+                  <div
+                    className={`w-16 h-16 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform ${benefit.highlight
+                      ? "bg-[#FFFFFF]/20 backdrop-blur-sm"
+                      : "bg-[#F9C5D5]/20"
+                      }`}
+                  >
+                    <benefit.icon
+                      className={`w-8 h-8 ${benefit.highlight ? "text-[#FFFFFF]" : "text-[#2C3E50]"
+                        }`}
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <h3
+                      className={`text-xl font-bold mb-3 ${benefit.highlight ? "text-[#333333]" : "text-[#333333]"
+                        }`}
+                    >
+                      {benefit.title}
+                    </h3>
+                    <p
+                      className={
+                        benefit.highlight ? "text-[#333333]/80" : "text-[#333333]/80"
+                      }
+                    >
+                      {benefit.description}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
         </div>
       </div>
     </section>
