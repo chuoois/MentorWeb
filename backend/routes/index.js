@@ -4,6 +4,7 @@ const bookingRoutes = require('./booking.routes');
 const commentRoutes = require("./comment.routes");
 const paymentsRoutes = require('./payment.routes');
 const adminRoutes = require("./admin.routes");
+const aiRoutes = require("./ai.routes");
 const express = require("express");
 const router = express.Router();
 
@@ -13,6 +14,6 @@ router.use('/bookings', bookingRoutes);
 router.use("/comments", commentRoutes);
 router.use('/payments', paymentsRoutes);
 router.use("/admin", adminRoutes);
-router.use('/ai', require('./ai.routes'));
+router.use('/ai', aiRoutes);
 
 module.exports = router;
