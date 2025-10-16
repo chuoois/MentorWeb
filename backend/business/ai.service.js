@@ -21,41 +21,48 @@ class AiService {
   const contextJson = await this.getMentorContext();
 
   const prompt = `
-  Bạn là AI tư vấn chọn mentor phù hợp cho mentee.
-  Dưới đây là danh sách mentor dưới dạng JSON:
+Bạn là hệ thống AI tư vấn chọn mentor phù hợp nhất cho mentee.
 
-  mentors = ${contextJson}
+Dưới đây là danh sách mentor dưới dạng JSON:
+mentors = ${contextJson}
 
-  - Mỗi mentor có "_id", "full_name", "job_title", "skill", "bio", "price", "location".
-  - Dựa trên yêu cầu mentee, hãy chọn mentor phù hợp nhất.
-  - Trả về kết quả ở định dạng JSON có dạng như sau:
+Hãy đọc yêu cầu của mentee và chọn ra **tối đa 3 mentor phù hợp nhất**.
+Chỉ trả về JSON hợp lệ, không thêm text khác ngoài JSON.
 
-  {
-    "recommended": {
-      "_id": "...",
-      "full_name": "...",
-      "reason": "...",
+Cấu trúc JSON bắt buộc:
+{
+  "recommended": [
+    {
+      "mentorId": "<_id>",
+      "full_name": "<tên mentor>",
+      "reason": "<lý do chọn>",
       "link": "/api/mentors/<_id>"
-    },
-    "alternatives": [
-      { "_id": "...", "full_name": "...", "reason": "...", "link": "/api/mentors/<_id>" },
-      ...
-    ]
-  }
+    }
+  ]
+}
 
-  Yêu cầu của mentee: ${userMessage}
-  `;
+Yêu cầu mentee: ${userMessage}
+`;
 
   const result = await this.model.generateContent(prompt);
-
-  // Trả về JSON đã parse
   const text = result.response.text().trim();
 
+  // 💡 Tự động parse nếu JSON bị trả dưới dạng string
   try {
-    const json = JSON.parse(text);
-    return json;
+    // Nếu Gemini trả JSON chuẩn
+    return JSON.parse(text);
   } catch {
-    // Nếu Gemini trả text không chuẩn JSON, trả về raw text
+    // Nếu Gemini trả text có JSON nằm bên trong, thì cố gắng bóc tách
+    const jsonStart = text.indexOf("{");
+    const jsonEnd = text.lastIndexOf("}");
+    if (jsonStart >= 0 && jsonEnd > jsonStart) {
+      const possibleJson = text.slice(jsonStart, jsonEnd + 1);
+      try {
+        return JSON.parse(possibleJson);
+      } catch {
+        return { raw: text }; // fallback cuối
+      }
+    }
     return { raw: text };
   }
 }
