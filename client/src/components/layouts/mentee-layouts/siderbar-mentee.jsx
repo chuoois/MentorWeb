@@ -4,11 +4,11 @@ import {
   Users,
   BookOpen,
   Calendar,
-  MessageSquare,
   User,
-  Settings,
   GraduationCap,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export const Sidebar = () => {
   const tabs = [
@@ -20,20 +20,19 @@ export const Sidebar = () => {
 
   return (
     <aside
-      className="fixed left-0 top-0 h-screen w-64 flex flex-col border-r"
+      className="fixed left-0 top-0 h-screen w-64 flex flex-col border-r shadow-sm"
       style={{
-        backgroundColor: "#FFFFFF", // Secondary
+        backgroundColor: "#FFFFFF",
         borderColor: "#F3F3F3",
-        color: "#333333", // Text
       }}
     >
-      {/* Logo */}
+      {/* Header */}
       <div
         className="flex items-center gap-2 px-6 py-4 border-b"
         style={{
           borderColor: "#F3F3F3",
-          backgroundColor: "#F9C5D5", // Primary
-          color: "#2C3E50", // Accent
+          background: "linear-gradient(135deg, #F9C5D5, #FEECEB)",
+          color: "#2C3E50",
         }}
       >
         <GraduationCap className="w-6 h-6" />
@@ -42,26 +41,34 @@ export const Sidebar = () => {
         </Link>
       </div>
 
+      {/* User Info */}
+      <div className="flex items-center gap-3 px-6 py-4 border-b border-[#F3F3F3]">
+        <Avatar className="w-10 h-10 border">
+          <AvatarImage src="https://i.pravatar.cc/100?img=13" alt="User avatar" />
+          <AvatarFallback>MT</AvatarFallback>
+        </Avatar>
+        <div>
+          <p className="text-sm font-medium text-[#2C3E50]">Ngọc Thịnh</p>
+          <p className="text-xs text-gray-500">Mentee</p>
+        </div>
+      </div>
+
       {/* Navigation */}
-      <nav className="flex-1 mt-4">
-        <ul className="space-y-1">
+      <nav className="flex-1 mt-3">
+        <ul className="space-y-1 px-3">
           {tabs.map((tab) => (
             <li key={tab.path}>
               <NavLink
                 to={tab.path}
                 className={({ isActive }) =>
-                  `flex items-center gap-3 px-6 py-2.5 text-sm font-medium rounded-lg transition-colors duration-150 ${isActive
-                    ? "shadow-sm"
-                    : "hover:translate-x-1"
+                  `flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 ${isActive
+                    ? "bg-[#F9C5D5]/80 text-[#2C3E50] shadow-[0_0_10px_rgba(249,197,213,0.5)]"
+                    : "text-[#333] hover:bg-[#F9C5D5]/30 hover:translate-x-1"
                   }`
                 }
-                style={({ isActive }) => ({
-                  backgroundColor: isActive ? "#F9C5D5" : "#FFFFFF",
-                  color: isActive ? "#2C3E50" : "#333333",
-                })}
               >
                 {tab.icon}
-                {tab.label}
+                <span>{tab.label}</span>
               </NavLink>
             </li>
           ))}
@@ -69,14 +76,19 @@ export const Sidebar = () => {
       </nav>
 
       {/* Footer */}
-      <div
-        className="border-t px-6 py-3 text-sm"
-        style={{
-          borderColor: "#F3F3F3",
-          color: "#333333",
-        }}
-      >
-        © 2025 Mentee App
+      <div className="mt-auto border-t border-[#F3F3F3] px-6 py-3">
+        <Link to="/" className="flex items-center justify-center gap-2 text-sm text-gray-600 hover:bg-[#F9C5D5]/50 transition-colors">
+          <Button
+            variant="ghost"
+            className="w-full flex items-center justify-center gap-2 text-sm text-gray-600 hover:bg-[#F9C5D5]/50 transition-colors"
+          >
+            <Home className="w-4 h-4" />
+            Quay lại trang chủ
+          </Button>
+        </ Link>
+        <p className="text-xs text-center text-gray-400 mt-2">
+          © 2025 Mentee App
+        </p>
       </div>
     </aside>
   );

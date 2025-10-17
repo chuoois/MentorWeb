@@ -11,6 +11,12 @@ router.post("/login", c.login);
 // GET /api/mentors/
 router.get("/", c.listActiveMentors);
 
+// GET /api/mentors/new
+router.get("/new", c.get8MentorsNew);
+
+// GET /api/mentors/rating
+router.get("/rating", c.get8MentorsRating);
+
 // POST /api/mentors/recommend
 router.post("/recommend", c.recommend);
 

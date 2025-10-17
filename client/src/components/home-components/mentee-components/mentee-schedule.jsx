@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { ChevronLeft, ChevronRight, Calendar, Clock, User, Link } from "lucide-react";
 
-// Map status to colors and labels with new color scheme
+// Map status to colors and labels
 const statusConfig = {
   PENDING: {
     bg: "bg-blue-400",
@@ -20,7 +20,7 @@ const statusConfig = {
     bg: "bg-gray-400",
     text: "Hoàn thành",
     badge: "bg-gray-100 text-gray-700",
-  }
+  },
 };
 
 // Utility to get week days
@@ -36,6 +36,23 @@ const getWeekDays = (date) => {
     const day = new Date(startOfWeek);
     day.setDate(startOfWeek.getDate() + i);
     days.push(day);
+  }
+  return days;
+};
+
+// Utility to get month days
+const getMonthDays = (date) => {
+  const startOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
+  const endOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+  const daysInMonth = endOfMonth.getDate();
+  const firstDayOfWeek = startOfMonth.getDay();
+  
+  const days = [];
+  for (let i = 0; i < firstDayOfWeek; i++) {
+    days.push(null); // Empty slots before the first day
+  }
+  for (let i = 1; i <= daysInMonth; i++) {
+    days.push(new Date(date.getFullYear(), date.getMonth(), i));
   }
   return days;
 };
@@ -74,7 +91,7 @@ const normalizeBookings = (bookings) => {
   return normalized.filter((b) => b.start_time && b.end_time);
 };
 
-// Group consecutive bookings with improved logic
+// Group consecutive bookings
 const groupConsecutiveBookings = (bookings) => {
   if (!bookings || bookings.length === 0) return [];
   
@@ -137,6 +154,7 @@ export const MenteeSchedule = () => {
   const [loading, setLoading] = useState(true);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedBooking, setSelectedBooking] = useState(null);
+  const [viewMode, setViewMode] = useState("week"); // "week" or "month"
 
   useEffect(() => {
     const fetchBookings = async () => {
@@ -156,9 +174,11 @@ export const MenteeSchedule = () => {
   }, []);
 
   const weekDays = getWeekDays(currentDate);
+  const monthDays = getMonthDays(currentDate);
   const groupedBookings = groupConsecutiveBookings(bookings);
 
   const getBookingsForDay = (day) => {
+    if (!day) return [];
     return groupedBookings.filter((b) => {
       const bookingStart = new Date(b.start_time);
       const localDate = new Date(bookingStart.getFullYear(), bookingStart.getMonth(), bookingStart.getDate());
@@ -167,15 +187,23 @@ export const MenteeSchedule = () => {
     });
   };
 
-  const prevWeek = () => {
+  const prevPeriod = () => {
     const newDate = new Date(currentDate);
-    newDate.setDate(newDate.getDate() - 7);
+    if (viewMode === "week") {
+      newDate.setDate(newDate.getDate() - 7);
+    } else {
+      newDate.setMonth(newDate.getMonth() - 1);
+    }
     setCurrentDate(newDate);
   };
 
-  const nextWeek = () => {
+  const nextPeriod = () => {
     const newDate = new Date(currentDate);
-    newDate.setDate(newDate.getDate() + 7);
+    if (viewMode === "week") {
+      newDate.setDate(newDate.getDate() + 7);
+    } else {
+      newDate.setMonth(newDate.getMonth() + 1);
+    }
     setCurrentDate(newDate);
   };
 
@@ -183,219 +211,262 @@ export const MenteeSchedule = () => {
     setCurrentDate(new Date());
   };
 
+  const handleDayClick = (day) => {
+    setCurrentDate(day);
+    setViewMode("week");
+  };
+
   if (loading) {
     return (
-      <div className="flex flex-col justify-center items-center h-64 space-y-4">
-        <Spinner className="w-12 h-12" style={{ color: '#F9C5D5' }} />
-        <p className="text-gray-500">Đang tải lịch của bạn...</p>
+      <div className="flex flex-col justify-center items-center h-40 space-y-2">
+        <Spinner className="w-7 h-7" style={{ color: '#F9C5D5' }} />
+        <p className="text-gray-500 text-xs">Đang tải lịch của bạn...</p>
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto p-4 sm:p-6">
+    <div className="max-w-[90vw] mx-auto p-2">
       {/* Header */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="p-3 rounded-lg" style={{ backgroundColor: '#F9C5D5' }}>
-              <Calendar className="w-6 h-6" style={{ color: '#2C3E50' }} />
+      <div className="bg-white rounded-md shadow-sm border border-gray-200 p-2 mb-2">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <div className="flex items-center gap-1.5">
+            <div className="p-1 rounded-md" style={{ backgroundColor: '#F9C5D5' }}>
+              <Calendar className="w-4 h-4" style={{ color: '#2C3E50' }} />
             </div>
             <div>
-              <h2 className="text-2xl font-bold" style={{ color: '#333333' }}>Lịch của bạn</h2>
-              <p className="text-sm text-gray-500 mt-1">
-                Tuần từ {weekDays[0].toLocaleDateString("vi-VN")} - {weekDays[6].toLocaleDateString("vi-VN")}
+              <h2 className="text-base font-bold" style={{ color: '#333333' }}>Lịch của bạn</h2>
+              <p className="text-xs text-gray-500">
+                {viewMode === "week"
+                  ? `Tuần từ ${weekDays[0].toLocaleDateString("vi-VN")} - ${weekDays[6].toLocaleDateString("vi-VN")}`
+                  : `${currentDate.toLocaleDateString("vi-VN", { month: "long", year: "numeric" })}`}
               </p>
             </div>
           </div>
           
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
+            <Button
+              onClick={() => setViewMode(viewMode === "week" ? "month" : "week")}
+              size="sm"
+              className="text-white hover:opacity-90 text-xs px-2"
+              style={{ backgroundColor: '#F9C5D5', color: '#2C3E50' }}
+            >
+              {viewMode === "week" ? "Tháng" : "Tuần"}
+            </Button>
             <Button 
-              onClick={prevWeek} 
+              onClick={prevPeriod} 
               variant="outline" 
               size="sm" 
-              className="gap-1 border-gray-300 hover:bg-gray-50"
+              className="gap-1 border-gray-300 hover:bg-gray-50 text-xs px-2"
               style={{ color: '#2C3E50' }}
             >
-              <ChevronLeft className="w-4 h-4" />
-              <span className="hidden sm:inline">Trước</span>
+              <ChevronLeft className="w-3 h-3" />
             </Button>
             <Button 
               onClick={goToToday} 
               size="sm"
-              className="text-white hover:opacity-90"
+              className="text-white hover:opacity-90 text-xs px-2"
               style={{ backgroundColor: '#F9C5D5', color: '#2C3E50' }}
             >
               Hôm nay
             </Button>
             <Button 
-              onClick={nextWeek} 
+              onClick={nextPeriod} 
               variant="outline" 
               size="sm" 
-              className="gap-1 border-gray-300 hover:bg-gray-50"
+              className="gap-1 border-gray-300 hover:bg-gray-50 text-xs px-2"
               style={{ color: '#2C3E50' }}
             >
-              <span className="hidden sm:inline">Sau</span>
-              <ChevronRight className="w-4 h-4" />
+              <ChevronRight className="w-3 h-3" />
             </Button>
           </div>
         </div>
 
-        {/* Legend */}
-        <div className="flex flex-wrap gap-3 mt-4 pt-4 border-t border-gray-100">
+        <div className="flex flex-wrap gap-1.5 mt-1.5 pt-1.5 border-t border-gray-100">
           {Object.entries(statusConfig).map(([status, config]) => (
-            <div key={status} className="flex items-center gap-2">
-              <div className={`w-3 h-3 rounded ${config.bg}`}></div>
+            <div key={status} className="flex items-center gap-1">
+              <div className={`w-2 h-2 rounded ${config.bg}`}></div>
               <span className="text-xs" style={{ color: '#333333' }}>{config.text}</span>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Calendar Grid */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <div className="overflow-x-auto">
-          <div className="inline-block min-w-full">
-            <div className="grid grid-cols-[60px_repeat(7,minmax(100px,1fr))] border-b border-gray-200">
-              <div className="border-r border-gray-200" style={{ backgroundColor: '#F9F9F9' }}></div>
-              
-              {weekDays.map((day, dayIndex) => {
-                const today = isToday(day);
-                return (
-                  <div
-                    key={dayIndex}
-                    className={`py-4 text-center border-r border-gray-200 last:border-r-0`}
-                    style={{ 
-                      backgroundColor: today ? '#F9C5D5' : '#F9F9F9'
-                    }}
-                  >
-                    <div 
-                      className="text-xs font-medium uppercase tracking-wider"
-                      style={{ color: today ? '#2C3E50' : '#666666' }}
+      {/* Week View */}
+      {viewMode === "week" && (
+        <div className="bg-white rounded-md shadow-sm border border-gray-200 overflow-hidden">
+          <div className="overflow-x-auto">
+            <div className="inline-block min-w-full">
+              <div className="grid grid-cols-[50px_repeat(7,minmax(120px,1fr))] border-b border-gray-200">
+                <div className="border-r border-gray-200" style={{ backgroundColor: '#F9F9F9' }}></div>
+                {weekDays.map((day, dayIndex) => {
+                  const today = isToday(day);
+                  return (
+                    <div
+                      key={dayIndex}
+                      className={`py-1 text-center border-r border-gray-200 last:border-r-0`}
+                      style={{ backgroundColor: today ? '#F9C5D5' : '#F9F9F9' }}
                     >
-                      {day.toLocaleDateString("vi-VN", { weekday: "short" })}
-                    </div>
-                    <div 
-                      className="text-lg font-bold mt-1"
-                      style={{ color: today ? '#2C3E50' : '#333333' }}
-                    >
-                      {day.getDate()}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            <div className="grid grid-cols-[60px_repeat(7,minmax(100px,1fr))]">
-              <div className="border-r border-gray-200" style={{ backgroundColor: '#F9F9F9' }}>
-                {hours.map((hour) => (
-                  <div
-                    key={hour}
-                    className="h-20 flex items-start justify-center pt-1 text-xs font-medium text-gray-500 border-b border-gray-100"
-                  >
-                    {hour}:00
-                  </div>
-                ))}
-              </div>
-
-              {weekDays.map((day, dayIndex) => {
-                const today = isToday(day);
-                return (
-                  <div
-                    key={dayIndex}
-                    className="border-r border-gray-200 last:border-r-0 relative"
-                    style={{ backgroundColor: today ? '#FFF5F8' : 'transparent' }}
-                  >
-                    {hours.map((hour) => (
-                      <div
-                        key={hour}
-                        className="h-20 border-b border-gray-100"
-                      ></div>
-                    ))}
-
-                    <div className="absolute inset-0 pointer-events-none">
-                      <div className="relative h-full pointer-events-auto">
-                        {getBookingsForDay(day).map((b) => {
-                          const bookingStart = new Date(b.start_time);
-                          const bookingEnd = new Date(b.end_time);
-                          const startHour = bookingStart.getHours();
-                          const startMinutes = bookingStart.getMinutes();
-                          const duration = (bookingEnd - bookingStart) / (1000 * 60);
-                          if (startHour < 8 || startHour >= 23) return null;
-                          
-                          const topOffset = ((startHour - 8) * 80 + (startMinutes / 60) * 80);
-                          const height = (duration / 60) * 80;
-                          const config = statusConfig[b.session_status] || statusConfig.PENDING;
-
-                          return (
-                            <div
-                              key={b._id}
-                              className={`absolute left-1 right-1 rounded-lg text-white text-xs p-2 shadow-md ${config.bg} hover:opacity-90 transition-all cursor-pointer group overflow-hidden`}
-                              style={{
-                                top: `${topOffset}px`,
-                                height: `${Math.max(height, 40)}px`,
-                              }}
-                              onClick={() => setSelectedBooking(b)}
-                              title="Nhấn để xem chi tiết"
-                            >
-                              <div className="flex flex-col h-full justify-between">
-                                <div>
-                                  <div className="font-semibold flex items-center gap-1 mb-1">
-                                    <Clock className="w-3 h-3" />
-                                    {bookingStart.toLocaleTimeString("vi-VN", {
-                                      hour: "2-digit",
-                                      minute: "2-digit",
-                                    })}
-                                  </div>
-                                  {height > 60 && (
-                                    <>
-                                      <div className="flex items-center gap-1 text-white/90">
-                                        <User className="w-3 h-3" />
-                                        <span className="truncate">
-                                          {b.mentor?.full_name || "Chưa xác định"}
-                                        </span>
-                                      </div>
-                                      {b.note && height > 100 && (
-                                        <div className="mt-1 text-white/80 text-xs truncate">
-                                          {b.note}
-                                        </div>
-                                      )}
-                                    </>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })}
+                      <div className="text-xs font-medium uppercase" style={{ color: today ? '#2C3E50' : '#666666' }}>
+                        {day.toLocaleDateString("vi-VN", { weekday: "short" })}
+                      </div>
+                      <div className="text-sm font-bold" style={{ color: today ? '#2C3E50' : '#333333' }}>
+                        {day.getDate()}
                       </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
+
+              <div className="grid grid-cols-[50px_repeat(7,minmax(120px,1fr))]">
+                <div className="border-r border-gray-200" style={{ backgroundColor: '#F9F9F9' }}>
+                  {hours.map((hour) => (
+                    <div
+                      key={hour}
+                      className="h-10 flex items-start justify-center pt-1 text-xs font-medium text-gray-500 border-b border-gray-100"
+                    >
+                      {hour}:00
+                    </div>
+                  ))}
+                </div>
+
+                {weekDays.map((day, dayIndex) => {
+                  const today = isToday(day);
+                  return (
+                    <div
+                      key={dayIndex}
+                      className="border-r border-gray-200 last:border-r-0 relative"
+                      style={{ backgroundColor: today ? '#FFF5F8' : 'transparent' }}
+                    >
+                      {hours.map((hour) => (
+                        <div key={hour} className="h-10 border-b border-gray-100"></div>
+                      ))}
+                      <div className="absolute inset-0 pointer-events-none">
+                        <div className="relative h-full pointer-events-auto">
+                          {getBookingsForDay(day).map((b) => {
+                            const bookingStart = new Date(b.start_time);
+                            const bookingEnd = new Date(b.end_time);
+                            const startHour = bookingStart.getHours();
+                            const startMinutes = bookingStart.getMinutes();
+                            const duration = (bookingEnd - bookingStart) / (1000 * 60);
+                            if (startHour < 8 || startHour >= 23) return null;
+
+                            const topOffset = ((startHour - 8) * 40 + (startMinutes / 60) * 40);
+                            const height = (duration / 60) * 40;
+                            const config = statusConfig[b.session_status] || statusConfig.PENDING;
+
+                            return (
+                              <div
+                                key={b._id}
+                                className={`absolute left-0.5 right-0.5 rounded-md text-white text-xs p-1 shadow-sm ${config.bg} hover:opacity-90 transition-all cursor-pointer group overflow-hidden`}
+                                style={{
+                                  top: `${topOffset}px`,
+                                  height: `${Math.max(height, 20)}px`,
+                                }}
+                                onClick={() => setSelectedBooking(b)}
+                                title="Nhấn để xem chi tiết"
+                              >
+                                <div className="flex flex-col h-full justify-between">
+                                  <div>
+                                    <div className="font-semibold flex items-center gap-1">
+                                      <Clock className="w-3 h-3" />
+                                      {bookingStart.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}
+                                    </div>
+                                    {height > 30 && (
+                                      <div className="flex items-center gap-1 text-white/90 truncate">
+                                        <User className="w-3 h-3" />
+                                        {b.mentor?.full_name || "Chưa xác định"}
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
+
+      {/* Month View */}
+      {viewMode === "month" && (
+        <div className="bg-white rounded-md shadow-sm border border-gray-200 p-2">
+          <div className="grid grid-cols-7 gap-0.5">
+            {["T2", "T3", "T4", "T5", "T6", "T7", "CN"].map((day, index) => (
+              <div key={index} className="text-center text-xs font-medium text-gray-500">
+                {day}
+              </div>
+            ))}
+            {monthDays.map((day, index) => {
+              const today = day && isToday(day);
+              const bookings = day ? getBookingsForDay(day) : [];
+              return (
+                <div
+                  key={index}
+                  className={`h-14 border border-gray-100 rounded-md flex flex-col items-center justify-between p-0.5
+                    ${day ? 'hover:bg-gray-50 cursor-pointer' : 'bg-gray-50'} 
+                    ${today ? 'bg-pink-50 border-pink-200' : ''}`}
+                  onClick={day ? () => handleDayClick(day) : undefined}
+                >
+                  {day && (
+                    <>
+                      <div className={`text-xs font-medium ${today ? 'text-pink-700' : 'text-gray-700'}`}>
+                        {day.getDate()}
+                      </div>
+                      <div className="flex flex-col gap-0.5 w-full">
+                        {bookings.slice(0, 2).map((b) => {
+                          const config = statusConfig[b.session_status] || statusConfig.PENDING;
+                          return (
+                            <div
+                              key={b._id}
+                              className={`text-xs text-white ${config.bg} rounded px-1 py-0.5 truncate`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedBooking(b);
+                              }}
+                            >
+                              {new Date(b.start_time).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}
+                            </div>
+                          );
+                        })}
+                        {bookings.length > 2 && (
+                          <div className="text-xs text-gray-500">+{bookings.length - 2}</div>
+                        )}
+                      </div>
+                    </>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {bookings.length === 0 && (
-        <div className="text-center py-12 bg-white rounded-xl shadow-sm border border-gray-200 mt-6">
-          <Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <p className="text-lg font-medium" style={{ color: '#333333' }}>Chưa có lịch hẹn nào</p>
-          <p className="text-gray-400 text-sm mt-2">Đặt lịch với mentor để bắt đầu học tập</p>
+        <div className="text-center py-5 bg-white rounded-md shadow-sm border border-gray-200 mt-2">
+          <Calendar className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+          <p className="text-sm font-medium" style={{ color: '#333333' }}>Chưa có lịch hẹn nào</p>
+          <p className="text-gray-400 text-xs mt-1">Đặt lịch với mentor để bắt đầu học tập</p>
         </div>
       )}
 
       {selectedBooking && (
         <div
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-2"
           onClick={() => setSelectedBooking(null)}
         >
           <div
-            className="bg-white rounded-xl shadow-xl max-w-md w-full p-6"
+            className="bg-white rounded-md shadow-xl max-w-md w-full p-3"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-start justify-between mb-4">
-              <h3 className="text-xl font-bold" style={{ color: '#333333' }}>Chi tiết lịch hẹn</h3>
+            <div className="flex items-start justify-between mb-2">
+              <h3 className="text-base font-bold" style={{ color: '#333333' }}>Chi tiết lịch hẹn</h3>
               <button
                 onClick={() => setSelectedBooking(null)}
                 className="text-gray-400 hover:text-gray-600"
@@ -404,17 +475,17 @@ export const MenteeSchedule = () => {
               </button>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-1.5">
               <div>
-                <label className="text-sm font-medium text-gray-500">Mentor</label>
-                <p className="text-base font-medium mt-1" style={{ color: '#333333' }}>
+                <label className="text-xs font-medium text-gray-500">Mentor</label>
+                <p className="text-sm font-medium" style={{ color: '#333333' }}>
                   {selectedBooking.mentor?.full_name || "Chưa xác định"}
                 </p>
               </div>
 
               <div>
-                <label className="text-sm font-medium text-gray-500">Thời gian</label>
-                <p className="text-base mt-1" style={{ color: '#333333' }}>
+                <label className="text-xs font-medium text-gray-500">Thời gian</label>
+                <p className="text-xs" style={{ color: '#333333' }}>
                   {new Date(selectedBooking.start_time).toLocaleString("vi-VN", {
                     weekday: "long",
                     year: "numeric",
@@ -422,7 +493,7 @@ export const MenteeSchedule = () => {
                     day: "numeric",
                   })}
                 </p>
-                <p className="text-base font-medium mt-1" style={{ color: '#2C3E50' }}>
+                <p className="text-sm font-medium" style={{ color: '#2C3E50' }}>
                   {new Date(selectedBooking.start_time).toLocaleTimeString("vi-VN", {
                     hour: "2-digit",
                     minute: "2-digit",
@@ -436,8 +507,8 @@ export const MenteeSchedule = () => {
               </div>
 
               <div>
-                <label className="text-sm font-medium text-gray-500">Trạng thái phiên</label>
-                <div className={`inline-block px-3 py-1 rounded-full text-sm font-medium mt-1 ${
+                <label className="text-xs font-medium text-gray-500">Trạng thái phiên</label>
+                <div className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
                   statusConfig[selectedBooking.session_status]?.badge || "bg-gray-100 text-gray-800"
                 }`}>
                   {statusConfig[selectedBooking.session_status]?.text || selectedBooking.session_status}
@@ -446,14 +517,14 @@ export const MenteeSchedule = () => {
 
               {selectedBooking.meeting_link && (
                 <div>
-                  <label className="text-sm font-medium text-gray-500">Link họp</label>
-                  <div className="mt-1 flex items-center gap-2">
-                    <Link className="w-4 h-4 text-gray-500" />
+                  <label className="text-xs font-medium text-gray-500">Link họp</label>
+                  <div className="flex items-center gap-1">
+                    <Link className="w-3 h-3 text-gray-500" />
                     <a
                       href={selectedBooking.meeting_link}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-blue-600 hover:underline truncate"
+                      className="text-blue-600 hover:underline truncate text-xs"
                     >
                       {selectedBooking.meeting_link}
                     </a>
@@ -463,16 +534,16 @@ export const MenteeSchedule = () => {
 
               {selectedBooking.note && (
                 <div>
-                  <label className="text-sm font-medium text-gray-500">Ghi chú</label>
-                  <p className="text-base mt-1 bg-gray-50 p-3 rounded-lg" style={{ color: '#333333' }}>
+                  <label className="text-xs font-medium text-gray-500">Ghi chú</label>
+                  <p className="text-xs bg-gray-50 p-1.5 rounded-md" style={{ color: '#333333' }}>
                     {selectedBooking.note}
                   </p>
                 </div>
               )}
 
               <div>
-                <label className="text-sm font-medium text-gray-500">Thông tin khác</label>
-                <div className="mt-1 space-y-1 text-sm" style={{ color: '#333333' }}>
+                <label className="text-xs font-medium text-gray-500">Thông tin khác</label>
+                <div className="text-xs" style={{ color: '#333333' }}>
                   <p>Thời lượng: <span className="font-medium">{selectedBooking.duration} giờ</span></p>
                   {selectedBooking.sessions && (
                     <p>Số buổi: <span className="font-medium">{selectedBooking.sessions} buổi</span></p>
@@ -483,13 +554,13 @@ export const MenteeSchedule = () => {
 
               {selectedBooking.original_bookings && selectedBooking.original_bookings.length > 1 && (
                 <div>
-                  <label className="text-sm font-medium text-gray-500">
+                  <label className="text-xs font-medium text-gray-500">
                     Các phiên liên quan ({selectedBooking.original_bookings.length} phiên)
                   </label>
-                  <div className="mt-2 space-y-2">
+                  <div className="mt-1 space-y-1">
                     {selectedBooking.original_bookings.map((session, index) => (
-                      <div key={index} className="border-t pt-2">
-                        <p className="text-sm font-medium" style={{ color: '#333333' }}>
+                      <div key={index} className="border-t pt-1">
+                        <p className="text-xs font-medium" style={{ color: '#333333' }}>
                           Phiên {index + 1}: {new Date(session.start_time).toLocaleTimeString("vi-VN", {
                             hour: "2-digit",
                             minute: "2-digit",
@@ -498,14 +569,14 @@ export const MenteeSchedule = () => {
                             minute: "2-digit",
                           })}
                         </p>
-                        <div className={`inline-block px-3 py-1 rounded-full text-xs font-medium mt-1 ${
+                        <div className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
                           statusConfig[session.session_status]?.badge || "bg-gray-100 text-gray-800"
                         }`}>
                           {statusConfig[session.session_status]?.text || session.session_status}
                         </div>
                         {session.meeting_link && (
-                          <div className="mt-1 flex items-center gap-2">
-                            <Link className="w-4 h-4 text-gray-500" />
+                          <div className="mt-0.5 flex items-center gap-1">
+                            <Link className="w-3 h-3 text-gray-500" />
                             <a
                               href={session.meeting_link}
                               target="_blank"
@@ -523,10 +594,10 @@ export const MenteeSchedule = () => {
               )}
             </div>
 
-            <div className="mt-6 flex gap-2">
+            <div className="mt-2">
               <Button
                 onClick={() => setSelectedBooking(null)}
-                className="flex-1 text-white hover:opacity-90"
+                className="w-full text-white hover:opacity-90 text-xs"
                 style={{ backgroundColor: '#F9C5D5', color: '#2C3E50' }}
               >
                 Đóng

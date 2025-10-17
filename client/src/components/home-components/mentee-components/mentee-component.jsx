@@ -4,15 +4,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import MentorService from "@/services/mentor.service";
 import {
   Users,
   Calendar,
-  MessageCircle,
-  Trophy,
   Shield,
-  Clock,
-  Star,
-  MapPin,
+  Briefcase,
   Search,
   TrendingUp,
   Play,
@@ -21,9 +19,7 @@ import {
   Sparkles,
   Video,
   Zap,
-  Award,
   Target,
-  BookOpen,
   Brain,
   Heart,
   Rocket,
@@ -178,32 +174,31 @@ export const HeroSection = () => {
     if (searchQuery.trim()) {
       navigate(`/listmentor?search=${encodeURIComponent(searchQuery.trim())}`);
     } else {
-      navigate("/mentors");
+      navigate("/listmentor");
     }
   };
 
   return (
-    <section className="relative min-h-screen flex items-center overflow-hidden">
-      {/* Animated gradient background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-[#F9C5D5]/20 via-[#FFFFFF] to-[#2C3E50]/10">
-        <div className="absolute inset-0 opacity-30">
-          <div className="absolute top-20 left-20 w-96 h-96 bg-[#F9C5D5]/50 rounded-full mix-blend-multiply filter blur-3xl animate-pulse" />
-          <div className="absolute bottom-20 right-20 w-96 h-96 bg-[#2C3E50]/50 rounded-full mix-blend-multiply filter blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
-        </div>
+    <section className="relative flex items-center py-16 md:py-20 overflow-hidden bg-gradient-to-br from-[#F9C5D5]/10 via-[#FFFFFF] to-[#2C3E50]/10">
+      {/* Hiệu ứng nền */}
+      <div className="absolute inset-0 opacity-30">
+        <div className="absolute top-20 left-20 w-72 h-72 bg-[#F9C5D5]/50 rounded-full mix-blend-multiply blur-3xl animate-pulse" />
+        <div
+          className="absolute bottom-20 right-20 w-72 h-72 bg-[#2C3E50]/50 rounded-full mix-blend-multiply blur-3xl animate-pulse"
+          style={{ animationDelay: "1s" }}
+        />
       </div>
 
-      <div className="container mx-auto px-6 py-20 relative z-10">
-        <div className="grid lg:grid-cols-2 gap-16 items-center">
-          {/* Left content */}
-          <div className="space-y-8">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#F9C5D5] text-[#333333] shadow-lg">
-              <Sparkles className="w-4 h-4" />
-              <span className="text-sm font-medium">
-                Mới ra mắt tại Việt Nam
-              </span>
+      <div className="container mx-auto px-6 relative z-10">
+        <div className="grid lg:grid-cols-2 gap-12 items-center">
+          {/* LEFT CONTENT */}
+          <div className="space-y-6">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#F9C5D5] text-[#333333] shadow">
+              <Sparkles className="w-3.5 h-3.5" />
+              <span className="text-sm font-medium">Mới ra mắt tại Việt Nam</span>
             </div>
 
-            <h1 className="text-5xl lg:text-7xl font-bold leading-tight">
+            <h1 className="text-4xl md:text-5xl font-bold leading-snug">
               <span className="text-[#333333]">Cùng </span>
               <span className="bg-gradient-to-r from-[#F9C5D5] to-[#2C3E50] bg-clip-text text-transparent">
                 {displayedText}
@@ -213,25 +208,25 @@ export const HeroSection = () => {
               <span className="text-[#333333]">với Mentor</span>
             </h1>
 
-            <p className="text-xl text-[#333333]/80 leading-relaxed">
-              Nền tảng kết nối bạn với các mentor giàu kinh nghiệm từ Google, Meta,
-              Shopee và nhiều công ty hàng đầu tại Việt Nam.
+            <p className="text-base md:text-lg text-[#333333]/80 leading-relaxed max-w-xl">
+              Nền tảng giúp bạn kết nối với các mentor uy tín, học hỏi từ kinh nghiệm
+              thực tế và phát triển bản thân.
             </p>
 
-            {/* Search bar */}
+            {/* SEARCH BAR */}
             <div className="relative group">
               <div className="absolute -inset-1 bg-gradient-to-r from-[#F9C5D5] to-[#2C3E50] rounded-2xl blur opacity-25 group-hover:opacity-40 transition" />
               <form onSubmit={handleSearch} className="relative">
-                <Search className="absolute left-6 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[#333333]/60" />
+                <Search className="absolute left-5 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[#333333]/60" />
                 <Input
                   placeholder="Tìm theo kỹ năng, công ty hoặc vai trò..."
-                  className="pl-14 pr-40 py-7 text-lg rounded-2xl border-0 bg-[#FFFFFF] shadow-xl"
+                  className="pl-12 pr-32 py-5 text-base rounded-2xl border-0 bg-white shadow"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
                 <Button
                   type="submit"
-                  className="absolute right-2 top-1/2 transform -translate-y-1/2 px-8 py-6 rounded-xl bg-[#F9C5D5] hover:bg-[#F9C5D5]/80 text-[#333333]"
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 px-6 py-4 rounded-xl bg-[#F9C5D5] hover:bg-[#F9C5D5]/80 text-[#333333] text-sm"
                 >
                   Khám phá
                 </Button>
@@ -239,53 +234,57 @@ export const HeroSection = () => {
             </div>
 
             {/* Value props */}
-            <div className="flex flex-wrap gap-4 items-center pt-4">
-              <div className="flex items-center gap-2 bg-[#FFFFFF] rounded-full px-4 py-2 shadow-md">
-                <Check className="w-4 h-4 text-[#2C3E50]" />
-                <span className="text-sm font-medium text-[#333333]">Miễn phí đăng ký</span>
-              </div>
-              <div className="flex items-center gap-2 bg-[#FFFFFF] rounded-full px-4 py-2 shadow-md">
-                <Check className="w-4 h-4 text-[#2C3E50]" />
-                <span className="text-sm font-medium text-[#333333]">Mentor được xác thực</span>
-              </div>
-              <div className="flex items-center gap-2 bg-[#FFFFFF] rounded-full px-4 py-2 shadow-md">
-                <Check className="w-4 h-4 text-[#2C3E50]" />
-                <span className="text-sm font-medium text-[#333333]">Bảo mật thông tin</span>
-              </div>
+            <div className="flex flex-wrap gap-3 pt-2">
+              {[
+                "Miễn phí đăng ký",
+                "Mentor được xác thực",
+                "Bảo mật thông tin",
+              ].map((item, i) => (
+                <div
+                  key={i}
+                  className="flex items-center gap-2 bg-white rounded-full px-3 py-1.5 shadow"
+                >
+                  <Check className="w-3.5 h-3.5 text-[#2C3E50]" />
+                  <span className="text-sm font-medium text-[#333333]">{item}</span>
+                </div>
+              ))}
             </div>
           </div>
 
-          {/* Right visual */}
-          <div className="relative">
-            <div className="relative rounded-3xl overflow-hidden shadow-2xl">
+          {/* RIGHT VISUAL */}
+          <div className="relative flex justify-center">
+            <div className="relative w-[450px] h-[550px] md:w-[500px] md:h-[600px] rounded-3xl overflow-hidden shadow-2xl">
               <img
                 src="https://images.unsplash.com/photo-1552581234-26160f608093?w=800&h=1000&fit=crop"
                 alt="Mentoring"
-                className="w-full h-auto object-cover"
+                className="w-full h-full object-cover"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#2C3E50]/50 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#2C3E50]/40 to-transparent" />
 
               {/* Floating cards */}
-              <div className="absolute top-8 right-8 bg-[#FFFFFF]/90 backdrop-blur-md rounded-2xl p-4 shadow-xl animate-bounce" style={{ animationDuration: "3s" }}>
+              <div
+                className="absolute top-6 right-6 bg-[#FFFFFF]/90 backdrop-blur-md rounded-2xl p-4 shadow-xl animate-bounce"
+                style={{ animationDuration: "3s" }}
+              >
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 rounded-full bg-[#F9C5D5] flex items-center justify-center">
                     <Rocket className="w-6 h-6 text-[#333333]" />
                   </div>
                   <div>
-                    <p className="font-bold text-[#333333]">Mới ra mắt</p>
+                    <p className="font-bold text-[#333333] text-sm">Mới ra mắt</p>
                     <p className="text-xs text-[#333333]/80">Tham gia ngay!</p>
                   </div>
                 </div>
               </div>
 
-              <div className="absolute bottom-8 left-8 bg-[#FFFFFF]/90 backdrop-blur-md rounded-2xl p-4 shadow-xl">
+              <div className="absolute bottom-6 left-6 bg-[#FFFFFF]/90 backdrop-blur-md rounded-2xl p-4 shadow-xl">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-[#F9C5D5]" />
                   <div>
-                    <p className="font-semibold text-[#333333]">Mentor chất lượng</p>
+                    <p className="font-semibold text-[#333333] text-sm">Mentor chất lượng</p>
                     <p className="text-xs text-[#333333]/80">100% xác thực</p>
                   </div>
-                  <div className="w-2 h-2 bg-[#2C3E50] rounded-full animate-pulse ml-2" />
+                  <div className="w-2 h-2 bg-[#2C3E50] rounded-full animate-pulse ml-1" />
                 </div>
               </div>
             </div>
@@ -299,119 +298,39 @@ export const HeroSection = () => {
 // ============ STATS SECTION ============
 export const StatsSection = () => {
   return (
-    <section className="py-20 bg-[#2C3E50] relative overflow-hidden">
+    <section className="py-12 bg-[#2C3E50] relative overflow-hidden">
+      {/* Hiệu ứng nền */}
       <div className="absolute inset-0 opacity-10">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#F9C5D5]/50 rounded-full filter blur-3xl" />
-        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-[#FFFFFF]/50 rounded-full filter blur-3xl" />
+        <div className="absolute top-0 left-1/4 w-64 h-64 bg-[#F9C5D5]/40 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 right-1/4 w-64 h-64 bg-white/40 rounded-full blur-3xl" />
       </div>
 
       <div className="container mx-auto px-6 relative z-10">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-[#FFFFFF] mb-3">
+        {/* Tiêu đề */}
+        <div className="text-center mb-8">
+          <h2 className="text-2xl font-semibold text-white mb-2">
             Tại sao chọn chúng tôi?
           </h2>
-          <p className="text-[#FFFFFF]/80 text-lg">
+          <p className="text-white/70 text-base">
             Nền tảng mentorship hiện đại đầu tiên tại Việt Nam
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        {/* Các số liệu */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {fakeData.stats.map((stat, idx) => (
             <div key={idx} className="text-center group">
-              <div className="mb-4 flex justify-center">
-                <div className="w-20 h-20 rounded-2xl bg-[#FFFFFF]/10 backdrop-blur-sm flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <stat.icon className="w-10 h-10 text-[#F9C5D5]" />
+              <div className="mb-3 flex justify-center">
+                <div className="w-14 h-14 rounded-xl bg-white/10 backdrop-blur-sm flex items-center justify-center group-hover:scale-105 transition-transform">
+                  <stat.icon className="w-7 h-7 text-[#F9C5D5]" />
                 </div>
               </div>
-              <h3 className="text-3xl md:text-4xl font-bold text-[#FFFFFF] mb-3">
+              <h3 className="text-2xl font-bold text-white mb-1">
                 {stat.number}
               </h3>
-              <p className="text-lg text-[#FFFFFF]/80">{stat.label}</p>
+              <p className="text-sm text-white/70">{stat.label}</p>
             </div>
           ))}
-        </div>
-      </div>
-    </section>
-  );
-};
-
-// ============ FEATURES BENTO GRID ============
-export const FeaturesBento = () => {
-  return (
-    <section className="py-32 px-6 bg-gradient-to-b from-[#FFFFFF] to-[#F9C5D5]/10">
-      <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-16">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#F9C5D5]/20 mb-6">
-            <Zap className="w-4 h-4 text-[#2C3E50]" />
-            <span className="text-sm font-medium text-[#333333]">
-              Tính năng nổi bật
-            </span>
-          </div>
-          <h2 className="text-4xl font-bold mb-6"
-            style={{ color: colors.text }}>
-            Mentorship đơn giản và hiệu quả
-          </h2>
-        </div>
-
-        {/* Bento Grid Layout */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 auto-rows-fr">
-          {/* Large feature - spans 2 columns */}
-          <div className="lg:col-span-2 lg:row-span-2 bg-[#F9C5D5] rounded-3xl p-8 text-[#333333] relative overflow-hidden group cursor-pointer">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-[#FFFFFF]/20 rounded-full -translate-y-32 translate-x-32 group-hover:scale-150 transition-transform duration-700" />
-            <div className="relative z-10">
-              <Users className="w-12 h-12 mb-6 text-[#2C3E50]" />
-              <h3 className="text-3xl font-bold mb-4">
-                Mentor chất lượng
-                <br />
-                được tuyển chọn
-              </h3>
-              <p className="text-[#333333]/80 text-lg mb-6">
-                Chúng tôi xác thực kỹ lưỡng mỗi mentor để đảm bảo
-                bạn nhận được sự hướng dẫn tốt nhất
-              </p>
-              <Link to="/listmentor" className="flex items-center">
-                <Button className="bg-[#FFFFFF] text-[#333333] hover:bg-[#FFFFFF]/80">
-                  Tìm hiểu thêm
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-              </Link>
-            </div>
-          </div>
-
-          {/* Regular features */}
-          {fakeData.features.map((feature, idx) => (
-            <Card
-              key={idx}
-              className="group cursor-pointer hover:shadow-2xl transition-all duration-300 border-0 bg-[#FFFFFF] rounded-3xl overflow-hidden"
-            >
-              <CardContent className="p-8 h-full flex flex-col">
-                <div className="w-16 h-16 rounded-2xl bg-[#F9C5D5]/20 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                  <feature.icon className="w-8 h-8 text-[#2C3E50]" />
-                </div>
-                <h3 className="text-xl font-bold text-[#333333] mb-3">
-                  {feature.title}
-                </h3>
-                <p className="text-[#333333]/80 flex-grow">
-                  {feature.description}
-                </p>
-              </CardContent>
-            </Card>
-          ))}
-
-          {/* CTA card */}
-          <div className="lg:col-span-2 bg-[#2C3E50] rounded-3xl p-8 text-[#FFFFFF] flex items-center justify-between group cursor-pointer hover:shadow-2xl transition-all">
-            <Link to="/mentor">
-              <div>
-                <h3 className="text-2xl font-bold mb-2">
-                  Bạn là mentor?
-                </h3>
-                <p className="text-[#FFFFFF]/80">
-                  Tham gia với chúng tôi và chia sẻ kinh nghiệm của bạn
-                </p>
-              </div>
-            </Link>
-            <ArrowRight className="w-8 h-8 text-[#F9C5D5] group-hover:translate-x-2 transition-transform" />
-          </div>
         </div>
       </div>
     </section>
@@ -420,102 +339,160 @@ export const FeaturesBento = () => {
 
 // ============ MENTOR SHOWCASE ============
 export const MentorShowcase = () => {
+  const [mentors, setMentors] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchNewMentors = async () => {
+      try {
+        setLoading(true);
+        const response = await MentorService.get8MentorsNew();
+        if (response.ok) {
+          setMentors(response.data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch new mentors:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchNewMentors();
+  }, []);
+
+  if (loading) {
+    return (
+      <section className="py-16 text-center">
+        <p className="text-[#333333]/80">Đang tải danh sách mentor...</p>
+      </section>
+    );
+  }
+
   return (
-    <section className="py-32 px-6 bg-[#FFFFFF]">
+    <section className="py-16 px-6 bg-gradient-to-br from-pink-50 via-white to-blue-50">
       <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl lg:text-5xl font-bold text-[#333333] mb-4">
-            Gặp gỡ các mentor
-            <br />
-            <span className="bg-gradient-to-r from-[#F9C5D5] to-[#2C3E50] bg-clip-text text-transparent">
-              đầu tiên của chúng tôi
-            </span>
+        {/* Tiêu đề */}
+        <div className="text-center mb-10">
+          <h2
+            className="text-3xl md:text-4xl font-bold mb-4"
+            style={{ color: colors.text }}
+          >
+            Các mentor mới gia nhập
           </h2>
-          <p className="text-xl text-[#333333]/80 mt-4">
-            Những chuyên gia đã sẵn sàng đồng hành cùng bạn
+          <p className="text-base text-[#333333]/70">
+            Có thể sẽ phù hợp với bạn
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {fakeData.mentors.map((mentor) => (
+        {/* Danh sách mentor */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {mentors.map((mentor) => (
             <Card
-              key={mentor.id}
-              className="group cursor-pointer hover:shadow-2xl transition-all duration-500 border-0 rounded-3xl overflow-hidden bg-gradient-to-br from-[#FFFFFF] to-[#F9C5D5]/10"
+              key={mentor._id}
+              onClick={() => navigate(`/mentor/${mentor._id}`)}
+              className="group bg-white border-0 shadow-sm hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden cursor-pointer"
             >
               <CardContent className="p-0">
-                {/* Image section */}
-                <div className="relative overflow-hidden">
-                  <div className="aspect-square bg-gradient-to-br from-[#F9C5D5]/50 to-[#2C3E50]/50 relative">
-                    <img
-                      src={mentor.image}
-                      alt={mentor.name}
-                      className="w-full h-full object-cover mix-blend-overlay opacity-90 group-hover:scale-110 transition-transform duration-700"
-                    />
-                  </div>
+                {/* Header gradient */}
+                <div className="bg-gradient-to-br from-[#F9C5D5] to-[#f5b3c9] p-6 relative">
+                  <div className="flex items-start gap-4">
+                    <Avatar className="h-20 w-20 border-4 border-white shadow-lg ring-2 ring-pink-100">
+                      <AvatarImage
+                        src={mentor.avatar_url || "/default-avatar.png"}
+                        alt={mentor.full_name}
+                        className="object-cover"
+                      />
+                      <AvatarFallback className="bg-white text-[#F9C5D5] text-xl font-bold">
+                        {mentor.full_name
+                          ?.split(" ")
+                          .map((n) => n[0])
+                          .join("")}
+                      </AvatarFallback>
+                    </Avatar>
 
-                  {/* NEW badge */}
-                  {mentor.isNew && (
-                    <div className="absolute top-4 right-4 bg-[#F9C5D5] text-[#333333] px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 shadow-lg">
+                    <div className="flex-1 text-white">
+                      <h3 className="font-bold text-lg mb-1 line-clamp-1">
+                        {mentor.full_name}
+                      </h3>
+                      <p className="text-sm opacity-90 line-clamp-1">
+                        {mentor.job_title}
+                      </p>
+                      {mentor.company && (
+                        <div className="flex items-center gap-1 mt-2 text-xs opacity-80">
+                          <Briefcase className="h-3 w-3" />
+                          <span className="line-clamp-1">{mentor.company}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Label “MỚI” */}
+                    <div className="absolute top-3 right-3 bg-white text-[#F9C5D5] px-2 py-0.5 rounded-full text-[10px] font-semibold flex items-center gap-1 shadow">
                       <Sparkles className="w-3 h-3" />
                       MỚI
                     </div>
-                  )}
-
-                  {/* Online status */}
-                  {mentor.available && (
-                    <div className="absolute top-4 left-4 bg-[#2C3E50] text-[#FFFFFF] px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1 shadow-lg">
-                      <div className="w-2 h-2 bg-[#FFFFFF] rounded-full animate-pulse" />
-                      Online
-                    </div>
-                  )}
-
-                  {/* Verified badge */}
-                  {mentor.verified && (
-                    <div className="absolute bottom-4 left-4 bg-[#2C3E50] text-[#FFFFFF] p-2 rounded-full shadow-lg">
-                      <Check className="w-4 h-4" />
-                    </div>
-                  )}
+                  </div>
                 </div>
 
-                {/* Content section */}
-                <div className="p-6">
-                  <h3 className="font-bold text-lg text-[#333333] mb-1">
-                    {mentor.name}
-                  </h3>
-
-                  <p className="text-sm text-[#333333]/80 mb-1">{mentor.title}</p>
-                  <p className="text-sm font-medium text-[#F9C5D5] mb-4">
-                    {mentor.company}
-                  </p>
-
-                  {/* Location */}
-                  <div className="flex items-center gap-2 text-sm text-[#333333]/80 mb-4">
-                    <MapPin className="w-4 h-4" />
-                    {mentor.location}
-                  </div>
+                {/* Content */}
+                <div className="p-6 space-y-4">
+                  {/* Category */}
+                  {mentor.category && (
+                    <Badge className="bg-[#2C3E50] text-white hover:bg-[#1e2d3d]">
+                      {mentor.category}
+                    </Badge>
+                  )}
 
                   {/* Skills */}
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {mentor.skills.slice(0, 2).map((skill, idx) => (
-                      <Badge
-                        key={idx}
-                        className="text-xs bg-[#F9C5D5]/20 text-[#333333] hover:bg-[#F9C5D5]/40"
-                      >
-                        {skill}
-                      </Badge>
-                    ))}
-                  </div>
-
-                  {/* Price & CTA */}
-                  <div className="flex items-center justify-between pt-4 border-t border-[#F9C5D5]/20">
-                    <div>
-                      <p className="text-xs text-[#333333]/60">Từ</p>
-                      <p className="text-lg font-bold text-[#333333]">
-                        {mentor.price}₫
-                      </p>
+                  {mentor.skill && (
+                    <div className="flex flex-wrap gap-2">
+                      {mentor.skill.split(",").slice(0, 3).map((s, index) => (
+                        <Badge
+                          key={`${s}-${index}`}
+                          variant="outline"
+                          className="border-[#F9C5D5] text-[#F9C5D5] text-xs"
+                        >
+                          {s.trim()}
+                        </Badge>
+                      ))}
+                      {mentor.skill.split(",").length > 3 && (
+                        <Badge
+                          variant="outline"
+                          className="border-gray-300 text-gray-500 text-xs"
+                        >
+                          +{mentor.skill.split(",").length - 3}
+                        </Badge>
+                      )}
                     </div>
-                    <Button className="bg-[#F9C5D5] hover:bg-[#F9C5D5]/80 text-[#333333] rounded-xl">
-                      Xem hồ sơ
+                  )}
+
+                  {/* Bio preview */}
+                  {mentor.bio && (
+                    <p className="text-sm text-gray-600 line-clamp-2">
+                      {mentor.bio}
+                    </p>
+                  )}
+
+                  {/* Footer */}
+                  <div className="pt-4 border-t border-gray-100 flex items-center justify-between">
+                    <div>
+                      {mentor.price && (
+                        <div className="text-xl font-bold text-[#2C3E50]">
+                          {mentor.price.toLocaleString("vi-VN")}₫
+                          <span className="text-xs text-gray-500 font-normal">
+                            /giờ
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    <Button
+                      size="sm"
+                      className="bg-[#F9C5D5] hover:bg-[#f5b3c9] text-white rounded-lg px-4"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/mentor/${mentor._id}`);
+                      }}
+                    >
+                      Xem chi tiết
                     </Button>
                   </div>
                 </div>
@@ -524,229 +501,347 @@ export const MentorShowcase = () => {
           ))}
         </div>
 
-        <div className="text-center mt-12">
-          <p className="text-[#333333]/80 mb-4">
-            Chúng tôi đang mở rộng mạng lưới mentor mỗi ngày
-          </p>
-          <Button
-            size="lg"
-            variant="outline"
-            className="rounded-full px-8 border-2 border-[#F9C5D5] hover:border-[#2C3E50] hover:text-[#2C3E50]"
-          >
-            Trở thành mentor
-            <ArrowRight className="w-4 h-4 ml-2" />
-          </Button>
+        {/* Nút xem thêm */}
+        <div className="text-center mt-10">
+          <Link to="/listmentor">
+            <Button
+              variant="outline"
+              size="sm"
+              className="rounded-full border-2 border-[#F9C5D5] hover:border-[#2C3E50] text-[#333333] hover:text-[#2C3E50] px-6"
+            >
+              Xem thêm mentor khác
+            </Button>
+          </Link>
         </div>
       </div>
     </section>
   );
 };
 
+// ============ MENTOR SHOWCASE RATING============
+
+export const MentorShowcaseRating = () => {
+  const [mentors, setMentors] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchNewMentors = async () => {
+      try {
+        setLoading(true);
+        const response = await MentorService.get8MentorsRating();
+        if (response.ok) {
+          setMentors(response.data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch new mentors:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchNewMentors();
+  }, []);
+
+  if (loading) {
+    return (
+      <section className="py-16 text-center">
+        <p className="text-[#333333]/80">Đang tải danh sách mentor...</p>
+      </section>
+    );
+  }
+
+  return (
+    <section className="py-16 px-6 bg-gradient-to-br from-pink-50 via-white to-blue-50">
+      <div className="max-w-7xl mx-auto">
+        {/* Tiêu đề */}
+        <div className="text-center mb-10">
+          <h2
+            className="text-3xl md:text-4xl font-bold mb-4"
+            style={{ color: colors.text }}
+          >
+            Các mentor nổi bật nhất
+          </h2>
+          <p className="text-base text-[#333333]/70">
+            Có thể sẽ phù hợp với bạn
+          </p>
+        </div>
+
+        {/* Danh sách mentor */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {mentors.map((mentor) => (
+            <Card
+              key={mentor._id}
+              onClick={() => navigate(`/mentor/${mentor._id}`)}
+              className="group bg-white border-0 shadow-sm hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden cursor-pointer"
+            >
+              <CardContent className="p-0">
+                {/* Header gradient */}
+                <div className="bg-gradient-to-br from-[#F9C5D5] to-[#f5b3c9] p-6 relative">
+                  <div className="flex items-start gap-4">
+                    <Avatar className="h-20 w-20 border-4 border-white shadow-lg ring-2 ring-pink-100">
+                      <AvatarImage
+                        src={mentor.avatar_url || "/default-avatar.png"}
+                        alt={mentor.full_name}
+                        className="object-cover"
+                      />
+                      <AvatarFallback className="bg-white text-[#F9C5D5] text-xl font-bold">
+                        {mentor.full_name
+                          ?.split(" ")
+                          .map((n) => n[0])
+                          .join("")}
+                      </AvatarFallback>
+                    </Avatar>
+
+                    <div className="flex-1 text-white">
+                      <h3 className="font-bold text-lg mb-1 line-clamp-1">
+                        {mentor.full_name}
+                      </h3>
+                      <p className="text-sm opacity-90 line-clamp-1">
+                        {mentor.job_title}
+                      </p>
+                      {mentor.company && (
+                        <div className="flex items-center gap-1 mt-2 text-xs opacity-80">
+                          <Briefcase className="h-3 w-3" />
+                          <span className="line-clamp-1">{mentor.company}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Label “MỚI” */}
+                    <div className="absolute top-3 right-3 bg-white text-[#F9C5D5] px-2 py-0.5 rounded-full text-[10px] font-semibold flex items-center gap-1 shadow">
+                      <Sparkles className="w-3 h-3" />
+                      NỔI BẬT
+                    </div>
+                  </div>
+                </div>
+
+                {/* Content */}
+                <div className="p-6 space-y-4">
+                  {/* Category */}
+                  {mentor.category && (
+                    <Badge className="bg-[#2C3E50] text-white hover:bg-[#1e2d3d]">
+                      {mentor.category}
+                    </Badge>
+                  )}
+
+                  {/* Skills */}
+                  {mentor.skill && (
+                    <div className="flex flex-wrap gap-2">
+                      {mentor.skill.split(",").slice(0, 3).map((s, index) => (
+                        <Badge
+                          key={`${s}-${index}`}
+                          variant="outline"
+                          className="border-[#F9C5D5] text-[#F9C5D5] text-xs"
+                        >
+                          {s.trim()}
+                        </Badge>
+                      ))}
+                      {mentor.skill.split(",").length > 3 && (
+                        <Badge
+                          variant="outline"
+                          className="border-gray-300 text-gray-500 text-xs"
+                        >
+                          +{mentor.skill.split(",").length - 3}
+                        </Badge>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Bio preview */}
+                  {mentor.bio && (
+                    <p className="text-sm text-gray-600 line-clamp-2">
+                      {mentor.bio}
+                    </p>
+                  )}
+
+                  {/* Footer */}
+                  <div className="pt-4 border-t border-gray-100 flex items-center justify-between">
+                    <div>
+                      {mentor.price && (
+                        <div className="text-xl font-bold text-[#2C3E50]">
+                          {mentor.price.toLocaleString("vi-VN")}₫
+                          <span className="text-xs text-gray-500 font-normal">
+                            /giờ
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    <Button
+                      size="sm"
+                      className="bg-[#F9C5D5] hover:bg-[#f5b3c9] text-white rounded-lg px-4"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/mentor/${mentor._id}`);
+                      }}
+                    >
+                      Xem chi tiết
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Nút xem thêm */}
+        <div className="text-center mt-10">
+          <Link to="/listmentor">
+            <Button
+              variant="outline"
+              size="sm"
+              className="rounded-full border-2 border-[#F9C5D5] hover:border-[#2C3E50] text-[#333333] hover:text-[#2C3E50] px-6"
+            >
+              Xem thêm mentor khác
+            </Button>
+          </Link>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+
 // ============ HOW IT WORKS ============
 export const MentorshipTimeline = () => {
   return (
-    <section className="py-20 px-4" style={{ background: colors.secondary }}>
+    <section
+      className="py-20 px-6 bg-gradient-to-br from-pink-50 via-white to-blue-50"
+      style={{ background: colors.secondary }}
+    >
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="text-left mb-16">
+        <div className="text-center mb-16">
           <h2
-            className="text-4xl font-bold mb-6"
+            className="text-3xl md:text-4xl font-bold mb-4"
             style={{ color: colors.text }}
           >
             Hành trình cố vấn dài hạn
-            <br />
-            không chỉ tốt hơn – mà còn nhanh hơn
           </h2>
+          <p className="text-base md:text-lg text-[#333333]/70">
+            Không chỉ tốt hơn – mà còn nhanh hơn
+          </p>
         </div>
 
-        {/* Timeline */}
+        {/* Timeline container */}
         <div className="relative">
           {/* Vertical line */}
           <div
-            className="absolute left-8 top-0 bottom-0 w-0.5"
+            className="absolute left-8 md:left-1/2 top-0 bottom-0 w-0.5 -translate-x-1/2 hidden md:block"
             style={{ background: colors.primary }}
           ></div>
 
           {/* Timeline items */}
-          <div className="space-y-16">
-            {/* Khám phá */}
-            <div className="relative flex items-start gap-8">
-              <div
-                className="relative z-10 w-4 h-4 rounded-full border-4"
-                style={{
-                  background: colors.primary,
-                  borderColor: colors.secondary,
-                }}
-              ></div>
-              <div className="flex-1 grid md:grid-cols-2 gap-8 items-center">
-                <div>
-                  <h3
-                    className="text-2xl font-semibold mb-4"
-                    style={{ color: colors.text }}
-                  >
-                    Khám phá
-                  </h3>
-                  <p className="leading-relaxed text-gray-600">
-                    Duyệt qua mạng lưới cố vấn chuyên gia – kỹ sư, nhà thiết kế,
-                    nhà sáng lập và nhiều lĩnh vực khác. Tìm người phù hợp với mục
-                    tiêu, kỹ năng và ngân sách của bạn.
-                  </p>
-                </div>
-                <div
-                  className="rounded-lg p-6 border"
-                  style={{ background: "#f9fafb", borderColor: "#e5e7eb" }}
-                >
-                  <div className="flex items-center gap-4 mb-4">
-                    <div
-                      className="w-12 h-12 rounded-full flex items-center justify-center"
-                      style={{ background: colors.primary }}
-                    >
-                      <Users className="w-6 h-6 text-white" />
+          <div className="space-y-20">
+            {[
+              {
+                title: "Khám phá",
+                desc: "Duyệt qua mạng lưới cố vấn chuyên gia – kỹ sư, nhà thiết kế, nhà sáng lập và nhiều lĩnh vực khác. Tìm người phù hợp với mục tiêu, kỹ năng và ngân sách của bạn.",
+                card: (
+                  <div className="rounded-2xl p-6 bg-white shadow-md hover:shadow-lg transition-all duration-300">
+                    <div className="flex items-center gap-4 mb-4">
+                      <div
+                        className="w-12 h-12 rounded-full flex items-center justify-center shadow-md"
+                        style={{ background: colors.primary }}
+                      >
+                        <Users className="w-6 h-6 text-white" />
+                      </div>
+                      <div>
+                        <h4
+                          className="font-semibold text-lg"
+                          style={{ color: colors.text }}
+                        >
+                          Arlene McCoy
+                        </h4>
+                        <p className="text-gray-500 text-sm">
+                          Chuyên gia Thiết kế Sản phẩm
+                        </p>
+                      </div>
                     </div>
-                    <div>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Kinh nghiệm</span>
+                        <span style={{ color: colors.text }}>8+ năm</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Đánh giá</span>
+                        <span style={{ color: colors.text }}>4.9/5</span>
+                      </div>
+                    </div>
+                  </div>
+                ),
+              },
+              {
+                title: "Bắt đầu",
+                desc: "Chọn gói linh hoạt phù hợp với tốc độ của bạn – dù là chat Q&A, cuộc gọi 1-1 hay kết hợp. Cố vấn sẽ giúp bạn xây dựng lộ trình cá nhân hóa.",
+                card: (
+                  <div className="rounded-2xl p-6 bg-white shadow-md hover:shadow-lg transition-all duration-300">
+                    <div className="flex items-center justify-between mb-4">
                       <h4
                         className="font-semibold"
                         style={{ color: colors.text }}
                       >
-                        Arlene McCoy
+                        Lên lịch buổi học
                       </h4>
-                      <p className="text-gray-500 text-sm">
-                        Chuyên gia Thiết kế Sản phẩm
-                      </p>
+                      <Calendar
+                        className="w-5 h-5"
+                        style={{ color: colors.primary }}
+                      />
                     </div>
-                  </div>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Kinh nghiệm</span>
-                      <span style={{ color: colors.text }}>8+ năm</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Đánh giá</span>
-                      <span style={{ color: colors.text }}>4.9/5</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Bắt đầu */}
-            <div className="relative flex items-start gap-8">
-              <div
-                className="relative z-10 w-4 h-4 rounded-full border-4"
-                style={{
-                  background: colors.primary,
-                  borderColor: colors.secondary,
-                }}
-              ></div>
-              <div className="flex-1 grid md:grid-cols-2 gap-8 items-center">
-                <div>
-                  <h3
-                    className="text-2xl font-semibold mb-4"
-                    style={{ color: colors.text }}
-                  >
-                    Bắt đầu
-                  </h3>
-                  <p className="leading-relaxed text-gray-600">
-                    Chọn gói linh hoạt phù hợp với tốc độ của bạn – dù là chat
-                    Q&A, cuộc gọi 1-1 hay kết hợp. Cố vấn sẽ giúp bạn xây dựng lộ
-                    trình cá nhân hóa.
-                  </p>
-                </div>
-                <div
-                  className="rounded-lg p-6 border"
-                  style={{ background: "#f9fafb", borderColor: "#e5e7eb" }}
-                >
-                  <div className="flex items-center justify-between mb-4">
-                    <h4
-                      className="font-semibold"
-                      style={{ color: colors.text }}
-                    >
-                      Lên lịch buổi học
-                    </h4>
-                    <Calendar
-                      className="w-5 h-5"
-                      style={{ color: colors.primary }}
-                    />
-                  </div>
-                  <div className="grid grid-cols-3 gap-2 mb-4">
-                    {["T2", "T3", "T4"].map((day) => (
-                      <div
-                        key={day}
-                        className="rounded p-2 text-center"
-                        style={{ background: "#e5e7eb" }}
-                      >
-                        <div className="text-xs text-gray-500">{day}</div>
+                    <div className="grid grid-cols-3 gap-2 mb-4">
+                      {["T2", "T3", "T4"].map((day) => (
                         <div
-                          className="text-sm font-medium"
-                          style={{ color: colors.text }}
+                          key={day}
+                          className="rounded-lg p-2 text-center bg-gray-100"
                         >
-                          15
+                          <div className="text-xs text-gray-500">{day}</div>
+                          <div
+                            className="text-sm font-medium"
+                            style={{ color: colors.text }}
+                          >
+                            15
+                          </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      className="flex-1 py-2 px-4 rounded text-sm font-medium"
-                      style={{ background: colors.primary, color: "#fff" }}
-                    >
-                      Đặt ngay
-                    </button>
-                    <button
-                      className="px-4 py-2 border rounded text-sm"
-                      style={{ borderColor: "#d1d5db", color: colors.text }}
-                    >
-                      <Play className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Gặp gỡ */}
-            <div className="relative flex items-start gap-8">
-              <div
-                className="relative z-10 w-4 h-4 rounded-full border-4"
-                style={{
-                  background: colors.primary,
-                  borderColor: colors.secondary,
-                }}
-              ></div>
-              <div className="flex-1 grid md:grid-cols-2 gap-8 items-center">
-                <div>
-                  <h3
-                    className="text-2xl font-semibold mb-4"
-                    style={{ color: colors.text }}
-                  >
-                    Gặp gỡ
-                  </h3>
-                  <p className="leading-relaxed text-gray-600">
-                    Nhận hỗ trợ liên tục qua các buổi gọi, kiểm tra tiến độ và
-                    phản hồi. Cố vấn sẽ đồng hành cùng bạn trong chặng đường dài.
-                  </p>
-                </div>
-                <div
-                  className="rounded-lg p-6 border"
-                  style={{ background: "#f9fafb", borderColor: "#e5e7eb" }}
-                >
-                  <div className="flex items-center justify-between mb-4">
-                    <h4
-                      className="font-semibold"
-                      style={{ color: colors.text }}
-                    >
-                      Cuộc gọi video
-                    </h4>
+                      ))}
+                    </div>
                     <div className="flex gap-2">
-                      <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                      <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <button
+                        className="flex-1 py-2 px-4 rounded-lg text-sm font-medium text-white"
+                        style={{ background: colors.primary }}
+                      >
+                        Đặt ngay
+                      </button>
+                      <button
+                        className="px-4 py-2 border rounded-lg text-sm"
+                        style={{
+                          borderColor: "#d1d5db",
+                          color: colors.text,
+                        }}
+                      >
+                        <Play className="w-4 h-4" />
+                      </button>
                     </div>
                   </div>
-                  <div
-                    className="rounded-lg p-4 mb-4"
-                    style={{ background: "#e5e7eb" }}
-                  >
-                    <div className="flex items-center gap-3">
+                ),
+              },
+              {
+                title: "Gặp gỡ",
+                desc: "Nhận hỗ trợ liên tục qua các buổi gọi, kiểm tra tiến độ và phản hồi. Cố vấn sẽ đồng hành cùng bạn trong chặng đường dài.",
+                card: (
+                  <div className="rounded-2xl p-6 bg-white shadow-md hover:shadow-lg transition-all duration-300">
+                    <div className="flex items-center justify-between mb-4">
+                      <h4
+                        className="font-semibold"
+                        style={{ color: colors.text }}
+                      >
+                        Cuộc gọi video
+                      </h4>
+                      <div className="flex gap-2">
+                        <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                        <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      </div>
+                    </div>
+                    <div className="rounded-xl p-4 bg-gray-100 mb-4 flex items-center gap-3 justify-center">
                       <div
                         className="w-10 h-10 rounded-full flex items-center justify-center"
                         style={{ background: colors.primary }}
@@ -757,83 +852,93 @@ export const MentorshipTimeline = () => {
                         <Users className="w-5 h-5 text-white" />
                       </div>
                     </div>
-                  </div>
-                  <div className="text-center">
-                    <div
-                      className="text-sm font-medium"
-                      style={{ color: colors.text }}
-                    >
-                      45:32
+                    <div className="text-center">
+                      <div
+                        className="text-sm font-medium"
+                        style={{ color: colors.text }}
+                      >
+                        45:32
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        Buổi học đang diễn ra
+                      </div>
                     </div>
-                    <div className="text-xs text-gray-500">
-                      Buổi học đang diễn ra
+                  </div>
+                ),
+              },
+              {
+                title: "Phát triển",
+                desc: "Đo lường kết quả bằng các chỉ số rõ ràng. Tiến nhanh hơn so với tự học – hiệu quả hơn sách vở, bứt phá hơn bao giờ hết.",
+                card: (
+                  <div className="rounded-2xl p-6 bg-white shadow-md hover:shadow-lg transition-all duration-300">
+                    <div className="flex items-center justify-between mb-4">
+                      <h4
+                        className="font-semibold"
+                        style={{ color: colors.text }}
+                      >
+                        Theo dõi tiến trình
+                      </h4>
+                      <TrendingUp
+                        className="w-5 h-5"
+                        style={{ color: colors.primary }}
+                      />
+                    </div>
+                    <div className="space-y-3 text-sm">
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-500">Kỹ năng cải thiện</span>
+                        <span style={{ color: colors.text }}>12</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-500">Mục tiêu đạt được</span>
+                        <span style={{ color: colors.text }}>8/10</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-500">Số buổi học</span>
+                        <span style={{ color: colors.text }}>24</span>
+                      </div>
+                    </div>
+                    <div className="mt-4 rounded-full h-2 bg-gray-200">
+                      <div
+                        className="h-2 rounded-full transition-all"
+                        style={{
+                          background: colors.primary,
+                          width: "80%",
+                        }}
+                      ></div>
                     </div>
                   </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Phát triển */}
-            <div className="relative flex items-start gap-8">
+                ),
+              },
+            ].map((step, index) => (
               <div
-                className="relative z-10 w-4 h-4 rounded-full border-4"
-                style={{
-                  background: colors.primary,
-                  borderColor: colors.secondary,
-                }}
-              ></div>
-              <div className="flex-1 grid md:grid-cols-2 gap-8 items-center">
-                <div>
+                key={index}
+                className={`relative flex flex-col md:flex-row items-start md:items-center gap-8 ${index % 2 === 0 ? "md:flex-row" : "md:flex-row-reverse"
+                  }`}
+              >
+                {/* Dot */}
+                <div
+                  className="hidden md:block absolute left-1/2 -translate-x-1/2 z-10 w-5 h-5 rounded-full border-4"
+                  style={{
+                    background: colors.primary,
+                    borderColor: colors.secondary,
+                  }}
+                ></div>
+
+                {/* Content */}
+                <div className="flex-1 space-y-4">
                   <h3
-                    className="text-2xl font-semibold mb-4"
+                    className="text-2xl font-semibold"
                     style={{ color: colors.text }}
                   >
-                    Phát triển
+                    {step.title}
                   </h3>
-                  <p className="leading-relaxed text-gray-600">
-                    Đo lường kết quả bằng các chỉ số rõ ràng. Tiến nhanh hơn so
-                    với tự học – hiệu quả hơn sách vở, bứt phá hơn bao giờ hết.
-                  </p>
+                  <p className="text-gray-600 leading-relaxed">{step.desc}</p>
                 </div>
-                <div
-                  className="rounded-lg p-6 border"
-                  style={{ background: "#f9fafb", borderColor: "#e5e7eb" }}
-                >
-                  <div className="flex items-center justify-between mb-4">
-                    <h4
-                      className="font-semibold"
-                      style={{ color: colors.text }}
-                    >
-                      Theo dõi tiến trình
-                    </h4>
-                    <TrendingUp
-                      className="w-5 h-5"
-                      style={{ color: colors.primary }}
-                    />
-                  </div>
-                  <div className="space-y-3 text-sm">
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-500">Kỹ năng cải thiện</span>
-                      <span style={{ color: colors.text }}>12</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-500">Mục tiêu đạt được</span>
-                      <span style={{ color: colors.text }}>8/10</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-500">Số buổi học</span>
-                      <span style={{ color: colors.text }}>24</span>
-                    </div>
-                  </div>
-                  <div className="mt-4 rounded-full h-2" style={{ background: "#e5e7eb" }}>
-                    <div
-                      className="h-2 rounded-full"
-                      style={{ background: colors.primary, width: "80%" }}
-                    ></div>
-                  </div>
-                </div>
+
+                {/* Card */}
+                <div className="flex-1">{step.card}</div>
               </div>
-            </div>
+            ))}
           </div>
         </div>
       </div>
@@ -844,52 +949,88 @@ export const MentorshipTimeline = () => {
 // ============ EARLY SUPPORTERS ============
 export const EarlySupporters = () => {
   return (
-    <section className="py-32 px-6 bg-[#FFFFFF]">
+    <section
+      className="py-32 px-6"
+      style={{ background: colors.secondary }}
+    >
       <div className="max-w-6xl mx-auto">
+        {/* Header */}
         <div className="text-center mb-16">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#F9C5D5]/20 mb-6">
-            <Heart className="w-4 h-4 text-[#2C3E50]" />
-            <span className="text-sm font-medium text-[#333333]">
+          <div
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6"
+            style={{ background: `${colors.primary}20` }} // 20% opacity
+          >
+            <Heart className="w-4 h-4" style={{ color: colors.accent }} />
+            <span
+              className="text-sm font-medium"
+              style={{ color: colors.text }}
+            >
               Cộng đồng
             </span>
           </div>
-          <h2 className="text-4xl font-bold mb-6"
-            style={{ color: colors.text }}>
+
+          <h2
+            className="text-4xl font-bold mb-6"
+            style={{ color: colors.text }}
+          >
             Lời từ những người ủng hộ đầu tiên
           </h2>
-          <p className="text-xl text-[#333333]/80 mt-4">
+          <p
+            className="text-xl mt-4"
+            style={{ color: `${colors.text}CC` }} // 80% opacity
+          >
             Họ tin tưởng vào tầm nhìn của chúng tôi
           </p>
         </div>
 
+        {/* Testimonials */}
         <div className="grid md:grid-cols-2 gap-8">
           {fakeData.testimonials.map((testimonial, idx) => (
             <Card
               key={idx}
-              className="border-0 rounded-3xl bg-[#FFFFFF] shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden"
+              className="border-0 rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden"
+              style={{ background: colors.secondary }}
             >
               <CardContent className="p-8">
                 <div className="flex items-center gap-2 mb-6">
-                  <Badge className="bg-[#F9C5D5] text-[#333333] border-0">
+                  <Badge
+                    className="border-0"
+                    style={{
+                      background: colors.primary,
+                      color: colors.text,
+                    }}
+                  >
                     {testimonial.role}
                   </Badge>
                 </div>
 
-                <blockquote className="text-lg text-[#333333]/80 mb-6 leading-relaxed">
-                  "{testimonial.quote}"
+                <blockquote
+                  className="text-lg mb-6 leading-relaxed"
+                  style={{ color: `${colors.text}CC` }}
+                >
+                  “{testimonial.quote}”
                 </blockquote>
 
                 <div className="flex items-center gap-4">
                   <img
                     src={testimonial.image}
                     alt={testimonial.name}
-                    className="w-14 h-14 rounded-full object-cover border-2 border-[#F9C5D5]/50"
+                    className="w-14 h-14 rounded-full object-cover"
+                    style={{
+                      border: `2px solid ${colors.primary}80`,
+                    }}
                   />
                   <div>
-                    <p className="font-bold text-[#333333]">
+                    <p
+                      className="font-bold"
+                      style={{ color: colors.text }}
+                    >
                       {testimonial.name}
                     </p>
-                    <p className="text-sm text-[#333333]/80">
+                    <p
+                      className="text-sm"
+                      style={{ color: `${colors.text}CC` }}
+                    >
                       {testimonial.title}
                     </p>
                   </div>
@@ -899,135 +1040,22 @@ export const EarlySupporters = () => {
           ))}
         </div>
 
+        {/* Call to Action */}
         <div className="text-center mt-12">
-          <p className="text-[#333333]/80 mb-4">
+          <p
+            className="mb-4"
+            style={{ color: `${colors.text}CC` }}
+          >
             Hãy là một trong những người đầu tiên trải nghiệm nền tảng
           </p>
-          <Button
-            size="lg"
-            variant="outline"
-            className="rounded-full px-8 border-2 border-[#F9C5D5] text-[#333333] hover:bg-[#F9C5D5]/10"
+          <Link
+            to="/auth/signup"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-white"
+            style={{ background: colors.primary }}
           >
-            Tham gia ngay
-            <ArrowRight className="w-4 h-4 ml-2" />
-          </Button>
-        </div>
-      </div>
-    </section>
-  );
-};
-
-// ============ CTA SECTION ============
-export const CTASection = () => {
-  return (
-    <section className="py-20 bg-[#F9C5D5]">
-      <div className="container mx-auto px-6 text-center max-w-3xl">
-        <h2 className="text-3xl lg:text-4xl font-bold text-[#333333] mb-6">
-          Sẵn sàng tìm Mentor phù hợp cho bạn?
-        </h2>
-        <p className="text-lg text-[#333333]/80 mb-8 leading-relaxed">
-          Khám phá hàng ngàn mentor toàn cầu – những người sẵn sàng đồng hành và
-          hỗ trợ bạn trên hành trình phát triển cá nhân và sự nghiệp.
-        </p>
-        <div className="flex justify-center">
-          <Link to="/listmentor">
-            <Button
-              size="lg"
-              className="bg-[#2C3E50] hover:bg-[#1A2634] text-white px-6 shadow-lg transition"
-            >
-              Tìm Mentor ngay
-              <ArrowRight className="ml-2 w-5 h-5" />
-            </Button>
+            <span>Đăng ký ngay</span>
+            <ArrowRight className="w-4 h-4" />
           </Link>
-        </div>
-      </div>
-    </section>
-  );
-};
-
-// ============ WHY JOIN NOW ============
-export const WhyJoinNow = () => {
-  const benefits = [
-    {
-      icon: Trophy,
-      title: "Ưu đãi Early Bird",
-      description: "Giảm 20% cho buổi học đầu tiên - chỉ dành cho 100 người đầu tiên",
-      highlight: true,
-    },
-    {
-      icon: Users,
-      title: "Tham gia cộng đồng",
-      description: "Kết nối với những người cùng chí hướng từ ngày đầu",
-      highlight: false,
-    },
-    {
-      icon: Sparkles,
-      title: "Ảnh hưởng đến sản phẩm",
-      description: "Góp ý và giúp định hình tương lai của nền tảng",
-      highlight: false,
-    },
-    {
-      icon: Heart,
-      title: "Hỗ trợ tận tâm",
-      description: "Nhận hỗ trợ trực tiếp từ team để trải nghiệm tốt nhất",
-      highlight: false,
-    },
-  ];
-
-  return (
-    <section className="py-32 px-6 bg-gradient-to-b from-[#FFFFFF] to-[#F9C5D5]/10">
-      <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl font-bold mb-6"
-            style={{ color: colors.text }}>
-            Tại sao nên tham gia ngay bây giờ?
-          </h2>
-          <p className="text-xl text-[#333333]/80 mt-4">
-            Những lợi ích đặc biệt dành cho người dùng đầu tiên
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {benefits.map((benefit, idx) => (
-            <Card
-              key={idx}
-              className={`group cursor-pointer hover:shadow-2xl transition-all duration-300 border-0 rounded-3xl overflow-hidden ${benefit.highlight
-                ? "bg-[#F9C5D5] text-[#333333]"
-                : "bg-[#FFFFFF]"
-                }`}
-            >
-              <CardContent className="p-8">
-                <div className="flex items-start gap-6">
-                  <div
-                    className={`w-16 h-16 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform ${benefit.highlight
-                      ? "bg-[#FFFFFF]/20 backdrop-blur-sm"
-                      : "bg-[#F9C5D5]/20"
-                      }`}
-                  >
-                    <benefit.icon
-                      className={`w-8 h-8 ${benefit.highlight ? "text-[#FFFFFF]" : "text-[#2C3E50]"
-                        }`}
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <h3
-                      className={`text-xl font-bold mb-3 ${benefit.highlight ? "text-[#333333]" : "text-[#333333]"
-                        }`}
-                    >
-                      {benefit.title}
-                    </h3>
-                    <p
-                      className={
-                        benefit.highlight ? "text-[#333333]/80" : "text-[#333333]/80"
-                      }
-                    >
-                      {benefit.description}
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
         </div>
       </div>
     </section>

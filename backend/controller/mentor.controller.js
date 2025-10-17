@@ -436,3 +436,25 @@ exports.recommend = async (req, res) => {
     res.status(500).json({ ok: false, message: 'Server error', error: error.message });
   }
 };
+
+// ---------------------- GET 8 MENTORS NEW ----------------------
+exports.get8MentorsNew = async (req, res) => {
+  try {
+    const mentors = await Mentor.find({ status: 'ACTIVE' }).limit(8).sort({ createdAt: -1 }).select('-password_hash').lean();
+    return res.json({ ok: true, data: mentors });
+  } catch (error) {
+    console.error('get 8 mentors new error:', error);
+    res.status(500).json({ ok: false, message: 'Server error', error: error.message });
+  }
+};
+
+// ---------------------- GET 8 MENTORS Rating DESC ----------------------
+exports.get8MentorsRating = async (req, res) => {
+  try {
+    const mentors = await Mentor.find({ status: 'ACTIVE' }).limit(8).sort({ rating: -1 }).select('-password_hash').lean();
+    return res.json({ ok: true, data: mentors });
+  } catch (error) {
+    console.error('get 8 mentors rating error:', error);
+    res.status(500).json({ ok: false, message: 'Server error', error: error.message });
+  }
+};
