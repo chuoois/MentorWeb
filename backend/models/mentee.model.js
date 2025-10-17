@@ -13,6 +13,7 @@ const menteeSchema = new mongoose.Schema(
       default: "ACTIVE",
       index: true,
     },
+    job_title: String,
     gpa: {
       type: Number,
       min: 0,

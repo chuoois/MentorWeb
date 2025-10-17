@@ -215,8 +215,7 @@ exports.getProfile = async (req, res) => {
 exports.updateProfile = async (req, res) => {
   try {
     const menteeId = req.user.id;
-    console.log("req.user:", req.user);
-    const { full_name, phone, gpa, experience, motivation, password, confirm_password } = req.body;
+    const { full_name, phone, gpa, experience, motivation, job_title, password, confirm_password } = req.body;
 
     const mentee = await Mentee.findById(menteeId);
     if (!mentee) return res.status(404).json({ message: "Mentee not found" });
@@ -227,6 +226,7 @@ exports.updateProfile = async (req, res) => {
     if (gpa !== undefined) mentee.gpa = gpa;
     if (experience !== undefined) mentee.experience = experience;
     if (motivation !== undefined) mentee.motivation = motivation;
+    if (job_title !== undefined) mentee.job_title = job_title;
 
     // Cập nhật mật khẩu nếu có
     if (password) {

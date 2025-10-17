@@ -62,6 +62,10 @@ export const router = createBrowserRouter([
       { path: "/", element: <MentorHome /> },
       { path: "mentor/:id", element: <MentorDetail /> },
       { path: "/listmentor", element: <MentorList /> },
+      { path: "applications", element: <MenteeApplicationPage /> },
+      { path: "progress", element: <LearningProgressPage /> },
+      { path: "schedule", element: <MenteeSchedulePage /> },
+      { path: "profile", element: <MenteeProfilePage /> },
     ],
   },
 

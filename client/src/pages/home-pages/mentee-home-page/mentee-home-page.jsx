@@ -1,15 +1,21 @@
-import {HeroSection, StatsSection, FeaturesBento, MentorshipTimeline, WhyJoinNow, EarlySupporters, CTASection  } from '@/components/home-components';
+import { 
+  HeroSection, 
+  StatsSection, 
+  MentorShowcase, 
+  MentorshipTimeline, 
+  EarlySupporters,
+  MentorShowcaseRating
+} from '@/components/home-components';
 
 export const MentorHome = () => {
   return (
     <>
       <HeroSection />
       <StatsSection />
-      <FeaturesBento />
+      <MentorShowcase />
+      <MentorShowcaseRating />
       <MentorshipTimeline />
-      <WhyJoinNow />
       <EarlySupporters />
-      <CTASection />
     </>
-  )
+  );
 };

@@ -13,6 +13,14 @@ const MentorService = {
         const response = await api.get("/api/mentors", { params });
         return response.data;
     },
+    get8MentorsNew: async () => {
+        const response = await api.get("/api/mentors/new");
+        return response.data;
+    },
+    get8MentorsRating: async () => {
+        const response = await api.get("/api/mentors/rating");
+        return response.data;
+    },
     getMentorByID: async (id) => {
         const response = await api.get(`/api/mentors/${id}`);
         return response.data;

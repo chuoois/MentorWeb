@@ -43,14 +43,14 @@ export const Header = () => {
             Xem toàn bộ Mentor
           </Link>
 
-          {/* Nếu chưa login → Trở thành Mentor | Nếu login → Trang cá nhân */}
+          {/* Nếu chưa login → Trở thành Mentor | Nếu login → Bảng điều khiển cá nhân */}
           {!isLoggedIn ? (
             <Link to="/mentor" className="text-[#2C3E50] hover:text-white transition-colors font-medium">
               Trở thành Mentor
             </Link>
           ) : (
             <Link to="/mentee/applications" className="text-[#2C3E50] hover:text-white transition-colors font-medium">
-              Trang cá nhân
+              Bảng điều khiển cá nhân
             </Link>
           )}
         </nav>
@@ -102,14 +102,14 @@ export const Header = () => {
             Xem toàn bộ Mentor
           </Link>
 
-          {/* Mobile: đổi Trở thành Mentor ↔ Trang cá nhân */}
+          {/* Mobile: đổi Trở thành Mentor ↔ Bảng điều khiển cá nhân */}
           {!isLoggedIn ? (
             <Link to="/mentor" className="block text-[#2C3E50] hover:text-white font-medium" onClick={() => setIsMenuOpen(false)}>
               Trở thành Mentor
             </Link>
           ) : (
             <Link to="/mentee/overview" className="block text-[#2C3E50] hover:text-white font-medium" onClick={() => setIsMenuOpen(false)}>
-              Trang cá nhân
+              Bảng điều khiển cá nhân
             </Link>
           )}
 
