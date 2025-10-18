@@ -122,7 +122,7 @@ exports.getBookedSlots = async (req, res) => {
   try {
     const { mentorId } = req.params;
 
-    const mentor = await Mentor.findOne({ _id: mentorId, status: "ACTIVE" });
+    const mentor = await Mentor.findOne({ _id: mentorId, status: "ACTIVE"  });
     if (!mentor) return res.status(404).json({ message: "Mentor không tồn tại hoặc không hoạt động" });
 
     const bookings = await Booking.find({
@@ -599,4 +599,60 @@ exports.recreatePaymentLink = async (req, res) => {
       payos: err?.response?.data || undefined,
     });
   }
+};
+
+exports.confirmSession = async (req, res) => {
+  const { bookingId, sessionIndex } = req.params;
+  const { role } = req.body; // "mentee" hoặc "mentor"
+
+  const booking = await Booking.findById(bookingId);
+  if (!booking) return res.status(404).json({ message: "Booking không tồn tại" });
+  if (sessionIndex >= booking.session_times.length)
+    return res.status(400).json({ message: "Session không hợp lệ" });
+
+  const session = booking.session_times[sessionIndex];
+
+  // ✅ Cập nhật xác nhận
+  if (role === "mentee") {
+    session.mentee_confirmed = true;
+  } else if (role === "mentor") {
+    session.mentor_confirmed = true;
+  } else {
+    return res.status(400).json({ message: "Vai trò không hợp lệ" });
+  }
+
+  // ✅ Cập nhật trạng thái session
+  if (session.mentor_confirmed && session.mentee_confirmed) {
+    session.status = "CONFIRMED";
+  } else {
+    session.status = "PENDING"; // Một bên xác nhận
+  }
+
+  await booking.save();
+  res.json({ message: "Xác nhận thành công", booking });
+};
+
+
+exports.cancelSession = async (req, res) => {
+  const { bookingId, sessionIndex } = req.params;
+  const { role } = req.body;
+
+  const booking = await Booking.findById(bookingId);
+  if (!booking) return res.status(404).json({ message: "Booking không tồn tại" });
+  if (sessionIndex >= booking.session_times.length)
+    return res.status(400).json({ message: "Session không hợp lệ" });
+
+  const session = booking.session_times[sessionIndex];
+  session.status = "CANCELLED";
+
+  if (role === "mentee") {
+    session.mentee_confirmed = false;
+  } else if (role === "mentor") {
+    session.mentor_confirmed = false;
+  } else {
+    return res.status(400).json({ message: "Vai trò không hợp lệ" });
+  }
+
+  await booking.save();
+  res.json({ message: "Đã hủy buổi học", booking });
 };

@@ -45,6 +45,11 @@ router.get("/mentor/applications", authMiddleware, checkRole("MENTOR"), cx.getMe
 router.get("/mentor/learning/progress", authMiddleware, checkRole("MENTOR"), c.getTeachProgress);
 
 // ======================= PUBLIC ROUTES =======================
+// 1. Xác nhận buổi học
+router.patch("/:bookingId/sessions/:sessionIndex/confirm", c.confirmSession);
+
+// 2. Hủy buổi học
+router.patch("/:bookingId/sessions/:sessionIndex/cancel", c.cancelSession);
 
 // 1. Xem lịch đã book của một mentor (hiển thị trên profile)
 router.get("/mentor/:mentorId/booked-slots", c.getBookedSlots);

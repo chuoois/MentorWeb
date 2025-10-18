@@ -11,7 +11,7 @@ const router = express.Router();
 router.use("/mentees", menteeRoutes);
 router.use("/mentors", mentorRoutes);
 router.use('/bookings', bookingRoutes);
-router.use("/comments", commentRoutes);
+router.use("/ratings", commentRoutes);
 router.use('/payments', paymentsRoutes);
 router.use("/admin", adminRoutes);
 router.use("/ai", aiRoutes);
