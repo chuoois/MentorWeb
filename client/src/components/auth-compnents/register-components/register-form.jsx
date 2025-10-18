@@ -4,12 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { GoogleLogin } from "@react-oauth/google";
-import MenteeService from "@/services/mentee.service";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
+import MenteeService from "@/services/mentee.service";
 
 export const MenteeRegisterForm = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -38,7 +38,7 @@ export const MenteeRegisterForm = () => {
       const res = await MenteeService.loginWithGoogle(id_token);
       localStorage.setItem("token", res.token);
       toast.success(`Xin chào ${res.mentee.full_name || "bạn"}!`);
-      navigate("/"); 
+      navigate("/");
     } catch (err) {
       console.error("Google login error:", err);
       toast.error("Đăng nhập Google thất bại!");
@@ -50,8 +50,8 @@ export const MenteeRegisterForm = () => {
   };
 
   return (
-    <div className="w-full space-y-6">
-      <h1 className="text-3xl font-bold text-[#2C3E50] mb-8 text-center">
+    <div className="w-full space-y-6 px-4 sm:px-6">
+      <h1 className="text-3xl font-bold text-[#333333] mb-8 text-center tracking-tight">
         Đăng ký làm mentee
       </h1>
 
@@ -78,7 +78,7 @@ export const MenteeRegisterForm = () => {
           <Form className="space-y-4">
             {/* Email */}
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm font-medium text-[#2C3E50]">
+              <Label htmlFor="email" className="text-sm font-medium text-[#333333]">
                 Email
               </Label>
               <Field
@@ -87,14 +87,18 @@ export const MenteeRegisterForm = () => {
                 name="email"
                 type="email"
                 placeholder="Nhập email của bạn"
-                className="h-12 border border-gray-300 rounded-md focus:border-[#F9C5D5] focus:ring-1 focus:ring-[#F9C5D5]"
+                className={`h-12 border rounded-lg w-full px-3 focus:outline-none focus:ring-2 focus:ring-[#F9C5D5] transition-all duration-200 ${isSubmitting ? "opacity-50" : ""} ${validationSchema.fields.email.isValidSync ? "" : "border-red-500"}`}
               />
-              <ErrorMessage name="email" component="div" className="text-xs text-red-500" />
+              <ErrorMessage
+                name="email"
+                component="div"
+                className="text-xs text-red-500 mt-1"
+              />
             </div>
 
             {/* Họ và tên */}
             <div className="space-y-2">
-              <Label htmlFor="full_name" className="text-sm font-medium text-[#2C3E50]">
+              <Label htmlFor="full_name" className="text-sm font-medium text-[#333333]">
                 Họ và tên
               </Label>
               <Field
@@ -102,14 +106,18 @@ export const MenteeRegisterForm = () => {
                 id="full_name"
                 name="full_name"
                 placeholder="Nhập họ và tên của bạn"
-                className="h-12 border border-gray-300 rounded-md focus:border-[#F9C5D5] focus:ring-1 focus:ring-[#F9C5D5]"
+                className={`h-12 border rounded-lg w-full px-3 focus:outline-none focus:ring-2 focus:ring-[#F9C5D5] transition-all duration-200 ${isSubmitting ? "opacity-50" : ""} ${validationSchema.fields.full_name.isValidSync ? "" : "border-red-500"}`}
               />
-              <ErrorMessage name="full_name" component="div" className="text-xs text-red-500" />
+              <ErrorMessage
+                name="full_name"
+                component="div"
+                className="text-xs text-red-500 mt-1"
+              />
             </div>
 
             {/* Số điện thoại */}
             <div className="space-y-2">
-              <Label htmlFor="phone" className="text-sm font-medium text-[#2C3E50]">
+              <Label htmlFor="phone" className="text-sm font-medium text-[#333333]">
                 Số điện thoại
               </Label>
               <Field
@@ -117,14 +125,18 @@ export const MenteeRegisterForm = () => {
                 id="phone"
                 name="phone"
                 placeholder="Nhập số điện thoại của bạn"
-                className="h-12 border border-gray-300 rounded-md focus:border-[#F9C5D5] focus:ring-1 focus:ring-[#F9C5D5]"
+                className={`h-12 border rounded-lg w-full px-3 focus:outline-none focus:ring-2 focus:ring-[#F9C5D5] transition-all duration-200 ${isSubmitting ? "opacity-50" : ""} ${validationSchema.fields.phone.isValidSync ? "" : "border-red-500"}`}
               />
-              <ErrorMessage name="phone" component="div" className="text-xs text-red-500" />
+              <ErrorMessage
+                name="phone"
+                component="div"
+                className="text-xs text-red-500 mt-1"
+              />
             </div>
 
             {/* Mật khẩu */}
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-sm font-medium text-[#2C3E50]">
+              <Label htmlFor="password" className="text-sm font-medium text-[#333333]">
                 Mật khẩu
               </Label>
               <div className="relative">
@@ -134,24 +146,32 @@ export const MenteeRegisterForm = () => {
                   name="password"
                   type={showPassword ? "text" : "password"}
                   placeholder="Nhập mật khẩu"
-                  className="h-12 border border-gray-300 rounded-md focus:border-[#F9C5D5] focus:ring-1 focus:ring-[#F9C5D5] pr-10"
+                  className={`h-12 border rounded-lg w-full px-3 pr-10 focus:outline-none focus:ring-2 focus:ring-[#F9C5D5] transition-all duration-200 ${isSubmitting ? "opacity-50" : ""} ${validationSchema.fields.password.isValidSync ? "" : "border-red-500"}`}
                 />
                 <button
                   type="button"
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#2C3E50] hover:text-[#F9C5D5] transition-colors duration-200"
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
-              <ErrorMessage name="password" component="div" className="text-xs text-red-500" />
+              <ErrorMessage
+                name="password"
+                component="div"
+                className="text-xs text-red-500 mt-1"
+              />
             </div>
 
+            {/* Submit button */}
             <Button
               type="submit"
-              className="w-full h-12 bg-[#F9C5D5] hover:bg-[#f5b8cc] text-[#2C3E50] font-medium rounded-md transition-colors"
+              className="w-full h-12 bg-[#F9C5D5] hover:bg-[#f5b8cc] text-[#2C3E50] font-medium rounded-lg transition-colors duration-200 flex items-center justify-center"
               disabled={isSubmitting}
             >
+              {isSubmitting ? (
+                <Loader2 className="w-5 h-5 animate-spin mr-2" />
+              ) : null}
               {isSubmitting ? "Đang đăng ký..." : "Đăng ký"}
             </Button>
           </Form>
@@ -160,9 +180,11 @@ export const MenteeRegisterForm = () => {
 
       {/* Separator */}
       <div className="relative">
-        <Separator className="my-6" />
+        <Separator className="my-6 bg-gray-200" />
         <div className="absolute inset-0 flex items-center justify-center">
-          <span className="bg-white px-4 text-sm text-gray-500">Hoặc</span>
+          <span className="bg-[#FFFFFF] px-4 text-sm text-[#333333]">
+            Hoặc
+          </span>
         </div>
       </div>
 
@@ -180,29 +202,29 @@ export const MenteeRegisterForm = () => {
       </div>
 
       {/* Footer */}
-      <div className="text-center space-y-3 text-sm mt-6 text-gray-600">
+      <div className="text-center space-y-3 text-sm mt-6 text-[#333333]">
         <p>
           Khi bấm <span className="font-medium">"Đăng ký"</span> hoặc{" "}
           <span className="font-medium">"Đăng ký bằng Google"</span>, bạn đồng ý với{" "}
-          <Link to="/terms" className="text-blue-600 hover:underline">
+          <Link to="/terms" className="text-[#2C3E50] hover:text-[#F9C5D5] transition-colors duration-200">
             Điều khoản dịch vụ
           </Link>{" "}
           và{" "}
-          <Link to="/privacy" className="text-blue-600 hover:underline">
+          <Link to="/privacy" className="text-[#2C3E50] hover:text-[#F9C5D5] transition-colors duration-200">
             Chính sách bảo mật
           </Link>.
         </p>
 
         <p>
           Đã có tài khoản?{" "}
-          <Link to="/auth/login" className="text-blue-600 hover:underline">
+          <Link to="/auth/login" className="text-[#2C3E50] hover:text-[#F9C5D5] transition-colors duration-200">
             Đăng nhập
           </Link>
         </p>
 
         <p>
           Muốn tham gia với vai trò mentor?{" "}
-          <Link to="/mentor" className="text-blue-600 hover:underline">
+          <Link to="/mentor" className="text-[#2C3E50] hover:text-[#F9C5D5] transition-colors duration-200">
             Ứng tuyển ngay
           </Link>
         </p>

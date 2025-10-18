@@ -3,6 +3,7 @@ import BookingService from "@/services/booking.service";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { ChevronLeft, ChevronRight, Calendar, Clock, User, Link } from "lucide-react";
+import toast from "react-hot-toast";
 
 // Map status to colors and labels
 const statusConfig = {
@@ -21,6 +22,16 @@ const statusConfig = {
     text: "Hoàn thành",
     badge: "bg-gray-100 text-gray-700",
   },
+  CANCELLED: {
+    bg: "bg-red-400",
+    text: "Đã hủy",
+    badge: "bg-red-100 text-red-700",
+  },
+  UPCOMING: {
+    bg: "bg-yellow-400",
+    text: "Sắp diễn ra",
+    badge: "bg-yellow-100 text-yellow-700",
+  },
 };
 
 // Utility to get week days
@@ -30,7 +41,7 @@ const getWeekDays = (date) => {
   const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
   startOfWeek.setDate(startOfWeek.getDate() + diff);
   startOfWeek.setHours(0, 0, 0, 0);
-  
+
   const days = [];
   for (let i = 0; i < 7; i++) {
     const day = new Date(startOfWeek);
@@ -46,10 +57,10 @@ const getMonthDays = (date) => {
   const endOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0);
   const daysInMonth = endOfMonth.getDate();
   const firstDayOfWeek = startOfMonth.getDay();
-  
+
   const days = [];
   for (let i = 0; i < firstDayOfWeek; i++) {
-    days.push(null); // Empty slots before the first day
+    days.push(null);
   }
   for (let i = 1; i <= daysInMonth; i++) {
     days.push(new Date(date.getFullYear(), date.getMonth(), i));
@@ -64,41 +75,56 @@ const hours = Array.from({ length: 15 }, (_, i) => i + 8);
 const normalizeBookings = (bookings) => {
   const normalized = [];
   bookings.forEach((booking) => {
+    const bookingId = booking.id || booking._id;
+    if (!bookingId) {
+      console.warn("Booking thiếu id/_id:", booking);
+      return; // Bỏ qua booking không hợp lệ
+    }
     if (booking.session_times && booking.session_times.length > 0) {
-      booking.session_times.forEach((session) => {
+      booking.session_times.forEach((session, index) => {
         normalized.push({
           ...booking,
-          _id: session._id || booking.id || booking._id,
+          _id: session._id || `${bookingId}_session_${index}`,
           start_time: session.start_time,
           end_time: session.end_time,
           session_status: session.status,
           meeting_link: session.meeting_link,
-          original_booking_id: booking.id || booking._id,
+          original_booking_id: bookingId,
+          session_index: index,
+          mentor_confirmed: session.mentor_confirmed || false,
+          mentee_confirmed: session.mentee_confirmed || false,
+          note: session.note,
+          completed_at: session.completed_at,
         });
       });
     } else {
       normalized.push({
         ...booking,
-        _id: booking.id || booking._id,
+        _id: bookingId,
         start_time: booking.start_time || null,
         end_time: booking.end_time || null,
         session_status: booking.status,
         meeting_link: booking.meeting_link || "",
-        original_booking_id: booking.id || booking._id,
+        original_booking_id: bookingId,
+        session_index: 0,
+        mentor_confirmed: booking.mentor_confirmed || false,
+        mentee_confirmed: booking.mentee_confirmed || false,
+        note: booking.note,
+        completed_at: booking.completed_at,
       });
     }
   });
-  return normalized.filter((b) => b.start_time && b.end_time);
+  return normalized.filter((b) => b.start_time && b.end_time && b.original_booking_id);
 };
 
 // Group consecutive bookings
 const groupConsecutiveBookings = (bookings) => {
   if (!bookings || bookings.length === 0) return [];
-  
-  const sortedBookings = [...bookings].sort((a, b) => 
+
+  const sortedBookings = [...bookings].sort((a, b) =>
     new Date(a.start_time) - new Date(b.start_time)
   );
-  
+
   const grouped = [];
   let currentGroup = null;
 
@@ -154,7 +180,8 @@ export const MenteeSchedule = () => {
   const [loading, setLoading] = useState(true);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedBooking, setSelectedBooking] = useState(null);
-  const [viewMode, setViewMode] = useState("week"); // "week" or "month"
+  const [viewMode, setViewMode] = useState("week");
+  const [cancelReason, setCancelReason] = useState("");
 
   useEffect(() => {
     const fetchBookings = async () => {
@@ -162,10 +189,12 @@ export const MenteeSchedule = () => {
         setLoading(true);
         const data = await BookingService.getMenteeBookings();
         const bookingsList = data.bookedSlots || [];
+        console.log("Bookings từ API:", bookingsList); // Debug dữ liệu API
         const normalizedBookings = normalizeBookings(bookingsList);
         setBookings(normalizedBookings);
       } catch (error) {
-        console.error(error);
+        console.error("Lỗi tải bookings:", error);
+        toast.error("Lỗi khi tải lịch hẹn.");
       } finally {
         setLoading(false);
       }
@@ -181,8 +210,16 @@ export const MenteeSchedule = () => {
     if (!day) return [];
     return groupedBookings.filter((b) => {
       const bookingStart = new Date(b.start_time);
-      const localDate = new Date(bookingStart.getFullYear(), bookingStart.getMonth(), bookingStart.getDate());
-      const checkDate = new Date(day.getFullYear(), day.getMonth(), day.getDate());
+      const localDate = new Date(
+        bookingStart.getFullYear(),
+        bookingStart.getMonth(),
+        bookingStart.getDate()
+      );
+      const checkDate = new Date(
+        day.getFullYear(),
+        day.getMonth(),
+        day.getDate()
+      );
       return localDate.getTime() === checkDate.getTime();
     });
   };
@@ -216,10 +253,62 @@ export const MenteeSchedule = () => {
     setViewMode("week");
   };
 
+  const handleConfirmSession = async (bookingId, sessionIndex) => {
+    if (!bookingId) {
+      toast.error("Không tìm thấy ID của booking.");
+      return;
+    }
+    try {
+      console.log("Gọi confirmSession:", { bookingId, sessionIndex, role: "mentee" }); // Debug
+      await BookingService.confirmSession(bookingId, sessionIndex, { role: "mentee" });
+      toast.success("Xác nhận buổi học thành công!");
+      const updatedBookings = await BookingService.getMenteeBookings();
+      const normalizedBookings = normalizeBookings(
+        updatedBookings.bookedSlots || []
+      );
+      setBookings(normalizedBookings);
+      setSelectedBooking(null);
+    } catch (error) {
+      console.error("Lỗi xác nhận:", error);
+      toast.error(error.response?.data?.message || "Lỗi khi xác nhận buổi học.");
+    }
+  };
+
+  const handleCancelSession = async (bookingId, sessionIndex) => {
+    if (!bookingId) {
+      toast.error("Không tìm thấy ID của booking.");
+      return;
+    }
+    if (!cancelReason.trim()) {
+      toast.error("Vui lòng nhập lý do hủy.");
+      return;
+    }
+    const confirmCancel = window.confirm(
+      "Bạn có chắc chắn muốn hủy buổi học này?"
+    );
+    if (!confirmCancel) return;
+
+    try {
+      console.log("Gọi cancelSession:", { bookingId, sessionIndex, role: "mentee", cancelReason }); // Debug
+      await BookingService.cancelSession(bookingId, sessionIndex, { role: "mentee", cancel_reason: cancelReason });
+      toast.success("Hủy buổi học thành công!");
+      const updatedBookings = await BookingService.getMenteeBookings();
+      const normalizedBookings = normalizeBookings(
+        updatedBookings.bookedSlots || []
+      );
+      setBookings(normalizedBookings);
+      setSelectedBooking(null);
+      setCancelReason("");
+    } catch (error) {
+      console.error("Lỗi hủy:", error);
+      toast.error(error.response?.data?.message || "Lỗi khi hủy buổi học.");
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex flex-col justify-center items-center h-40 space-y-2">
-        <Spinner className="w-7 h-7" style={{ color: '#F9C5D5' }} />
+        <Spinner className="w-7 h-7" style={{ color: "#F9C5D5" }} />
         <p className="text-gray-500 text-xs">Đang tải lịch của bạn...</p>
       </div>
     );
@@ -231,51 +320,58 @@ export const MenteeSchedule = () => {
       <div className="bg-white rounded-md shadow-sm border border-gray-200 p-2 mb-2">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <div className="flex items-center gap-1.5">
-            <div className="p-1 rounded-md" style={{ backgroundColor: '#F9C5D5' }}>
-              <Calendar className="w-4 h-4" style={{ color: '#2C3E50' }} />
+            <div className="p-1 rounded-md" style={{ backgroundColor: "#F9C5D5" }}>
+              <Calendar className="w-4 h-4" style={{ color: "#2C3E50" }} />
             </div>
             <div>
-              <h2 className="text-base font-bold" style={{ color: '#333333' }}>Lịch của bạn</h2>
+              <h2 className="text-base font-bold" style={{ color: "#333333" }}>
+                Lịch của bạn
+              </h2>
               <p className="text-xs text-gray-500">
                 {viewMode === "week"
-                  ? `Tuần từ ${weekDays[0].toLocaleDateString("vi-VN")} - ${weekDays[6].toLocaleDateString("vi-VN")}`
-                  : `${currentDate.toLocaleDateString("vi-VN", { month: "long", year: "numeric" })}`}
+                  ? `Tuần từ ${weekDays[0].toLocaleDateString(
+                      "vi-VN"
+                    )} - ${weekDays[6].toLocaleDateString("vi-VN")}`
+                  : `${currentDate.toLocaleDateString("vi-VN", {
+                      month: "long",
+                      year: "numeric",
+                    })}`}
               </p>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-1">
             <Button
               onClick={() => setViewMode(viewMode === "week" ? "month" : "week")}
               size="sm"
               className="text-white hover:opacity-90 text-xs px-2"
-              style={{ backgroundColor: '#F9C5D5', color: '#2C3E50' }}
+              style={{ backgroundColor: "#F9C5D5", color: "#2C3E50" }}
             >
               {viewMode === "week" ? "Tháng" : "Tuần"}
             </Button>
-            <Button 
-              onClick={prevPeriod} 
-              variant="outline" 
-              size="sm" 
+            <Button
+              onClick={prevPeriod}
+              variant="outline"
+              size="sm"
               className="gap-1 border-gray-300 hover:bg-gray-50 text-xs px-2"
-              style={{ color: '#2C3E50' }}
+              style={{ color: "#2C3E50" }}
             >
               <ChevronLeft className="w-3 h-3" />
             </Button>
-            <Button 
-              onClick={goToToday} 
+            <Button
+              onClick={goToToday}
               size="sm"
               className="text-white hover:opacity-90 text-xs px-2"
-              style={{ backgroundColor: '#F9C5D5', color: '#2C3E50' }}
+              style={{ backgroundColor: "#F9C5D5", color: "#2C3E50" }}
             >
               Hôm nay
             </Button>
-            <Button 
-              onClick={nextPeriod} 
-              variant="outline" 
-              size="sm" 
+            <Button
+              onClick={nextPeriod}
+              variant="outline"
+              size="sm"
               className="gap-1 border-gray-300 hover:bg-gray-50 text-xs px-2"
-              style={{ color: '#2C3E50' }}
+              style={{ color: "#2C3E50" }}
             >
               <ChevronRight className="w-3 h-3" />
             </Button>
@@ -286,7 +382,9 @@ export const MenteeSchedule = () => {
           {Object.entries(statusConfig).map(([status, config]) => (
             <div key={status} className="flex items-center gap-1">
               <div className={`w-2 h-2 rounded ${config.bg}`}></div>
-              <span className="text-xs" style={{ color: '#333333' }}>{config.text}</span>
+              <span className="text-xs" style={{ color: "#333333" }}>
+                {config.text}
+              </span>
             </div>
           ))}
         </div>
@@ -298,19 +396,30 @@ export const MenteeSchedule = () => {
           <div className="overflow-x-auto">
             <div className="inline-block min-w-full">
               <div className="grid grid-cols-[50px_repeat(7,minmax(120px,1fr))] border-b border-gray-200">
-                <div className="border-r border-gray-200" style={{ backgroundColor: '#F9F9F9' }}></div>
+                <div
+                  className="border-r border-gray-200"
+                  style={{ backgroundColor: "#F9F9F9" }}
+                ></div>
                 {weekDays.map((day, dayIndex) => {
                   const today = isToday(day);
                   return (
                     <div
                       key={dayIndex}
                       className={`py-1 text-center border-r border-gray-200 last:border-r-0`}
-                      style={{ backgroundColor: today ? '#F9C5D5' : '#F9F9F9' }}
+                      style={{
+                        backgroundColor: today ? "#F9C5D5" : "#F9F9F9",
+                      }}
                     >
-                      <div className="text-xs font-medium uppercase" style={{ color: today ? '#2C3E50' : '#666666' }}>
+                      <div
+                        className="text-xs font-medium uppercase"
+                        style={{ color: today ? "#2C3E50" : "#666666" }}
+                      >
                         {day.toLocaleDateString("vi-VN", { weekday: "short" })}
                       </div>
-                      <div className="text-sm font-bold" style={{ color: today ? '#2C3E50' : '#333333' }}>
+                      <div
+                        className="text-sm font-bold"
+                        style={{ color: today ? "#2C3E50" : "#333333" }}
+                      >
                         {day.getDate()}
                       </div>
                     </div>
@@ -319,7 +428,10 @@ export const MenteeSchedule = () => {
               </div>
 
               <div className="grid grid-cols-[50px_repeat(7,minmax(120px,1fr))]">
-                <div className="border-r border-gray-200" style={{ backgroundColor: '#F9F9F9' }}>
+                <div
+                  className="border-r border-gray-200"
+                  style={{ backgroundColor: "#F9F9F9" }}
+                >
                   {hours.map((hour) => (
                     <div
                       key={hour}
@@ -336,10 +448,15 @@ export const MenteeSchedule = () => {
                     <div
                       key={dayIndex}
                       className="border-r border-gray-200 last:border-r-0 relative"
-                      style={{ backgroundColor: today ? '#FFF5F8' : 'transparent' }}
+                      style={{
+                        backgroundColor: today ? "#FFF5F8" : "transparent",
+                      }}
                     >
                       {hours.map((hour) => (
-                        <div key={hour} className="h-10 border-b border-gray-100"></div>
+                        <div
+                          key={hour}
+                          className="h-10 border-b border-gray-100"
+                        ></div>
                       ))}
                       <div className="absolute inset-0 pointer-events-none">
                         <div className="relative h-full pointer-events-auto">
@@ -348,12 +465,16 @@ export const MenteeSchedule = () => {
                             const bookingEnd = new Date(b.end_time);
                             const startHour = bookingStart.getHours();
                             const startMinutes = bookingStart.getMinutes();
-                            const duration = (bookingEnd - bookingStart) / (1000 * 60);
+                            const duration =
+                              (bookingEnd - bookingStart) / (1000 * 60);
                             if (startHour < 8 || startHour >= 23) return null;
 
-                            const topOffset = ((startHour - 8) * 40 + (startMinutes / 60) * 40);
+                            const topOffset =
+                              (startHour - 8) * 40 + (startMinutes / 60) * 40;
                             const height = (duration / 60) * 40;
-                            const config = statusConfig[b.session_status] || statusConfig.PENDING;
+                            const config =
+                              statusConfig[b.session_status] ||
+                              statusConfig.PENDING;
 
                             return (
                               <div
@@ -363,14 +484,20 @@ export const MenteeSchedule = () => {
                                   top: `${topOffset}px`,
                                   height: `${Math.max(height, 20)}px`,
                                 }}
-                                onClick={() => setSelectedBooking(b)}
+                                onClick={() => {
+                                  console.log("Booking được chọn:", b); // Debug
+                                  setSelectedBooking(b);
+                                }}
                                 title="Nhấn để xem chi tiết"
                               >
                                 <div className="flex flex-col h-full justify-between">
                                   <div>
                                     <div className="font-semibold flex items-center gap-1">
                                       <Clock className="w-3 h-3" />
-                                      {bookingStart.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}
+                                      {bookingStart.toLocaleTimeString("vi-VN", {
+                                        hour: "2-digit",
+                                        minute: "2-digit",
+                                      })}
                                     </div>
                                     {height > 30 && (
                                       <div className="flex items-center gap-1 text-white/90 truncate">
@@ -399,7 +526,10 @@ export const MenteeSchedule = () => {
         <div className="bg-white rounded-md shadow-sm border border-gray-200 p-2">
           <div className="grid grid-cols-7 gap-0.5">
             {["T2", "T3", "T4", "T5", "T6", "T7", "CN"].map((day, index) => (
-              <div key={index} className="text-center text-xs font-medium text-gray-500">
+              <div
+                key={index}
+                className="text-center text-xs font-medium text-gray-500"
+              >
                 {day}
               </div>
             ))}
@@ -410,33 +540,45 @@ export const MenteeSchedule = () => {
                 <div
                   key={index}
                   className={`h-14 border border-gray-100 rounded-md flex flex-col items-center justify-between p-0.5
-                    ${day ? 'hover:bg-gray-50 cursor-pointer' : 'bg-gray-50'} 
-                    ${today ? 'bg-pink-50 border-pink-200' : ''}`}
+                    ${day ? "hover:bg-gray-50 cursor-pointer" : "bg-gray-50"} 
+                    ${today ? "bg-pink-50 border-pink-200" : ""}`}
                   onClick={day ? () => handleDayClick(day) : undefined}
                 >
                   {day && (
                     <>
-                      <div className={`text-xs font-medium ${today ? 'text-pink-700' : 'text-gray-700'}`}>
+                      <div
+                        className={`text-xs font-medium ${
+                          today ? "text-pink-700" : "text-gray-700"
+                        }`}
+                      >
                         {day.getDate()}
                       </div>
                       <div className="flex flex-col gap-0.5 w-full">
                         {bookings.slice(0, 2).map((b) => {
-                          const config = statusConfig[b.session_status] || statusConfig.PENDING;
+                          const config =
+                            statusConfig[b.session_status] ||
+                            statusConfig.PENDING;
                           return (
                             <div
                               key={b._id}
                               className={`text-xs text-white ${config.bg} rounded px-1 py-0.5 truncate`}
                               onClick={(e) => {
                                 e.stopPropagation();
+                                console.log("Booking được chọn:", b); // Debug
                                 setSelectedBooking(b);
                               }}
                             >
-                              {new Date(b.start_time).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}
+                              {new Date(b.start_time).toLocaleTimeString(
+                                "vi-VN",
+                                { hour: "2-digit", minute: "2-digit" }
+                              )}
                             </div>
                           );
                         })}
                         {bookings.length > 2 && (
-                          <div className="text-xs text-gray-500">+{bookings.length - 2}</div>
+                          <div className="text-xs text-gray-500">
+                            +{bookings.length - 2}
+                          </div>
                         )}
                       </div>
                     </>
@@ -451,8 +593,12 @@ export const MenteeSchedule = () => {
       {bookings.length === 0 && (
         <div className="text-center py-5 bg-white rounded-md shadow-sm border border-gray-200 mt-2">
           <Calendar className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-          <p className="text-sm font-medium" style={{ color: '#333333' }}>Chưa có lịch hẹn nào</p>
-          <p className="text-gray-400 text-xs mt-1">Đặt lịch với mentor để bắt đầu học tập</p>
+          <p className="text-sm font-medium" style={{ color: "#333333" }}>
+            Chưa có lịch hẹn nào
+          </p>
+          <p className="text-gray-400 text-xs mt-1">
+            Đặt lịch với mentor để bắt đầu học tập
+          </p>
         </div>
       )}
 
@@ -466,7 +612,9 @@ export const MenteeSchedule = () => {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start justify-between mb-2">
-              <h3 className="text-base font-bold" style={{ color: '#333333' }}>Chi tiết lịch hẹn</h3>
+              <h3 className="text-base font-bold" style={{ color: "#333333" }}>
+                Chi tiết lịch hẹn
+              </h3>
               <button
                 onClick={() => setSelectedBooking(null)}
                 className="text-gray-400 hover:text-gray-600"
@@ -477,15 +625,19 @@ export const MenteeSchedule = () => {
 
             <div className="space-y-1.5">
               <div>
-                <label className="text-xs font-medium text-gray-500">Mentor</label>
-                <p className="text-sm font-medium" style={{ color: '#333333' }}>
+                <label className="text-xs font-medium text-gray-500">
+                  Mentor
+                </label>
+                <p className="text-sm font-medium" style={{ color: "#333333" }}>
                   {selectedBooking.mentor?.full_name || "Chưa xác định"}
                 </p>
               </div>
 
               <div>
-                <label className="text-xs font-medium text-gray-500">Thời gian</label>
-                <p className="text-xs" style={{ color: '#333333' }}>
+                <label className="text-xs font-medium text-gray-500">
+                  Thời gian
+                </label>
+                <p className="text-xs" style={{ color: "#333333" }}>
                   {new Date(selectedBooking.start_time).toLocaleString("vi-VN", {
                     weekday: "long",
                     year: "numeric",
@@ -493,31 +645,63 @@ export const MenteeSchedule = () => {
                     day: "numeric",
                   })}
                 </p>
-                <p className="text-sm font-medium" style={{ color: '#2C3E50' }}>
-                  {new Date(selectedBooking.start_time).toLocaleTimeString("vi-VN", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}{" "}
+                <p className="text-sm font-medium" style={{ color: "#2C3E50" }}>
+                  {new Date(selectedBooking.start_time).toLocaleTimeString(
+                    "vi-VN",
+                    {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    }
+                  )}{" "}
                   -{" "}
-                  {new Date(selectedBooking.end_time).toLocaleTimeString("vi-VN", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
+                  {new Date(selectedBooking.end_time).toLocaleTimeString(
+                    "vi-VN",
+                    {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    }
+                  )}
                 </p>
               </div>
 
               <div>
-                <label className="text-xs font-medium text-gray-500">Trạng thái phiên</label>
-                <div className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
-                  statusConfig[selectedBooking.session_status]?.badge || "bg-gray-100 text-gray-800"
-                }`}>
-                  {statusConfig[selectedBooking.session_status]?.text || selectedBooking.session_status}
+                <label className="text-xs font-medium text-gray-500">
+                  Trạng thái phiên
+                </label>
+                <div
+                  className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
+                    statusConfig[selectedBooking.session_status]?.badge ||
+                    "bg-gray-100 text-gray-800"
+                  }`}
+                >
+                  {statusConfig[selectedBooking.session_status]?.text ||
+                    selectedBooking.session_status}
                 </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-medium text-gray-500">
+                  Xác nhận
+                </label>
+                <p className="text-xs" style={{ color: "#333333" }}>
+                  Mentor:{" "}
+                  {selectedBooking.mentor_confirmed
+                    ? "Đã xác nhận"
+                    : "Chưa xác nhận"}
+                </p>
+                <p className="text-xs" style={{ color: "#333333" }}>
+                  Mentee:{" "}
+                  {selectedBooking.mentee_confirmed
+                    ? "Đã xác nhận"
+                    : "Chưa xác nhận"}
+                </p>
               </div>
 
               {selectedBooking.meeting_link && (
                 <div>
-                  <label className="text-xs font-medium text-gray-500">Link họp</label>
+                  <label className="text-xs font-medium text-gray-500">
+                    Link họp
+                  </label>
                   <div className="flex items-center gap-1">
                     <Link className="w-3 h-3 text-gray-500" />
                     <a
@@ -534,71 +718,226 @@ export const MenteeSchedule = () => {
 
               {selectedBooking.note && (
                 <div>
-                  <label className="text-xs font-medium text-gray-500">Ghi chú</label>
-                  <p className="text-xs bg-gray-50 p-1.5 rounded-md" style={{ color: '#333333' }}>
+                  <label className="text-xs font-medium text-gray-500">
+                    Ghi chú
+                  </label>
+                  <p
+                    className="text-xs bg-gray-50 p-1.5 rounded-md"
+                    style={{ color: "#333333" }}
+                  >
                     {selectedBooking.note}
                   </p>
                 </div>
               )}
 
+              {selectedBooking.cancel_reason && (
+                <div>
+                  <label className="text-xs font-medium text-gray-500">
+                    Lý do hủy
+                  </label>
+                  <p
+                    className="text-xs bg-gray-50 p-1.5 rounded-md"
+                    style={{ color: "#333333" }}
+                  >
+                    {selectedBooking.cancel_reason}
+                  </p>
+                </div>
+              )}
+
               <div>
-                <label className="text-xs font-medium text-gray-500">Thông tin khác</label>
-                <div className="text-xs" style={{ color: '#333333' }}>
-                  <p>Thời lượng: <span className="font-medium">{selectedBooking.duration} giờ</span></p>
-                  {selectedBooking.sessions && (
-                    <p>Số buổi: <span className="font-medium">{selectedBooking.sessions} buổi</span></p>
+                <label className="text-xs font-medium text-gray-500">
+                  Thông tin thanh toán
+                </label>
+                <div className="text-xs" style={{ color: "#333333" }}>
+                  <p>
+                    Giá:{" "}
+                    <span
+                      className="font-medium"
+                      style={{ color: "#2C3E50" }}
+                    >
+                      {selectedBooking.price?.toLocaleString("vi-VN")}{" "}
+                      {selectedBooking.currency || "VND"}
+                    </span>
+                  </p>
+                  {selectedBooking.payment_at && (
+                    <p>
+                      Thanh toán lúc:{" "}
+                      <span className="font-medium">
+                        {new Date(selectedBooking.payment_at).toLocaleString(
+                          "vi-VN",
+                          {
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          }
+                        )}
+                      </span>
+                    </p>
                   )}
-                  <p>Giá: <span className="font-medium" style={{ color: '#2C3E50' }}>{selectedBooking.price?.toLocaleString('vi-VN')} VNĐ</span></p>
                 </div>
               </div>
 
-              {selectedBooking.original_bookings && selectedBooking.original_bookings.length > 1 && (
-                <div>
-                  <label className="text-xs font-medium text-gray-500">
-                    Các phiên liên quan ({selectedBooking.original_bookings.length} phiên)
-                  </label>
-                  <div className="mt-1 space-y-1">
-                    {selectedBooking.original_bookings.map((session, index) => (
-                      <div key={index} className="border-t pt-1">
-                        <p className="text-xs font-medium" style={{ color: '#333333' }}>
-                          Phiên {index + 1}: {new Date(session.start_time).toLocaleTimeString("vi-VN", {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })} - {new Date(session.end_time).toLocaleTimeString("vi-VN", {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                        </p>
-                        <div className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
-                          statusConfig[session.session_status]?.badge || "bg-gray-100 text-gray-800"
-                        }`}>
-                          {statusConfig[session.session_status]?.text || session.session_status}
-                        </div>
-                        {session.meeting_link && (
-                          <div className="mt-0.5 flex items-center gap-1">
-                            <Link className="w-3 h-3 text-gray-500" />
-                            <a
-                              href={session.meeting_link}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-blue-600 hover:underline truncate text-xs"
-                            >
-                              {session.meeting_link}
-                            </a>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
+              <div>
+                <label className="text-xs font-medium text-gray-500">
+                  Thông tin khác
+                </label>
+                <div className="text-xs" style={{ color: "#333333" }}>
+                  <p>
+                    Thời lượng:{" "}
+                    <span className="font-medium">
+                      {selectedBooking.duration} giờ
+                    </span>
+                  </p>
+                  <p>
+                    Số buổi:{" "}
+                    <span className="font-medium">
+                      {selectedBooking.sessions} buổi
+                    </span>
+                  </p>
                 </div>
-              )}
+              </div>
+
+              {selectedBooking.original_bookings &&
+                selectedBooking.original_bookings.length > 1 && (
+                  <div>
+                    <label className="text-xs font-medium text-gray-500">
+                      Các phiên liên quan (
+                      {selectedBooking.original_bookings.length} phiên)
+                    </label>
+                    <div className="mt-1 space-y-1">
+                      {selectedBooking.original_bookings.map((session, index) => (
+                        <div key={index} className="border-t pt-1">
+                          <p
+                            className="text-xs font-medium"
+                            style={{ color: "#333333" }}
+                          >
+                            Phiên {index + 1}:{" "}
+                            {new Date(session.start_time).toLocaleTimeString(
+                              "vi-VN",
+                              {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              }
+                            )}{" "}
+                            -{" "}
+                            {new Date(session.end_time).toLocaleTimeString(
+                              "vi-VN",
+                              {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              }
+                            )}
+                          </p>
+                          <div
+                            className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
+                              statusConfig[session.session_status]?.badge ||
+                              "bg-gray-100 text-gray-800"
+                            }`}
+                          >
+                            {statusConfig[session.session_status]?.text ||
+                              session.session_status}
+                          </div>
+                          <p className="text-xs" style={{ color: "#333333" }}>
+                            Mentor:{" "}
+                            {session.mentor_confirmed
+                              ? "Đã xác nhận"
+                              : "Chưa xác nhận"}
+                          </p>
+                          <p className="text-xs" style={{ color: "#333333" }}>
+                            Mentee:{" "}
+                            {session.mentee_confirmed
+                              ? "Đã xác nhận"
+                              : "Chưa xác nhận"}
+                          </p>
+                          {session.meeting_link && (
+                            <div className="mt-0.5 flex items-center gap-1">
+                              <Link className="w-3 h-3 text-gray-500" />
+                              <a
+                                href={session.meeting_link}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 hover:underline truncate text-xs"
+                              >
+                                {session.meeting_link}
+                              </a>
+                            </div>
+                          )}
+                          {session.cancel_reason && (
+                            <p
+                              className="text-xs bg-gray-50 p-1 rounded-md mt-0.5"
+                              style={{ color: "#333333" }}
+                            >
+                              Lý do hủy: {session.cancel_reason}
+                            </p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
             </div>
+
+            {/* Nút hành động */}
+            {selectedBooking.session_status !== "COMPLETED" && (
+              <div className="mt-2 space-y-2">
+                {!selectedBooking.mentee_confirmed &&
+                  selectedBooking.session_status !== "CANCELLED" && (
+                    <Button
+                      onClick={() =>
+                        handleConfirmSession(
+                          selectedBooking.original_booking_id,
+                          selectedBooking.session_index
+                        )
+                      }
+                      className="w-full text-white hover:opacity-90 text-xs"
+                      style={{ backgroundColor: "#28A745", color: "#FFFFFF" }}
+                      disabled={!selectedBooking.original_booking_id}
+                    >
+                      Xác nhận buổi học
+                    </Button>
+                  )}
+                {selectedBooking.session_status !== "CANCELLED" &&
+                  !selectedBooking.mentee_confirmed && (
+                    <div>
+                      <label className="text-xs font-medium text-gray-500">
+                        Lý do hủy (nếu có)
+                      </label>
+                      <textarea
+                        value={cancelReason}
+                        onChange={(e) => setCancelReason(e.target.value)}
+                        className="w-full text-xs p-1.5 border rounded-md"
+                        placeholder="Nhập lý do hủy..."
+                      />
+                    </div>
+                  )}
+                {selectedBooking.session_status !== "CANCELLED" &&
+                  !selectedBooking.mentee_confirmed && (
+                    <Button
+                      onClick={() =>
+                        handleCancelSession(
+                          selectedBooking.original_booking_id,
+                          selectedBooking.session_index
+                        )
+                      }
+                      className="w-full text-white hover:opacity-90 text-xs"
+                      style={{ backgroundColor: "#DC3545", color: "#FFFFFF" }}
+                      disabled={
+                        !cancelReason.trim() || !selectedBooking.original_booking_id
+                      }
+                    >
+                      Hủy buổi học
+                    </Button>
+                  )}
+              </div>
+            )}
 
             <div className="mt-2">
               <Button
                 onClick={() => setSelectedBooking(null)}
                 className="w-full text-white hover:opacity-90 text-xs"
-                style={{ backgroundColor: '#F9C5D5', color: '#2C3E50' }}
+                style={{ backgroundColor: "#F9C5D5", color: "#2C3E50" }}
               >
                 Đóng
               </Button>

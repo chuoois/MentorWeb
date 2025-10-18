@@ -303,17 +303,17 @@ exports.getMentorByID = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Find mentor by ID and populate role
+    // 🔹 Tìm mentor theo ID, populate role và mentee trong ratings
     const mentor = await Mentor.findById(id)
-      .populate('role')
-      .select('-password_hash'); // Exclude password_hash from response
+      .populate('role', 'name')
+      .populate('ratings.mentee', 'full_name email')
+      .select('-password_hash'); // Không trả về password_hash
 
-    // Check if mentor exists
     if (!mentor) {
       return res.status(404).json({ message: "Không tìm thấy mentor" });
     }
 
-    // Prepare response
+    // 🔹 Chuẩn bị dữ liệu trả về
     const response = {
       message: "Lấy thông tin mentor thành công",
       mentor: {
@@ -337,16 +337,30 @@ exports.getMentorByID = async (req, res) => {
         price: mentor.price,
         status: mentor.status,
         createdAt: mentor.createdAt,
-        submitted_at: mentor.submitted_at
+        submitted_at: mentor.submitted_at,
+        average_rating: mentor.average_rating || 0,
+        ratings: mentor.ratings?.map(r => ({
+          mentee: r.mentee
+            ? {
+                id: r.mentee._id,
+                full_name: r.mentee.full_name,
+                email: r.mentee.email
+              }
+            : null,
+          score: r.score,
+          comment: r.comment,
+          created_at: r.created_at
+        })) || []
       }
     };
 
     res.status(200).json(response);
   } catch (error) {
-    console.error(error);
+    console.error("❌ Lỗi khi lấy mentor theo ID:", error);
     res.status(500).json({ message: "Lỗi server" });
   }
 };
+
 
 // ---------------------- RECOMMEND MENTORS ----------------------
 // Input (req.body):

@@ -72,6 +72,16 @@ const BookingService = {
     const res = await api.get(`/api/bookings/mentor/${mentorId}/booked-slots`);
     return res.data;
   },
+
+  confirmSession: async (bookingId, sessionIndex) => {
+    const res = await api.patch(`/api/bookings/${bookingId}/sessions/${sessionIndex}/confirm`, { role: "mentee" });
+    return res.data;
+  },
+
+  cancelSession: async (bookingId, sessionIndex, reason) => {
+    const res = await api.patch(`/api/bookings/${bookingId}/sessions/${sessionIndex}/cancel`, { reason });
+    return res.data;
+  },
 };
 
 export default BookingService;

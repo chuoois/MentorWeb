@@ -7,10 +7,8 @@ import {
   Clock,
   CheckCircle,
   XCircle,
-  AlertCircle,
   FileText,
   ArrowLeft,
-  Save,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -69,6 +67,13 @@ const formatCurrency = (amount) => {
   }).format(amount);
 };
 
+const formatDateTime = (date) => {
+  return new Date(date).toLocaleString("vi-VN", {
+    dateStyle: "short",
+    timeStyle: "short",
+  });
+};
+
 export const Applications = () => {
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -125,42 +130,6 @@ export const Applications = () => {
         return matchesStatus && matchesSearch;
       })
     : [];
-
-  const handleStatusChange = async (applicationId, newStatus) => {
-    try {
-      const data = {
-        applicationId: applicationId,
-        status: newStatus.toUpperCase(),
-      };
-
-      if (newStatus.toLowerCase() === "cancelled") {
-        const cancelReason = prompt("Vui lòng nhập lý do từ chối:");
-        if (!cancelReason) {
-          toast.error("Vui lòng cung cấp lý do từ chối!");
-          return;
-        }
-        data.cancel_reason = cancelReason;
-      }
-
-      console.log("Payload gửi đi:", data); // Debug payload
-      await BookingService.updateApplicationStatus(data);
-
-      setApplications((prev) =>
-        prev.map((app) =>
-          app.id === applicationId ? { ...app, status: newStatus.toUpperCase() } : app
-        )
-      );
-
-      if (selectedApplication?.id === applicationId) {
-        setSelectedApplication({ ...selectedApplication, status: newStatus.toUpperCase() });
-      }
-
-      toast.success(`Đã cập nhật trạng thái thành ${getStatusLabel(newStatus)}`);
-    } catch (err) {
-      console.error("Lỗi khi cập nhật trạng thái:", err.response?.data || err.message);
-      toast.error("Lỗi khi cập nhật trạng thái!");
-    }
-  };
 
   if (loading) {
     return (
@@ -291,10 +260,9 @@ export const Applications = () => {
             {/* Nội dung */}
             <div className="flex-1 overflow-y-auto p-6">
               <Tabs defaultValue="overview" className="space-y-6">
-                <TabsList className="grid w-full grid-cols-3">
+                <TabsList className="grid w-full grid-cols-2">
                   <TabsTrigger value="overview">Tổng quan</TabsTrigger>
                   <TabsTrigger value="details">Chi tiết</TabsTrigger>
-                  <TabsTrigger value="actions">Hành động</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="overview" className="space-y-6">
@@ -329,6 +297,15 @@ export const Applications = () => {
                       </CardContent>
                     </Card>
                   </div>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Công việc hiện tại</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-muted-foreground">{selectedApplication.mentee.job_title || "Chưa có"}</p>
+                    </CardContent>
+                  </Card>
 
                   <Card>
                     <CardHeader>
@@ -374,45 +351,41 @@ export const Applications = () => {
                           <label className="text-sm font-medium">Giá</label>
                           <p className="text-muted-foreground">{formatCurrency(selectedApplication.price)}</p>
                         </div>
-                        <div>
-                          <label className="text-sm font-medium">Trạng thái thanh toán</label>
-                          <p className="text-muted-foreground">
-                            {selectedApplication.paymentStatus === "PENDING"
-                              ? "Đang chờ"
-                              : selectedApplication.paymentStatus === "PAID"
-                              ? "Đã thanh toán"
-                              : "Thất bại"}
-                          </p>
-                        </div>
                       </div>
                     </CardContent>
                   </Card>
-                </TabsContent>
 
-                <TabsContent value="actions" className="space-y-6">
                   <Card>
                     <CardHeader>
-                      <CardTitle>Hành động với đơn</CardTitle>
+                      <CardTitle>Thời gian buổi học</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                      <div className="flex gap-2">
-                        <Button
-                          onClick={() => handleStatusChange(selectedApplication.id, "CONFIRMED")}
-                          className="bg-green-600 hover:bg-green-700"
-                          disabled={selectedApplication.status === "CONFIRMED"}
-                        >
-                          <CheckCircle className="w-4 h-4 mr-2" />
-                          Chấp nhận
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          onClick={() => handleStatusChange(selectedApplication.id, "CANCELLED")}
-                          disabled={selectedApplication.status === "CANCELLED"}
-                        >
-                          <XCircle className="w-4 h-4 mr-2" />
-                          Từ chối
-                        </Button>
-                      </div>
+                      {selectedApplication.sessionTimes && selectedApplication.sessionTimes.length > 0 ? (
+                        selectedApplication.sessionTimes.map((session, index) => (
+                          <div key={index} className="grid grid-cols-2 gap-4">
+                            <div>
+                              <label className="text-sm font-medium">Thời gian bắt đầu</label>
+                              <p className="text-muted-foreground">{formatDateTime(session.startTime)}</p>
+                            </div>
+                            <div>
+                              <label className="text-sm font-medium">Thời gian kết thúc</label>
+                              <p className="text-muted-foreground">{formatDateTime(session.endTime)}</p>
+                            </div>
+                            <div>
+                              <label className="text-sm font-medium">Trạng thái</label>
+                              <p className="text-muted-foreground">
+                                {session.status === "UPCOMING" ? "Sắp diễn ra" : session.status}
+                              </p>
+                            </div>
+                            <div>
+                              <label className="text-sm font-medium">Ghi chú</label>
+                              <p className="text-muted-foreground">{session.note || "Không có"}</p>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-muted-foreground">Không có thông tin thời gian buổi học.</p>
+                      )}
                     </CardContent>
                   </Card>
                 </TabsContent>

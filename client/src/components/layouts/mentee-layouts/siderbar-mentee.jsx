@@ -7,7 +7,6 @@ import {
   User,
   GraduationCap,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export const Sidebar = () => {
@@ -16,6 +15,7 @@ export const Sidebar = () => {
     { path: "/mentee/progress", label: "Tiến độ học tập", icon: <BookOpen className="w-4 h-4" /> },
     { path: "/mentee/schedule", label: "Lịch học", icon: <Calendar className="w-4 h-4" /> },
     { path: "/mentee/profile", label: "Hồ sơ", icon: <User className="w-4 h-4" /> },
+    { path: "/", label: "Quay lại trang chủ", icon: <Home className="w-4 h-4" /> },
   ];
 
   return (
@@ -77,15 +77,6 @@ export const Sidebar = () => {
 
       {/* Footer */}
       <div className="mt-auto border-t border-[#F3F3F3] px-6 py-3">
-        <Link to="/" className="flex items-center justify-center gap-2 text-sm text-gray-600 hover:bg-[#F9C5D5]/50 transition-colors">
-          <Button
-            variant="ghost"
-            className="w-full flex items-center justify-center gap-2 text-sm text-gray-600 hover:bg-[#F9C5D5]/50 transition-colors"
-          >
-            <Home className="w-4 h-4" />
-            Quay lại trang chủ
-          </Button>
-        </ Link>
         <p className="text-xs text-center text-gray-400 mt-2">
           © 2025 Mentee App
         </p>

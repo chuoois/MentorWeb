@@ -15,8 +15,15 @@ import {
 } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
   Star,
-  MapPin,
   Clock,
   MessageCircle,
   ArrowLeft,
@@ -28,7 +35,6 @@ import {
   Plus,
   TrendingUp,
   Award,
-  Users,
   DollarSign,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
@@ -38,10 +44,9 @@ import { format, addHours, startOfDay, addDays } from "date-fns";
 import { vi } from "date-fns/locale";
 import MentorService from "@/services/mentor.service";
 import BookingService from "@/services/booking.service";
-import CommentService from "@/services/comment.service";
 import { Skeleton } from "@/components/ui/skeleton";
 
-// MentorSkeleton component
+// MentorSkeleton component (giữ nguyên)
 const MentorSkeleton = () => (
   <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
     <div className="lg:col-span-3 space-y-4">
@@ -94,29 +99,29 @@ export const MentorDetailPage = () => {
   const [bookedSlots, setBookedSlots] = useState([]);
   const [note, setNote] = useState("");
   const [sessionDuration, setSessionDuration] = useState(1);
-  const [comments, setComments] = useState([]);
-  const [commentsLoading, setCommentsLoading] = useState(true);
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const durationOptions = [1, 1.5, 2, 2.5, 3];
+
+  const checkAuthToken = () => {
+    const token = localStorage.getItem("token");
+    return !!token;
+  };
 
   useEffect(() => {
     const fetchMentorAndBookings = async () => {
       try {
         setLoading(true);
-        setCommentsLoading(true);
-        const [resMentor, resBookings, resComments] = await Promise.all([
+        const [resMentor, resBookings] = await Promise.all([
           MentorService.getMentorByID(id),
           BookingService.getBookedSlots(id),
-          CommentService.getCommentsByMentor(id),
         ]);
         setMentor(resMentor.mentor);
         setBookedSlots(resBookings.bookedSlots || []);
-        setComments(resComments.comments || []);
       } catch (error) {
         console.error(error);
-        toast.error("Không thể tải dữ liệu mentor, lịch đặt, hoặc bình luận");
+        toast.error("Không thể tải dữ liệu mentor hoặc lịch đặt");
       } finally {
         setLoading(false);
-        setCommentsLoading(false);
       }
     };
     fetchMentorAndBookings();
@@ -164,12 +169,16 @@ export const MentorDetailPage = () => {
         (s) => s.start.getTime() === slot.start.getTime()
       );
       if (exists) {
-        return {
-          ...prev,
-          [dateKey]: slotsForDate.filter(
-            (s) => s.start.getTime() !== slot.start.getTime()
-          ),
-        };
+        const filtered = slotsForDate.filter(
+          (s) => s.start.getTime() !== slot.start.getTime()
+        );
+        const newSlots = { ...prev };
+        if (filtered.length > 0) {
+          newSlots[dateKey] = filtered;
+        } else {
+          delete newSlots[dateKey];
+        }
+        return newSlots;
       }
       return {
         ...prev,
@@ -181,7 +190,10 @@ export const MentorDetailPage = () => {
   const handleAddDate = () => {
     const newDate = addDays(selectedDate, 1);
     const minDate = addDays(new Date(), 5);
-    if (newDate >= minDate && !selectedDays.some((d) => format(d, "yyyy-MM-dd") === format(newDate, "yyyy-MM-dd"))) {
+    if (
+      newDate >= minDate &&
+      !selectedDays.some((d) => format(d, "yyyy-MM-dd") === format(newDate, "yyyy-MM-dd"))
+    ) {
       setSelectedDays((prev) => [...prev, newDate]);
       setSelectedDate(newDate);
     } else {
@@ -191,18 +203,29 @@ export const MentorDetailPage = () => {
 
   const handleRemoveDate = (dateToRemove) => {
     const dateKey = format(dateToRemove, "yyyy-MM-dd");
-    setSelectedDays((prev) => prev.filter((d) => format(d, "yyyy-MM-dd") !== dateKey));
+    setSelectedDays((prev) => {
+      const newDays = prev.filter((d) => format(d, "yyyy-MM-dd") !== dateKey);
+      return newDays.length > 0 ? newDays : [addDays(new Date(), 5)];
+    });
     setSelectedSlots((prev) => {
-      const { [dateKey]: _, ...rest } = prev;
-      return rest;
+      const newSlots = { ...prev };
+      delete newSlots[dateKey];
+      return newSlots;
     });
     if (format(selectedDate, "yyyy-MM-dd") === dateKey) {
-      setSelectedDate(selectedDays[0] || addDays(new Date(), 5));
+      const newDays = selectedDays.filter((d) => format(d, "yyyy-MM-dd") !== dateKey);
+      setSelectedDate(newDays.length > 0 ? newDays[0] : addDays(new Date(), 5));
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!checkAuthToken()) {
+      setIsLoginModalOpen(true);
+      return;
+    }
+
     const minAllowedDate = addDays(new Date(), 5);
     const allSlots = Object.entries(selectedSlots).flatMap(([date, slots]) =>
       slots.map((slot) => ({ ...slot, date: new Date(date) }))
@@ -226,15 +249,11 @@ export const MentorDetailPage = () => {
     const sessionTimesText = allSlots
       .map(
         (slot) =>
-          `từ ${format(slot.start, "HH:mm")} đến ${format(
-            slot.end,
-            "HH:mm"
-          )} ngày ${format(slot.start, "dd/MM/yyyy")}`
+          `từ ${format(slot.start, "HH:mm")} đến ${format(slot.end, "HH:mm")} ngày ${format(slot.start, "dd/MM/yyyy")}`
       )
       .join(", ");
     const confirm = window.confirm(
-      `Bạn có chắc muốn đặt ${allSlots.length} buổi mentoring với ${mentor.full_name
-      } vào các khung giờ: ${sessionTimesText}?`
+      `Bạn có chắc muốn đặt ${allSlots.length} buổi mentoring với ${mentor.full_name} vào các khung giờ: ${sessionTimesText}?`
     );
     if (!confirm) return;
 
@@ -299,8 +318,8 @@ export const MentorDetailPage = () => {
     currency: "VND",
   });
 
-  const sortedComments = [...comments].sort(
-    (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+  const sortedRatings = [...(mentor.ratings || [])].sort(
+    (a, b) => new Date(b.created_at) - new Date(a.created_at)
   );
 
   const availableSlots = generateAvailableSlots(selectedDate);
@@ -318,7 +337,6 @@ export const MentorDetailPage = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
           <div className="lg:col-span-3 space-y-4">
-            {/* Mentor Info */}
             <Card className="border-0 bg-white dark:bg-gray-900 shadow-sm rounded-xl overflow-hidden">
               <CardContent className="p-4 sm:p-6">
                 <div className="flex flex-col sm:flex-row gap-4">
@@ -333,9 +351,19 @@ export const MentorDetailPage = () => {
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1">
-                    <h1 className="text-xl sm:text-2xl font-semibold text-[#2C3E50] dark:text-white mb-1">
-                      {mentor.full_name}
-                    </h1>
+                    <div className="flex items-center gap-2 mb-1">
+                      <h1 className="text-xl sm:text-2xl font-semibold text-[#2C3E50] dark:text-white">
+                        {mentor.full_name}
+                      </h1>
+                      {mentor.average_rating && (
+                        <div className="flex items-center gap-1">
+                          <Star className="h-4 w-4 fill-[#F9C5D5] text-[#F9C5D5]" />
+                          <span className="text-sm font-medium text-[#2C3E50] dark:text-gray-200">
+                            {mentor.average_rating.toFixed(1)}
+                          </span>
+                        </div>
+                      )}
+                    </div>
                     <p className="text-sm text-[#333333] dark:text-gray-300 mb-1">
                       {mentor.job_title}
                     </p>
@@ -392,7 +420,6 @@ export const MentorDetailPage = () => {
               </CardContent>
             </Card>
 
-            {/* Bio */}
             <Card className="border-0 bg-white dark:bg-gray-900 shadow-sm rounded-xl">
               <CardHeader className="p-4 border-b border-[#F9C5D5]/10">
                 <CardTitle className="text-base flex items-center gap-1 text-[#2C3E50] dark:text-white">
@@ -405,7 +432,6 @@ export const MentorDetailPage = () => {
               </CardContent>
             </Card>
 
-            {/* Skills */}
             {mentor.skill && (
               <Card className="border-0 bg-white dark:bg-gray-900 shadow-sm rounded-xl">
                 <CardHeader className="p-4 border-b border-[#F9C5D5]/10">
@@ -429,68 +455,56 @@ export const MentorDetailPage = () => {
               </Card>
             )}
 
-            {/* Comments */}
             <Card className="border-0 bg-white dark:bg-gray-900 shadow-sm rounded-xl">
               <CardHeader className="p-4 border-b border-[#F9C5D5]/10">
                 <CardTitle className="text-base flex items-center gap-1 text-[#2C3E50] dark:text-white">
                   <MessageCircle className="h-3.5 w-3.5 text-[#F9C5D5]" />
-                  Bình luận ({sortedComments.length})
+                  Bình luận ({sortedRatings.length})
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-4">
-                {commentsLoading ? (
-                  <div className="space-y-3">
-                    {[...Array(2)].map((_, i) => (
-                      <div key={i} className="flex gap-3">
-                        <Skeleton className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700" />
-                        <div className="flex-1 space-y-1">
-                          <Skeleton className="h-3 w-1/3 bg-gray-200 dark:bg-gray-700" />
-                          <Skeleton className="h-2 w-2/3 bg-gray-200 dark:bg-gray-700" />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : sortedComments.length > 0 ? (
+                {sortedRatings.length > 0 ? (
                   <div className="space-y-3 max-h-80 overflow-y-auto">
-                    {sortedComments.map((comment, idx) => (
-                      <div key={comment._id || idx} className="flex gap-3 border-b border-[#F9C5D5]/10 pb-3 last:border-b-0">
+                    {sortedRatings.map((rating, idx) => (
+                      <div
+                        key={idx}
+                        className="flex gap-3 border-b border-[#F9C5D5]/10 pb-3 last:border-b-0"
+                      >
                         <Avatar className="w-8 h-8">
                           <AvatarImage
-                            src={comment.mentee?.avatar_url || "/placeholder.svg"}
-                            alt={comment.mentee?.full_name}
+                            src={rating.mentee?.avatar_url || "/placeholder.svg"}
+                            alt={rating.mentee?.full_name}
                           />
                           <AvatarFallback className="bg-[#F9C5D5] text-[#2C3E50] text-xs">
-                            {comment.mentee?.full_name?.charAt(0) || "U"}
+                            {rating.mentee?.full_name?.charAt(0) || "U"}
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
                             <p className="text-xs font-medium text-[#2C3E50] dark:text-gray-200">
-                              {comment.mentee?.full_name || "Người dùng"}
+                              {rating.mentee?.full_name || "Người dùng"}
                             </p>
                             <p className="text-xs text-gray-500 dark:text-gray-400">
-                              {format(new Date(comment.createdAt), "dd/MM/yyyy HH:mm", { locale: vi })}
+                              {format(new Date(rating.created_at), "dd/MM/yyyy HH:mm", {
+                                locale: vi,
+                              })}
                             </p>
                           </div>
                           <div className="flex items-center gap-1 mb-1">
                             {[...Array(5)].map((_, i) => (
                               <Star
                                 key={i}
-                                className={`h-3 w-3 ${i < comment.rating
-                                  ? "fill-[#F9C5D5] text-[#F9C5D5]"
-                                  : "text-gray-300 dark:text-gray-600"
-                                  }`}
+                                className={`h-3 w-3 ${
+                                  i < rating.score
+                                    ? "fill-[#F9C5D5] text-[#F9C5D5]"
+                                    : "text-gray-300 dark:text-gray-600"
+                                }`}
                               />
                             ))}
                           </div>
                           <p className="text-xs text-[#333333] dark:text-gray-300">
-                            {comment.content}
+                            {rating.comment}
                           </p>
-                          {comment.booking && (
-                            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                              Buổi: {comment.booking.sessions} sessions
-                            </p>
-                          )}
                         </div>
                       </div>
                     ))}
@@ -504,7 +518,6 @@ export const MentorDetailPage = () => {
             </Card>
           </div>
 
-          {/* Booking Section */}
           <div className="lg:col-span-2">
             <Card className="sticky top-4 border-0 bg-white dark:bg-gray-900 shadow-sm rounded-xl">
               <CardHeader className="p-4 bg-gradient-to-r from-[#F9C5D5]/20 to-[#2C3E50]/10">
@@ -525,9 +538,9 @@ export const MentorDetailPage = () => {
                         {totalSlots > 0
                           ? calculatedPrice
                           : `${mentor.price?.toLocaleString("vi-VN", {
-                            style: "currency",
-                            currency: "VND",
-                          })}/giờ`}
+                              style: "currency",
+                              currency: "VND",
+                            })}/giờ`}
                       </span>
                     </div>
                   </div>
@@ -569,21 +582,28 @@ export const MentorDetailPage = () => {
                     {selectedDays.map((day, idx) => (
                       <Button
                         key={idx}
-                        variant={format(day, "yyyy-MM-dd") === format(selectedDate, "yyyy-MM-dd") ? "default" : "outline"}
-                        className={`text-xs px-2 py-1 rounded-md ${format(day, "yyyy-MM-dd") === format(selectedDate, "yyyy-MM-dd")
-                          ? "bg-[#2C3E50] text-white hover:bg-[#1a252f]"
-                          : "border-[#F9C5D5] text-[#2C3E50] dark:text-gray-200 hover:bg-[#F9C5D5]/10"
-                          } transition-all duration-200`}
+                        variant={
+                          format(day, "yyyy-MM-dd") === format(selectedDate, "yyyy-MM-dd")
+                            ? "default"
+                            : "outline"
+                        }
+                        className={`text-xs px-2 py-1 rounded-md flex items-center gap-1 ${
+                          format(day, "yyyy-MM-dd") === format(selectedDate, "yyyy-MM-dd")
+                            ? "bg-[#2C3E50] text-white hover:bg-[#1a252f]"
+                            : "border-[#F9C5D5] text-[#2C3E50] dark:text-gray-200 hover:bg-[#F9C5D5]/10"
+                        } transition-all duration-200`}
                         onClick={() => setSelectedDate(day)}
                       >
                         {format(day, "dd/MM", { locale: vi })}
-                        <X
-                          className="h-3 w-3 ml-1 hover:text-red-500 transition-colors"
+                        <span
                           onClick={(e) => {
                             e.stopPropagation();
                             handleRemoveDate(day);
                           }}
-                        />
+                          className="hover:text-red-500 transition-colors"
+                        >
+                          <X className="h-3 w-3" />
+                        </span>
                       </Button>
                     ))}
                   </div>
@@ -639,10 +659,11 @@ export const MentorDetailPage = () => {
                             <Button
                               key={idx}
                               variant={isSelected ? "default" : "outline"}
-                              className={`w-full justify-start text-xs py-1.5 rounded-md relative group ${isSelected
-                                ? "bg-[#2C3E50] text-white hover:bg-[#1a252f]"
-                                : "border-[#F9C5D5] text-[#2C3E50] dark:text-gray-200 hover:bg-[#F9C5D5]/10"
-                                } transition-all duration-200`}
+                              className={`w-full justify-start text-xs py-1.5 rounded-md relative group ${
+                                isSelected
+                                  ? "bg-[#2C3E50] text-white hover:bg-[#1a252f]"
+                                  : "border-[#F9C5D5] text-[#2C3E50] dark:text-gray-200 hover:bg-[#F9C5D5]/10"
+                              } transition-all duration-200`}
                               onClick={() => handleSlotSelect(slot)}
                             >
                               <span className="w-16 text-left">{format(slot.start, "HH:mm")}</span>
@@ -689,7 +710,8 @@ export const MentorDetailPage = () => {
                                 className="flex items-center justify-between bg-white dark:bg-gray-800 p-1.5 rounded-md text-xs"
                               >
                                 <span className="text-[#333333] dark:text-gray-200">
-                                  {format(slot.start, "HH:mm")} - {format(slot.end, "HH:mm")} · {format(new Date(date), "dd/MM")}
+                                  {format(slot.start, "HH:mm")} - {format(slot.end, "HH:mm")} ·{" "}
+                                  {format(new Date(date), "dd/MM")}
                                 </span>
                                 <Button
                                   variant="ghost"
@@ -697,13 +719,17 @@ export const MentorDetailPage = () => {
                                   className="h-5 w-5 p-0 hover:bg-red-50 dark:hover:bg-red-900/10"
                                   onClick={() =>
                                     setSelectedSlots((prev) => {
-                                      const slotsForDate = prev[date].filter(
+                                      const newSlots = { ...prev };
+                                      const slotsForDate = newSlots[date] || [];
+                                      const filtered = slotsForDate.filter(
                                         (s) => s.start.getTime() !== slot.start.getTime()
                                       );
-                                      return {
-                                        ...prev,
-                                        [date]: slotsForDate.length > 0 ? slotsForDate : undefined,
-                                      };
+                                      if (filtered.length > 0) {
+                                        newSlots[date] = filtered;
+                                      } else {
+                                        delete newSlots[date];
+                                      }
+                                      return newSlots;
                                     })
                                   }
                                 >
@@ -751,6 +777,36 @@ export const MentorDetailPage = () => {
             </Card>
           </div>
         </div>
+
+        <Dialog open={isLoginModalOpen} onOpenChange={setIsLoginModalOpen}>
+          <DialogContent className="sm:max-w-[425px] bg-white dark:bg-gray-900 rounded-xl">
+            <DialogHeader>
+              <DialogTitle className="text-lg font-semibold text-[#2C3E50] dark:text-white">
+                Yêu cầu đăng nhập
+              </DialogTitle>
+              <DialogDescription className="text-sm text-[#333333] dark:text-gray-300">
+                Bạn cần đăng nhập để đặt lịch mentoring. Vui lòng đăng nhập hoặc đăng ký tài khoản.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="sm:justify-start">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsLoginModalOpen(false)}
+                className="mr-2 border-[#F9C5D5] text-[#2C3E50] dark:text-gray-200 hover:bg-[#F9C5D5]/10"
+              >
+                Hủy
+              </Button>
+              <Button
+                type="button"
+                onClick={() => navigate("/auth/login")}
+                className="bg-[#2C3E50] hover:bg-[#1a252f] text-white"
+              >
+                Đăng nhập
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </main>
   );

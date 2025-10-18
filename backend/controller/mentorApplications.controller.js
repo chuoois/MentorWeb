@@ -13,7 +13,7 @@ exports.getMentorApplications = async (req, res) => {
 
     // 🔹 Chỉ lấy các booking có paymentStatus = "PAID"
     const bookings = await Booking.find({ mentor: mentorId, paymentStatus: "PAID" })
-      .populate("mentee", "full_name email avatar_url gpa experience motivation")
+      .populate("mentee", "full_name email avatar_url gpa experience motivation job_title")
       .sort({ createdAt: -1 })
       .lean();
 
@@ -31,6 +31,7 @@ exports.getMentorApplications = async (req, res) => {
         gpa: b.mentee?.gpa || null,
         experience: b.mentee?.experience || null,
         motivation: b.mentee?.motivation || null,
+        job_title: b.mentee?.job_title || null,
       },
     }));
 
@@ -44,7 +45,6 @@ exports.getMentorApplications = async (req, res) => {
     res.status(500).json({ success: false, message: "Lỗi server khi lấy danh sách đơn" });
   }
 };
-
 
 exports.getMentorBookedSlots = async (req, res) => {
   try {
@@ -86,7 +86,7 @@ exports.getApplicationDetail = async (req, res) => {
 
     const booking = await Booking.findById(applicationId)
       .populate("mentor", "full_name email job_title company avatar_url price")
-      .populate("mentee", "full_name email avatar_url gpa experience motivation")
+      .populate("mentee", "full_name email avatar_url gpa experience motivation job_title")
       .lean();
 
     if (!booking) {
@@ -118,6 +118,7 @@ exports.getApplicationDetail = async (req, res) => {
         gpa: booking.mentee?.gpa,
         experience: booking.mentee?.experience,
         motivation: booking.mentee?.motivation,
+        job_title: booking.mentee?.job_title,
       },
       mentor: {
         id: booking.mentor?._id,

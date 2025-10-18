@@ -1,40 +1,55 @@
-// controllers/comment.controller.js
-const Comment = require("../models/comment.model");
-const Booking = require("../models/booking.model");
 const Mentor = require("../models/mentor.model");
-const Mentee = require("../models/mentee.model");
+const Booking = require("../models/booking.model");
 
-// ---------------------- GET COMMENTS BY MENTOR ----------------------
-exports.getCommentsByMentor = async (req, res) => {
+exports.addRating = async (req, res) => {
   try {
+    const menteeId = req.user.id; // lấy từ token
     const { mentorId } = req.params;
-    const { page = 1, limit = 10 } = req.query; // Phân trang
+    const { score, comment } = req.body;
 
-    // Kiểm tra mentor có tồn tại
-    const mentor = await Mentor.findById(mentorId);
-    if (!mentor) {
-      return res.status(404).json({ message: "Mentor not found" });
+    // ✅ Kiểm tra đã có buổi học hoàn thành với mentor chưa
+    const booking = await Booking.findOne({
+      mentee: menteeId,
+      mentor: mentorId,
+      status: "COMPLETED",
+    });
+
+    if (!booking) {
+      return res.status(400).json({
+        message: "Bạn chỉ có thể đánh giá mentor sau khi hoàn thành buổi học với họ.",
+      });
     }
 
-    // Lấy comment kèm thông tin mentee
-    const comments = await Comment.find({ mentor: mentorId })
-      .populate({ path: "mentee", select: "full_name email avatar_url" })
-      .populate({ path: "booking", select: "start_time end_time sessions" })
-      .sort({ createdAt: -1 }) // comment mới nhất trước
-      .skip((page - 1) * limit)
-      .limit(parseInt(limit));
+    // ✅ Tìm mentor
+    const mentor = await Mentor.findById(mentorId);
+    if (!mentor) {
+      return res.status(404).json({ message: "Không tìm thấy mentor." });
+    }
 
-    // Tính tổng comment (cho phân trang)
-    const total = await Comment.countDocuments({ mentor: mentorId });
+    // ✅ Kiểm tra đã đánh giá mentor này chưa
+    const alreadyRated = mentor.ratings.some(
+      (r) => r.mentee.toString() === menteeId
+    );
+    if (alreadyRated) {
+      return res.status(400).json({ message: "Bạn đã đánh giá mentor này rồi." });
+    }
 
-    res.json({
-      total,
-      page: parseInt(page),
-      limit: parseInt(limit),
-      comments
+    // ✅ Thêm rating
+    mentor.ratings.push({ mentee: menteeId, score, comment });
+
+    // ✅ Cập nhật điểm trung bình
+    const totalScore = mentor.ratings.reduce((sum, r) => sum + r.score, 0);
+    mentor.average_rating = totalScore / mentor.ratings.length;
+
+    await mentor.save();
+
+    return res.status(201).json({
+      message: "Đánh giá thành công!",
+      rating: { mentee: menteeId, score, comment },
+      average_rating: mentor.average_rating,
     });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server error" });
+  } catch (error) {
+    console.error("❌ Lỗi khi thêm rating:", error);
+    res.status(500).json({ message: "Lỗi server khi thêm đánh giá." });
   }
 };
