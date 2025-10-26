@@ -83,6 +83,11 @@ const BookingService = {
     return res.data;
   },
 
+  confirmSessionByMentor: async (bookingId, sessionIndex, data) => {
+    const res = await api.patch(`/api/bookings/${bookingId}/sessions/${sessionIndex}/confirm-by-mentor`, data);
+    return res.data;
+  },
+
   cancelSession: async (bookingId, sessionIndex, reason) => {
     const res = await api.patch(`/api/bookings/${bookingId}/sessions/${sessionIndex}/cancel`, { reason });
     return res.data;

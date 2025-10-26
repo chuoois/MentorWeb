@@ -28,9 +28,9 @@ export const LearningProgressMentor = () => {
   // 🔹 Loading UI
   if (loading) {
     return (
-      <div className="flex flex-col justify-center items-center h-64 space-y-4">
-        <Spinner className="w-12 h-12" style={{ color: "#F9C5D5" }} />
-        <p className="text-gray-500">Đang tải tiến độ giảng dạy...</p>
+      <div className="flex flex-col justify-center items-center h-40 space-y-2">
+        <Spinner className="w-7 h-7" style={{ color: "#F9C5D5" }} />
+        <p className="text-gray-500 text-xs">Đang tải tiến độ giảng dạy...</p>
       </div>
     );
   }
@@ -38,12 +38,12 @@ export const LearningProgressMentor = () => {
   // 🔹 Empty progress data
   if (!progressData || progressData.bookings.length === 0) {
     return (
-      <div className="text-center py-12 bg-white rounded-xl shadow-sm border border-gray-200 mt-6">
-        <BookOpen className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-        <p className="text-lg font-medium" style={{ color: "#333333" }}>
+      <div className="text-center py-5 bg-white rounded-md shadow-sm border border-gray-200 mt-2">
+        <BookOpen className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+        <p className="text-sm font-medium" style={{ color: "#333333" }}>
           Không tìm thấy tiến độ giảng dạy
         </p>
-        <p className="text-gray-400 text-sm mt-2">
+        <p className="text-gray-400 text-xs mt-1">
           Vui lòng kiểm tra lại hoặc liên hệ hỗ trợ
         </p>
       </div>
@@ -52,19 +52,19 @@ export const LearningProgressMentor = () => {
 
   // 🔹 Main UI
   return (
-    <div className="max-w-7xl mx-auto p-4 sm:p-6">
+    <div className="max-w-[90vw] mx-auto p-2">
       {/* Header */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="p-3 rounded-lg" style={{ backgroundColor: "#F9C5D5" }}>
-              <BookOpen className="w-6 h-6" style={{ color: "#2C3E50" }} />
+      <div className="bg-white rounded-md shadow-sm border border-gray-200 p-3 mb-2">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <div className="flex items-center gap-1.5">
+            <div className="p-1 rounded-md" style={{ backgroundColor: "#F9C5D5" }}>
+              <BookOpen className="w-4 h-4" style={{ color: "#2C3E50" }} />
             </div>
             <div>
-              <h2 className="text-2xl font-bold" style={{ color: "#333333" }}>
+              <h2 className="text-base font-bold" style={{ color: "#333333" }}>
                 Tiến độ giảng dạy
               </h2>
-              <p className="text-sm text-gray-500 mt-1">
+              <p className="text-xs text-gray-500 mt-0.5">
                 Xem tiến độ giảng dạy của bạn với các học viên
               </p>
             </div>
@@ -72,42 +72,42 @@ export const LearningProgressMentor = () => {
         </div>
 
         {/* Overall Progress */}
-        <div className="mt-6">
-          <h3 className="text-lg font-semibold" style={{ color: "#333333" }}>
+        <div className="mt-3">
+          <h3 className="text-sm font-semibold" style={{ color: "#333333" }}>
             Tổng quan tiến độ
           </h3>
-          <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <p className="text-sm text-gray-500">Tổng số booking</p>
-              <p className="text-2xl font-bold" style={{ color: "#2C3E50" }}>
+          <div className="mt-2 grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <div className="bg-gray-50 p-2 rounded-md">
+              <p className="text-xs text-gray-500">Tổng số booking</p>
+              <p className="text-lg font-bold" style={{ color: "#2C3E50" }}>
                 {progressData.overallProgress.totalBookings}
               </p>
             </div>
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <p className="text-sm text-gray-500">Tổng số buổi học</p>
-              <p className="text-2xl font-bold" style={{ color: "#2C3E50" }}>
+            <div className="bg-gray-50 p-2 rounded-md">
+              <p className="text-xs text-gray-500">Tổng số buổi học</p>
+              <p className="text-lg font-bold" style={{ color: "#2C3E50" }}>
                 {progressData.overallProgress.totalSessions}
               </p>
             </div>
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <p className="text-sm text-gray-500">Buổi đã hoàn thành</p>
-              <p className="text-2xl font-bold" style={{ color: "#2C3E50" }}>
+            <div className="bg-gray-50 p-2 rounded-md">
+              <p className="text-xs text-gray-500">Buổi đã hoàn thành</p>
+              <p className="text-lg font-bold" style={{ color: "#2C3E50" }}>
                 {progressData.overallProgress.totalCompletedSessions}
               </p>
             </div>
           </div>
-          <div className="mt-4">
-            <p className="text-sm text-gray-500">Phần trăm hoàn thành</p>
-            <div className="w-full bg-gray-200 rounded-full h-4 mt-2">
+          <div className="mt-2">
+            <p className="text-xs text-gray-500">Phần trăm hoàn thành</p>
+            <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
               <div
-                className="h-4 rounded-full"
+                className="h-2 rounded-full"
                 style={{
                   width: `${progressData.overallProgress.overallProgressPercentage}%`,
                   backgroundColor: "#F9C5D5",
                 }}
               ></div>
             </div>
-            <p className="text-sm font-medium mt-2" style={{ color: "#2C3E50" }}>
+            <p className="text-xs font-medium mt-1" style={{ color: "#2C3E50" }}>
               {progressData.overallProgress.overallProgressPercentage}% hoàn thành
             </p>
           </div>
@@ -115,33 +115,33 @@ export const LearningProgressMentor = () => {
       </div>
 
       {/* Booking List */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold mb-4" style={{ color: "#333333" }}>
+      <div className="bg-white rounded-md shadow-sm border border-gray-200 p-3">
+        <h3 className="text-sm font-semibold mb-2" style={{ color: "#333333" }}>
           Chi tiết các booking
         </h3>
         {progressData.bookings.map((booking) => (
           <div
             key={booking.bookingId}
-            className="border-b border-gray-200 py-4 last:border-b-0"
+            className="border-b border-gray-200 py-2 last:border-b-0"
           >
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div className="flex items-center gap-3">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <div className="flex items-center gap-2">
                 <img
                   src={booking.mentee.avatarUrl || "https://via.placeholder.com/40"}
                   alt={booking.mentee.fullName}
-                  className="w-10 h-10 rounded-full object-cover"
+                  className="w-8 h-8 rounded-full object-cover"
                 />
                 <div>
-                  <p className="font-medium" style={{ color: "#333333" }}>
+                  <p className="text-sm font-medium" style={{ color: "#333333" }}>
                     {booking.mentee.fullName}
                   </p>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-xs text-gray-500">
                     Email: {booking.mentee.email}
                   </p>
                 </div>
               </div>
               <div
-                className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
+                className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
                   booking.status === "COMPLETED"
                     ? "bg-green-100 text-green-700"
                     : booking.status === "CONFIRMED"
@@ -158,47 +158,47 @@ export const LearningProgressMentor = () => {
             </div>
 
             {/* Booking Details */}
-            <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="mt-2 grid grid-cols-1 sm:grid-cols-3 gap-2">
               <div>
-                <p className="text-sm text-gray-500">Tổng số buổi</p>
-                <p className="text-base font-medium" style={{ color: "#2C3E50" }}>
+                <p className="text-xs text-gray-500">Tổng số buổi</p>
+                <p className="text-sm font-medium" style={{ color: "#2C3E50" }}>
                   {booking.totalSessions}
                 </p>
               </div>
               <div>
-                <p className="text-sm text-gray-500">Buổi đã hoàn thành</p>
-                <p className="text-base font-medium" style={{ color: "#2C3E50" }}>
+                <p className="text-xs text-gray-500">Buổi đã hoàn thành</p>
+                <p className="text-sm font-medium" style={{ color: "#2C3E50" }}>
                   {booking.completedSessions}
                 </p>
               </div>
               <div>
-                <p className="text-sm text-gray-500">Phần trăm hoàn thành</p>
-                <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                <p className="text-xs text-gray-500">Phần trăm hoàn thành</p>
+                <div className="w-full bg-gray-200 rounded-full h-1.5 mt-1">
                   <div
-                    className="h-2 rounded-full"
+                    className="h-1.5 rounded-full"
                     style={{
                       width: `${booking.progressPercentage}%`,
                       backgroundColor: "#F9C5D5",
                     }}
                   ></div>
                 </div>
-                <p className="text-sm font-medium mt-1" style={{ color: "#2C3E50" }}>
+                <p className="text-xs font-medium mt-1" style={{ color: "#2C3E50" }}>
                   {booking.progressPercentage}% hoàn thành
                 </p>
               </div>
             </div>
 
             {/* Session Details */}
-            <div className="mt-4">
-              <p className="text-sm font-medium text-gray-500">Chi tiết các buổi học</p>
-              <div className="mt-2 space-y-3">
+            <div className="mt-2">
+              <p className="text-xs font-medium text-gray-500">Chi tiết các buổi học</p>
+              <div className="mt-1 space-y-2">
                 {booking.sessionDetails.map((session, index) => (
                   <div
                     key={index}
-                    className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg"
+                    className="flex items-center gap-2 p-2 bg-gray-50 rounded-md"
                   >
                     <div
-                      className={`p-2 rounded-lg ${
+                      className={`p-1.5 rounded-md ${
                         session.status === "COMPLETED"
                           ? "bg-green-100"
                           : session.status === "PENDING"
@@ -207,13 +207,13 @@ export const LearningProgressMentor = () => {
                       }`}
                     >
                       {session.status === "COMPLETED" ? (
-                        <CheckCircle className="w-5 h-5 text-green-700" />
+                        <CheckCircle className="w-4 h-4 text-green-700" />
                       ) : (
-                        <Clock className="w-5 h-5 text-blue-700" />
+                        <Clock className="w-4 h-4 text-blue-700" />
                       )}
                     </div>
                     <div className="flex-1">
-                      <p className="text-sm font-medium" style={{ color: "#333333" }}>
+                      <p className="text-xs font-medium" style={{ color: "#333333" }}>
                         {new Date(session.startTime).toLocaleString("vi-VN", {
                           timeZone: "Asia/Ho_Chi_Minh",
                         })}
@@ -223,7 +223,7 @@ export const LearningProgressMentor = () => {
                           timeStyle: "short",
                         })}
                       </p>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-xs text-gray-500">
                         Trạng thái: {session.status === "COMPLETED" ? "Hoàn thành" : "Chưa hoàn thành"}
                       </p>
                       {session.meetingLink && (
@@ -231,13 +231,13 @@ export const LearningProgressMentor = () => {
                           href={session.meetingLink}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-sm text-blue-600 hover:underline"
+                          className="text-xs text-blue-600 hover:underline"
                         >
                           Link Google Meet
                         </a>
                       )}
                       {session.menteeNote && (
-                        <p className="text-sm text-gray-600 mt-1">
+                        <p className="text-xs text-gray-600 mt-0.5">
                           <span className="font-medium">Ghi chú từ học viên:</span>{" "}
                           {session.menteeNote}
                         </p>
@@ -249,9 +249,9 @@ export const LearningProgressMentor = () => {
             </div>
 
             {booking.note && (
-              <div className="mt-4">
-                <p className="text-sm font-medium text-gray-500">Ghi chú booking</p>
-                <p className="text-sm bg-gray-50 p-3 rounded-lg mt-1" style={{ color: "#333333" }}>
+              <div className="mt-2">
+                <p className="text-xs font-medium text-gray-500">Ghi chú booking</p>
+                <p className="text-xs bg-gray-50 p-2 rounded-md mt-0.5" style={{ color: "#333333" }}>
                   {booking.note}
                 </p>
               </div>

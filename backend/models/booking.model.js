@@ -26,7 +26,7 @@ const bookingSchema = new mongoose.Schema(
     status: {
       type: String,
       enum: ["PENDING", "CONFIRMED", "COMPLETED", "CANCELLED"],
-      default: "PENDING",
+      default: "CONFIRMED",
       index: true,
     },
     paymentStatus: {
@@ -85,6 +85,7 @@ bookingSchema.pre("save", function (next) {
 
 // Phương thức markPaid
 bookingSchema.methods.markPaid = function (payosData) {
+  this.status = "CONFIRMED";
   this.paymentStatus = "PAID";
   this.payos_status = "PAID";
   this.payment_meta = payosData || this.payment_meta;
@@ -94,6 +95,7 @@ bookingSchema.methods.markPaid = function (payosData) {
 
 // Phương thức markCancelled
 bookingSchema.methods.markCancelled = function (payosData) {
+    this.status = "CANCELLED";
   this.paymentStatus = "CANCELLED";
   this.payos_status = "CANCELLED";
   this.payment_meta = payosData || this.payment_meta;

@@ -174,48 +174,69 @@ exports.updateApplicationStatus = async (req, res) => {
 
 exports.updateSessionByMentor = async (req, res) => {
   try {
-    // ✅ Lấy applicationId từ PARAMS chứ không phải body
-    const { applicationId } = req.params;
-    const { sessionIndex, meeting_link, note, markCompleted } = req.body;
+    const { bookingId, sessionIndex } = req.params;
+    const { meeting_link, note, markCompleted } = req.body;
 
     const mentorId = req.user.id;
-    const booking = await Booking.findOne({ _id: applicationId, mentor: mentorId });
 
-    if (!booking) {
-      return res.status(404).json({
-        success: false,
-        message: "Không tìm thấy booking của mentor này",
-      });
-    }
+    // 🔍 Tìm booking thuộc về mentor
+    const booking = await Booking.findOne({
+      _id: bookingId,
+      mentor: mentorId,
+    })
+      .populate("mentee", "email name")
+      .populate("mentor", "name");
 
+    if (!booking)
+      return res.status(404).json({ message: "Không tìm thấy booking của mentor này" });
+
+    // 🔍 Kiểm tra session tồn tại
     const session = booking.session_times[sessionIndex];
-    if (!session) {
-      return res.status(404).json({
-        success: false,
-        message: "Không tìm thấy session này",
-      });
+    if (!session)
+      return res.status(404).json({ message: "Không tìm thấy session này" });
+
+    let menteeNeedsNotification = false;
+
+    // ✅ Mentor xác nhận buổi học
+    session.mentor_confirmed = true;
+
+    // ✅ Cập nhật link học (nếu có)
+    if (meeting_link && meeting_link !== session.meeting_link) {
+      session.meeting_link = meeting_link;
+      session.status = "PENDING"; // mentee cần xác nhận lại nếu link thay đổi
+      session.mentee_confirmed = false;
+      menteeNeedsNotification = true;
     }
 
-    // ✅ Cập nhật dữ liệu session
-    if (meeting_link !== undefined) session.meeting_link = meeting_link;
-    if (note !== undefined) session.note = note;
+    // ✅ Cập nhật note (nếu có)
+    if (note !== undefined) {
+      session.note = note;
+    }
+
+    // ✅ Nếu mentor đánh dấu hoàn thành
     if (markCompleted) {
       session.status = "COMPLETED";
-      session.mentor_confirmed = true;
+      session.completed_at = new Date();
+    } else if (session.mentor_confirmed && session.mentee_confirmed) {
+      // Nếu cả hai đã xác nhận
+      session.status = "CONFIRMED";
+    } else if (!session.meeting_link) {
+      // Nếu chưa có link
+      session.status = "PENDING";
     }
 
     await booking.save();
 
+    // (Tùy chọn) gửi thông báo cho mentee nếu cần
+    // if (menteeNeedsNotification) sendEmailToMentee(booking.mentee.email, ...)
+
     res.json({
       success: true,
-      message: "Cập nhật session thành công",
+      message: "Mentor đã cập nhật buổi học thành công",
       data: session,
     });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({
-      success: false,
-      message: "Lỗi server khi cập nhật session",
-    });
+  } catch (error) {
+    console.error("Lỗi updateSessionByMentor:", error);
+    res.status(500).json({ success: false, message: "Lỗi server" });
   }
 };

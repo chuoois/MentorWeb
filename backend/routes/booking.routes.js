@@ -51,6 +51,9 @@ router.get("/mentor/learning/progress", authMiddleware, checkRole("MENTOR"), c.g
 // 1. Xác nhận buổi học
 router.patch("/:bookingId/sessions/:sessionIndex/confirm", c.confirmSession);
 
+// 2. Mentor xác nhận buổi học
+router.patch("/:bookingId/sessions/:sessionIndex/confirm-by-mentor", c.confirmSessionByMentor);
+
 // 2. Hủy buổi học
 router.patch("/:bookingId/sessions/:sessionIndex/cancel", c.cancelSession);
 

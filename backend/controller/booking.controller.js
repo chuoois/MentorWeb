@@ -602,36 +602,38 @@ exports.recreatePaymentLink = async (req, res) => {
 };
 
 exports.confirmSession = async (req, res) => {
-  const { bookingId, sessionIndex } = req.params;
-  const { role } = req.body; // "mentee" hoặc "mentor"
+  try {
+    const { bookingId, sessionIndex } = req.params;
 
-  const booking = await Booking.findById(bookingId);
-  if (!booking) return res.status(404).json({ message: "Booking không tồn tại" });
-  if (sessionIndex >= booking.session_times.length)
-    return res.status(400).json({ message: "Session không hợp lệ" });
+    const booking = await Booking.findById(bookingId);
+    if (!booking)
+      return res.status(404).json({ message: "Booking không tồn tại" });
+    if (sessionIndex >= booking.session_times.length)
+      return res.status(400).json({ message: "Session không hợp lệ" });
 
-  const session = booking.session_times[sessionIndex];
+    const session = booking.session_times[sessionIndex];
 
-  // ✅ Cập nhật xác nhận
-  if (role === "mentee") {
+    // ✅ Chỉ cho mentee xác nhận
     session.mentee_confirmed = true;
-  } else if (role === "mentor") {
-    session.mentor_confirmed = true;
-  } else {
-    return res.status(400).json({ message: "Vai trò không hợp lệ" });
-  }
 
-  // ✅ Cập nhật trạng thái session
-  if (session.mentor_confirmed && session.mentee_confirmed) {
-    session.status = "CONFIRMED";
-  } else {
-    session.status = "PENDING"; // Một bên xác nhận
-  }
+    // ✅ Nếu cả hai bên đã xác nhận → CONFIRMED
+    if (session.mentor_confirmed && session.mentee_confirmed) {
+      session.status = "CONFIRMED";
+    } else {
+      session.status = "PENDING";
+    }
 
-  await booking.save();
-  res.json({ message: "Xác nhận thành công", booking });
+    await booking.save();
+
+    res.json({
+      message: "Mentee đã xác nhận buổi học thành công",
+      booking,
+    });
+  } catch (error) {
+    console.error("Lỗi confirmSession:", error);
+    res.status(500).json({ message: "Lỗi server" });
+  }
 };
-
 
 exports.cancelSession = async (req, res) => {
   const { bookingId, sessionIndex } = req.params;

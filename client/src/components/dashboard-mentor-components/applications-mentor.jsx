@@ -24,13 +24,13 @@ import { toast } from "react-hot-toast";
 const getStatusIcon = (status) => {
   switch (status.toLowerCase()) {
     case "confirmed":
-      return <CheckCircle className="w-4 h-4 text-green-500" />;
+      return <CheckCircle className="w-3 h-3 text-green-500" />;
     case "cancelled":
-      return <XCircle className="w-4 h-4 text-red-500" />;
+      return <XCircle className="w-3 h-3 text-red-500" />;
     case "pending":
-      return <Clock className="w-4 h-4 text-blue-500" />;
+      return <Clock className="w-3 h-3 text-blue-500" />;
     default:
-      return <Clock className="w-4 h-4 text-blue-500" />;
+      return <Clock className="w-3 h-3 text-blue-500" />;
   }
 };
 
@@ -83,7 +83,6 @@ export const Applications = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [showApplicationsList, setShowApplicationsList] = useState(true);
 
-  // Fetch applications on component mount
   useEffect(() => {
     const fetchApplications = async () => {
       try {
@@ -103,12 +102,10 @@ export const Applications = () => {
     fetchApplications();
   }, []);
 
-  // Fetch application details when selected
   const handleApplicationSelect = async (application) => {
     try {
       setLoading(true);
       const response = await BookingService.getApplicationDetails(application.id);
-      console.log("Chi tiết đơn đăng ký:", response.data.id);
       setSelectedApplication(response.data);
       setShowApplicationsList(false);
     } catch (err) {
@@ -119,7 +116,6 @@ export const Applications = () => {
     }
   };
 
-  // Filter applications
   const filteredApplications = Array.isArray(applications)
     ? applications.filter((app) => {
         const matchesStatus =
@@ -134,7 +130,7 @@ export const Applications = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <p className="text-muted-foreground">Đang tải đơn đăng ký...</p>
+        <p className="text-[#2C3E50] text-sm">Đang tải đơn đăng ký...</p>
       </div>
     );
   }
@@ -142,43 +138,42 @@ export const Applications = () => {
   if (error) {
     return (
       <div className="flex items-center justify-center h-full">
-        <p className="text-red-500">{error}</p>
+        <p className="text-red-500 text-sm">{error}</p>
       </div>
     );
   }
 
   return (
-    <div className="flex h-full">
-      {/* Danh sách Đơn đăng ký */}
-      <div className={cn("w-full lg:w-96 border-r border-border bg-card", !showApplicationsList && "hidden lg:block")}>
-        <div className="p-6 border-b border-border">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-card-foreground">Đơn đăng ký</h2>
-            <Button variant="ghost" size="sm">
-              <Filter className="w-4 h-4" />
+    <div className="flex flex-col lg:flex-row min-h-screen">
+      <div className={cn("w-full lg:w-80 border-r border-[#F3F3F3] bg-white shadow-sm", !showApplicationsList && "hidden lg:block")}>
+        <div className="p-4 border-b border-[#F3F3F3]">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-lg font-semibold text-[#2C3E50]">Đơn đăng ký</h2>
+            <Button variant="ghost" size="sm" className="hover:bg-[#A3BFFA]/30">
+              <Filter className="w-4 h-4 text-[#2C3E50]" />
             </Button>
           </div>
 
           <div className="space-y-3">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500" />
               <Input
                 placeholder="Tìm kiếm đơn đăng ký..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 bg-background"
+                className="pl-10 bg-white border-[#F3F3F3] text-sm rounded-xl focus:ring-[#A3BFFA] focus:border-[#A3BFFA]"
               />
             </div>
 
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="bg-background">
+              <SelectTrigger className="bg-white border-[#F3F3F3] text-sm rounded-xl">
                 <SelectValue placeholder="Lọc theo trạng thái" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tất cả</SelectItem>
-                <SelectItem value="pending">Đang chờ</SelectItem>
-                <SelectItem value="confirmed">Đã chấp nhận</SelectItem>
-                <SelectItem value="cancelled">Đã từ chối</SelectItem>
+                <SelectItem value="all" className="text-sm">Tất cả</SelectItem>
+                <SelectItem value="pending" className="text-sm">Đang chờ</SelectItem>
+                <SelectItem value="confirmed" className="text-sm">Đã chấp nhận</SelectItem>
+                <SelectItem value="cancelled" className="text-sm">Đã từ chối</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -186,29 +181,29 @@ export const Applications = () => {
 
         <div className="overflow-y-auto">
           {filteredApplications.length === 0 ? (
-            <p className="p-4 text-muted-foreground">Không có đơn đăng ký nào phù hợp.</p>
+            <p className="p-4 text-gray-500 text-sm">Không có đơn đăng ký nào phù hợp.</p>
           ) : (
             filteredApplications.map((application) => (
               <div
                 key={application.id}
                 className={cn(
-                  "p-4 border-b border-border cursor-pointer hover:bg-accent transition-colors",
-                  selectedApplication?.id === application.id && "bg-accent"
+                  "p-4 border-b border-[#F3F3F3] cursor-pointer hover:bg-[#A3BFFA]/30 transition-all duration-200",
+                  selectedApplication?.id === application.id && "bg-[#A3BFFA]/80 shadow-[0_0_10px_rgba(163,191,250,0.5)]"
                 )}
                 onClick={() => handleApplicationSelect(application)}
               >
-                <div className="space-y-3">
+                <div className="space-y-2">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
-                      <Avatar className="w-10 h-10">
+                      <Avatar className="w-9 h-9 border">
                         <AvatarImage src={application.mentee?.avatar || "/placeholder.svg"} />
                         <AvatarFallback>
                           <User className="w-4 h-4" />
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <h3 className="font-medium text-card-foreground">{application.mentee?.fullName || "N/A"}</h3>
-                        <p className="text-sm text-muted-foreground">{application.program}</p>
+                        <h3 className="text-sm font-medium text-[#2C3E50]">{application.mentee?.fullName || "N/A"}</h3>
+                        <p className="text-xs text-gray-500">{application.program}</p>
                       </div>
                     </div>
                   </div>
@@ -216,12 +211,12 @@ export const Applications = () => {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       {getStatusIcon(application.status)}
-                      <Badge variant="outline" className={getStatusColor(application.status)}>
+                      <Badge variant="outline" className={cn(getStatusColor(application.status), "text-xs")}>
                         {getStatusLabel(application.status)}
                       </Badge>
                     </div>
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                      <Calendar className="w-3 h-3" />
+                    <div className="flex items-center gap-2 text-xs text-gray-500">
+                      <Calendar className="w-4 h-4" />
                       {new Date(application.submittedDate).toLocaleDateString("vi-VN")}
                     </div>
                   </div>
@@ -232,159 +227,159 @@ export const Applications = () => {
         </div>
       </div>
 
-      {/* Chi tiết đơn */}
       <div className={cn("flex-1 flex flex-col", showApplicationsList && "hidden lg:flex")}>
         {selectedApplication ? (
           <>
-            {/* Header */}
-            <div className="p-6 border-b border-border bg-card">
+            <div className="p-4 border-b border-[#F3F3F3] bg-white shadow-sm">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <Button variant="ghost" size="sm" onClick={() => setShowApplicationsList(true)} className="lg:hidden">
-                    <ArrowLeft className="w-4 h-4" />
+                <div className="flex items-center gap-3">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowApplicationsList(true)}
+                    className="lg:hidden hover:bg-[#A3BFFA]/30"
+                  >
+                    <ArrowLeft className="w-4 h-4 text-[#2C3E50]" />
                   </Button>
-                  <Avatar className="w-12 h-12">
+                  <Avatar className="w-10 h-10 border">
                     <AvatarImage src={selectedApplication.mentee?.avatar || "/placeholder.svg"} />
                     <AvatarFallback>
-                      <User className="w-6 h-6" />
+                      <User className="w-4 h-4" />
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <h2 className="text-xl font-semibold text-card-foreground">{selectedApplication.mentee?.fullName}</h2>
-                    <p className="text-muted-foreground">{selectedApplication.program}</p>
+                    <h2 className="text-lg font-semibold text-[#2C3E50]">{selectedApplication.mentee?.fullName}</h2>
+                    <p className="text-sm text-gray-500">{selectedApplication.program}</p>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Nội dung */}
             <div className="flex-1 overflow-y-auto p-6">
-              <Tabs defaultValue="overview" className="space-y-6">
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="overview">Tổng quan</TabsTrigger>
-                  <TabsTrigger value="details">Chi tiết</TabsTrigger>
+              <Tabs defaultValue="overview" className="space-y-4">
+                <TabsList className="grid w-full grid-cols-2 bg-white border-[#F3F3F3] rounded-xl">
+                  <TabsTrigger value="overview" className="text-sm text-[#2C3E50] data-[state=active]:bg-[#A3BFFA]/80">Tổng quan</TabsTrigger>
+                  <TabsTrigger value="details" className="text-sm text-[#2C3E50] data-[state=active]:bg-[#A3BFFA]/80">Chi tiết</TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="overview" className="space-y-6">
+                <TabsContent value="overview" className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <Card>
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium">GPA</CardTitle>
+                    <Card className="bg-white border-[#F3F3F3] shadow-[0_0_10px_rgba(163,191,250,0.2)]">
+                      <CardHeader className="pb-1">
+                        <CardTitle className="text-sm font-medium text-[#2C3E50]">GPA</CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <div className="text-2xl font-bold">{selectedApplication.mentee?.gpa || "Chưa có"}</div>
+                        <div className="text-lg font-bold text-[#2C3E50]">{selectedApplication.mentee?.gpa || "Chưa có"}</div>
                       </CardContent>
                     </Card>
 
-                    <Card>
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium">Trạng thái</CardTitle>
+                    <Card className="bg-white border-[#F3F3F3] shadow-[0_0_10px_rgba(163,191,250,0.2)]">
+                      <CardHeader className="pb-1">
+                        <CardTitle className="text-sm font-medium text-[#2C3E50]">Trạng thái</CardTitle>
                       </CardHeader>
                       <CardContent>
                         <div className="flex items-center gap-2">
                           {getStatusIcon(selectedApplication.status)}
-                          <span>{getStatusLabel(selectedApplication.status)}</span>
+                          <span className="text-sm text-[#2C3E50]">{getStatusLabel(selectedApplication.status)}</span>
                         </div>
                       </CardContent>
                     </Card>
 
-                    <Card>
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium">Email</CardTitle>
+                    <Card className="bg-white border-[#F3F3F3] shadow-[0_0_10px_rgba(163,191,250,0.2)]">
+                      <CardHeader className="pb-1">
+                        <CardTitle className="text-sm font-medium text-[#2C3E50]">Email</CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <p className="text-muted-foreground">{selectedApplication.mentee?.email}</p>
+                        <p className="text-sm text-gray-500">{selectedApplication.mentee?.email}</p>
                       </CardContent>
                     </Card>
                   </div>
 
-                  <Card>
+                  <Card className="bg-white border-[#F3F3F3] shadow-[0_0_10px_rgba(163,191,250,0.2)]">
                     <CardHeader>
-                      <CardTitle>Công việc hiện tại</CardTitle>
+                      <CardTitle className="text-sm text-[#2C3E50]">Công việc hiện tại</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-muted-foreground">{selectedApplication.mentee.job_title || "Chưa có"}</p>
+                      <p className="text-sm text-gray-500">{selectedApplication.mentee.job_title || "Chưa có"}</p>
                     </CardContent>
                   </Card>
 
-                  <Card>
+                  <Card className="bg-white border-[#F3F3F3] shadow-[0_0_10px_rgba(163,191,250,0.2)]">
                     <CardHeader>
-                      <CardTitle>Kinh nghiệm</CardTitle>
+                      <CardTitle className="text-sm text-[#2C3E50]">Kinh nghiệm</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-muted-foreground">{selectedApplication.mentee?.experience || "Chưa có"}</p>
+                      <p className="text-sm text-gray-500">{selectedApplication.mentee?.experience || "Chưa có"}</p>
                     </CardContent>
                   </Card>
 
-                  <Card>
+                  <Card className="bg-white border-[#F3F3F3] shadow-[0_0_10px_rgba(163,191,250,0.2)]">
                     <CardHeader>
-                      <CardTitle>Động lực</CardTitle>
+                      <CardTitle className="text-sm text-[#2C3E50]">Động lực</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-muted-foreground">{selectedApplication.mentee?.motivation || "Chưa có"}</p>
+                      <p className="text-sm text-gray-500">{selectedApplication.mentee?.motivation || "Chưa có"}</p>
                     </CardContent>
                   </Card>
                 </TabsContent>
 
-                <TabsContent value="details" className="space-y-6">
-                  <Card>
+                <TabsContent value="details" className="space-y-4">
+                  <Card className="bg-white border-[#F3F3F3] shadow-[0_0_10px_rgba(163,191,250,0.2)]">
                     <CardHeader>
-                      <CardTitle>Chi tiết đơn</CardTitle>
+                      <CardTitle className="text-sm text-[#2C3E50]">Chi tiết đơn</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <label className="text-sm font-medium">Ngày nộp</label>
-                          <p className="text-muted-foreground">
-                            {new Date(selectedApplication.createdAt).toLocaleDateString("vi-VN")}
-                          </p>
+                          <label className="text-sm font-medium text-[#2C3E50]">Ngày nộp</label>
+                          <p className="text-sm text-gray-500">{new Date(selectedApplication.createdAt).toLocaleDateString("vi-VN")}</p>
                         </div>
                         <div>
-                          <label className="text-sm font-medium">Thời lượng mỗi buổi</label>
-                          <p className="text-muted-foreground">{selectedApplication.duration || "N/A"} giờ</p>
+                          <label className="text-sm font-medium text-[#2C3E50]">Thời lượng mỗi buổi</label>
+                          <p className="text-sm text-gray-500">{selectedApplication.duration || "N/A"} giờ</p>
                         </div>
                         <div>
-                          <label className="text-sm font-medium">Tổng số buổi</label>
-                          <p className="text-muted-foreground">{selectedApplication.sessions || "1"}</p>
+                          <label className="text-sm font-medium text-[#2C3E50]">Tổng số buổi</label>
+                          <p className="text-sm text-gray-500">{selectedApplication.sessions || "1"}</p>
                         </div>
                         <div>
-                          <label className="text-sm font-medium">Giá</label>
-                          <p className="text-muted-foreground">{formatCurrency(selectedApplication.price)}</p>
+                          <label className="text-sm font-medium text-[#2C3E50]">Giá</label>
+                          <p className="text-sm text-gray-500">{formatCurrency(selectedApplication.price)}</p>
                         </div>
                       </div>
                     </CardContent>
                   </Card>
 
-                  <Card>
+                  <Card className="bg-white border-[#F3F3F3] shadow-[0_0_10px_rgba(163,191,250,0.2)]">
                     <CardHeader>
-                      <CardTitle>Thời gian buổi học</CardTitle>
+                      <CardTitle className="text-sm text-[#2C3E50]">Thời gian buổi học</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                       {selectedApplication.sessionTimes && selectedApplication.sessionTimes.length > 0 ? (
                         selectedApplication.sessionTimes.map((session, index) => (
                           <div key={index} className="grid grid-cols-2 gap-4">
                             <div>
-                              <label className="text-sm font-medium">Thời gian bắt đầu</label>
-                              <p className="text-muted-foreground">{formatDateTime(session.startTime)}</p>
+                              <label className="text-sm font-medium text-[#2C3E50]">Thời gian bắt đầu</label>
+                              <p className="text-sm text-gray-500">{formatDateTime(session.startTime)}</p>
                             </div>
                             <div>
-                              <label className="text-sm font-medium">Thời gian kết thúc</label>
-                              <p className="text-muted-foreground">{formatDateTime(session.endTime)}</p>
+                              <label className="text-sm font-medium text-[#2C3E50]">Thời gian kết thúc</label>
+                              <p className="text-sm text-gray-500">{formatDateTime(session.endTime)}</p>
                             </div>
                             <div>
-                              <label className="text-sm font-medium">Trạng thái</label>
-                              <p className="text-muted-foreground">
+                              <label className="text-sm font-medium text-[#2C3E50]">Trạng thái</label>
+                              <p className="text-sm text-gray-500">
                                 {session.status === "UPCOMING" ? "Sắp diễn ra" : session.status}
                               </p>
                             </div>
                             <div>
-                              <label className="text-sm font-medium">Ghi chú</label>
-                              <p className="text-muted-foreground">{session.note || "Không có"}</p>
+                              <label className="text-sm font-medium text-[#2C3E50]">Ghi chú</label>
+                              <p className="text-sm text-gray-500">{session.note || "Không có"}</p>
                             </div>
                           </div>
                         ))
                       ) : (
-                        <p className="text-muted-foreground">Không có thông tin thời gian buổi học.</p>
+                        <p className="text-sm text-gray-500">Không có thông tin thời gian buổi học.</p>
                       )}
                     </CardContent>
                   </Card>
@@ -395,9 +390,9 @@ export const Applications = () => {
         ) : (
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center">
-              <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-card-foreground mb-2">Chọn một đơn đăng ký</h3>
-              <p className="text-muted-foreground">Hãy chọn một đơn từ danh sách để xem chi tiết</p>
+              <FileText className="w-10 h-10 text-gray-500 mx-auto mb-3" />
+              <h3 className="text-lg font-medium text-[#2C3E50] mb-2">Chọn một đơn đăng ký</h3>
+              <p className="text-sm text-gray-500">Hãy chọn một đơn từ danh sách để xem chi tiết</p>
             </div>
           </div>
         )}
