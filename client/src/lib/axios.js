@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "https://mentor-web-back-end.vercel.app", 
+  baseURL: import.meta.env.DEV ? "http://localhost:3000" : "https://mentor-web-back-end.vercel.app", 
   headers: {
     "Content-Type": "application/json",
   },

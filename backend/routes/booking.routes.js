@@ -24,6 +24,9 @@ router.get("/mentee/status", authMiddleware, checkRole("MENTEE"), c.getBookingSt
 // 6. Lấy tiến độ học tập (learning progress)
 router.get("/mentee/progress", authMiddleware, checkRole("MENTEE"), c.getLearningProgress);
 
+// 7. Lấy lịch sử giao dịch của mentee
+router.get("/mentee/transactions", authMiddleware, checkRole("MENTEE"), c.getTransactionHistory);
+
 // ======================= MENTOR ROUTES =======================
 
 // 1. Lấy danh sách đơn ứng tuyển

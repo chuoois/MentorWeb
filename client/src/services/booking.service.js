@@ -34,6 +34,11 @@ const BookingService = {
     return res.data;
   },
 
+  getTransactionHistory: async (params = {}) => {
+    const res = await api.get("/api/bookings/mentee/transactions", { params });
+    return res.data;
+  },
+
   // ======================= MENTOR =======================
 
   getMentorApplications: async () => {

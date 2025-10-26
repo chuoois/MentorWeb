@@ -6,6 +6,7 @@ import {
   Calendar,
   User,
   GraduationCap,
+  CreditCard,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
@@ -14,6 +15,7 @@ export const Sidebar = () => {
     { path: "/mentee/applications", label: "Đơn xét duyệt", icon: <Users className="w-4 h-4" /> },
     { path: "/mentee/progress", label: "Tiến độ học tập", icon: <BookOpen className="w-4 h-4" /> },
     { path: "/mentee/schedule", label: "Lịch học", icon: <Calendar className="w-4 h-4" /> },
+    { path: "/mentee/transactions", label: "Lịch sử giao dịch", icon: <CreditCard className="w-4 h-4" /> },
     { path: "/mentee/profile", label: "Hồ sơ", icon: <User className="w-4 h-4" /> },
     { path: "/", label: "Quay lại trang chủ", icon: <Home className="w-4 h-4" /> },
   ];

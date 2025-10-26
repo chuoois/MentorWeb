@@ -6,3 +6,4 @@ export * from './mentee-profile-page';
 export * from './mentee-application-page';
 export * from './mentee-learning-progress';
 export * from './mentee-payment-page';
+export * from './mentee-transaction-history-page';

@@ -656,3 +656,100 @@ exports.cancelSession = async (req, res) => {
   await booking.save();
   res.json({ message: "Đã hủy buổi học", booking });
 };
+
+// ---------------------- GET TRANSACTION HISTORY ----------------------
+exports.getTransactionHistory = async (req, res) => {
+  try {
+    const menteeId = req.user.id;
+    const { status, paymentStatus, page = 1, limit = 10, startDate, endDate } = req.query;
+
+    // Xây dựng điều kiện lọc
+    const query = { mentee: menteeId };
+    
+    if (status) query.status = status;
+    if (paymentStatus) query.paymentStatus = paymentStatus;
+    
+    // Lọc theo ngày
+    if (startDate || endDate) {
+      query.createdAt = {};
+      if (startDate) query.createdAt.$gte = new Date(startDate);
+      if (endDate) query.createdAt.$lte = new Date(endDate);
+    }
+
+    // Lấy tổng số bản ghi để phân trang
+    const total = await Booking.countDocuments(query);
+
+    const bookings = await Booking.find(query)
+      .select("status paymentStatus price duration sessions order_code payment_at payment_meta currency createdAt updatedAt")
+      .populate("mentor", "full_name job_title company avatar_url")
+      .sort({ createdAt: -1 }) // Sắp xếp theo ngày tạo mới nhất
+      .skip((page - 1) * limit)
+      .limit(parseInt(limit))
+      .lean();
+
+    // Format dữ liệu lịch sử giao dịch
+    const transactionHistory = bookings.map((booking) => {
+      const mentor = booking.mentor || {};
+      
+      return {
+        transactionId: booking._id,
+        orderCode: booking.order_code,
+        mentor: {
+          id: mentor._id,
+          fullName: mentor.full_name || "N/A",
+          jobTitle: mentor.job_title || "N/A",
+          company: mentor.company || "N/A",
+          avatarUrl: mentor.avatar_url || null,
+        },
+        amount: booking.price,
+        duration: booking.duration,
+        sessions: booking.sessions,
+        status: booking.status,
+        paymentStatus: booking.paymentStatus,
+        currency: booking.currency || "VND",
+        paymentAt: booking.payment_at,
+        paymentMeta: booking.payment_meta,
+        createdAt: booking.createdAt,
+        updatedAt: booking.updatedAt,
+      };
+    });
+
+    // Tính tổng thống kê
+    const totalAmount = bookings.reduce((sum, booking) => {
+      return booking.paymentStatus === "PAID" ? sum + booking.price : sum;
+    }, 0);
+
+    const paidTransactions = bookings.filter(b => b.paymentStatus === "PAID").length;
+    const pendingTransactions = bookings.filter(b => b.paymentStatus === "PENDING").length;
+    const failedTransactions = bookings.filter(b => b.paymentStatus === "FAILED").length;
+    const cancelledTransactions = bookings.filter(b => b.paymentStatus === "CANCELLED").length;
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        transactions: transactionHistory,
+        summary: {
+          totalTransactions: total,
+          totalAmount,
+          paidTransactions,
+          pendingTransactions,
+          failedTransactions,
+          cancelledTransactions,
+        }
+      },
+      pagination: {
+        total,
+        page: parseInt(page),
+        limit: parseInt(limit),
+        totalPages: Math.ceil(total / limit),
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching transaction history:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi server khi lấy lịch sử giao dịch",
+      error: error.message,
+    });
+  }
+};
