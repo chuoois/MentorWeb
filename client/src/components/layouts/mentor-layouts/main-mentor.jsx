@@ -3,14 +3,11 @@ import { Sidebar } from "./sidebar-mentor";
 
 export const MentorLayout = () => {
   return (
-    <div className="flex h-screen">
-      {/* Sidebar cố định bên trái */}
+    <div className="flex min-h-screen">
       <Sidebar />
-
-      {/* Nội dung thay đổi theo route */}
-      <div className="flex-1 overflow-y-auto">
+      <main className="ml-64 flex-1 min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
         <Outlet />
-      </div>
+      </main>
     </div>
   );
 };

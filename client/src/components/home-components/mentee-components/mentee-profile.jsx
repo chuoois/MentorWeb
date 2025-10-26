@@ -38,7 +38,6 @@ export const MenteeProfile = () => {
         });
       } catch (error) {
         console.error(error);
-        toast.error("Không tải được thông tin hồ sơ");
       } finally {
         setLoading(false);
       }

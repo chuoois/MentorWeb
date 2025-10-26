@@ -181,7 +181,6 @@ export const MenteeSchedule = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [viewMode, setViewMode] = useState("week");
-  const [cancelReason, setCancelReason] = useState("");
 
   useEffect(() => {
     const fetchBookings = async () => {
@@ -194,7 +193,6 @@ export const MenteeSchedule = () => {
         setBookings(normalizedBookings);
       } catch (error) {
         console.error("Lỗi tải bookings:", error);
-        toast.error("Lỗi khi tải lịch hẹn.");
       } finally {
         setLoading(false);
       }
@@ -271,37 +269,6 @@ export const MenteeSchedule = () => {
     } catch (error) {
       console.error("Lỗi xác nhận:", error);
       toast.error(error.response?.data?.message || "Lỗi khi xác nhận buổi học.");
-    }
-  };
-
-  const handleCancelSession = async (bookingId, sessionIndex) => {
-    if (!bookingId) {
-      toast.error("Không tìm thấy ID của booking.");
-      return;
-    }
-    if (!cancelReason.trim()) {
-      toast.error("Vui lòng nhập lý do hủy.");
-      return;
-    }
-    const confirmCancel = window.confirm(
-      "Bạn có chắc chắn muốn hủy buổi học này?"
-    );
-    if (!confirmCancel) return;
-
-    try {
-      console.log("Gọi cancelSession:", { bookingId, sessionIndex, role: "mentee", cancelReason }); // Debug
-      await BookingService.cancelSession(bookingId, sessionIndex, { role: "mentee", cancel_reason: cancelReason });
-      toast.success("Hủy buổi học thành công!");
-      const updatedBookings = await BookingService.getMenteeBookings();
-      const normalizedBookings = normalizeBookings(
-        updatedBookings.bookedSlots || []
-      );
-      setBookings(normalizedBookings);
-      setSelectedBooking(null);
-      setCancelReason("");
-    } catch (error) {
-      console.error("Lỗi hủy:", error);
-      toast.error(error.response?.data?.message || "Lỗi khi hủy buổi học.");
     }
   };
 
@@ -896,38 +863,6 @@ export const MenteeSchedule = () => {
                       disabled={!selectedBooking.original_booking_id}
                     >
                       Xác nhận buổi học
-                    </Button>
-                  )}
-                {selectedBooking.session_status !== "CANCELLED" &&
-                  !selectedBooking.mentee_confirmed && (
-                    <div>
-                      <label className="text-xs font-medium text-gray-500">
-                        Lý do hủy (nếu có)
-                      </label>
-                      <textarea
-                        value={cancelReason}
-                        onChange={(e) => setCancelReason(e.target.value)}
-                        className="w-full text-xs p-1.5 border rounded-md"
-                        placeholder="Nhập lý do hủy..."
-                      />
-                    </div>
-                  )}
-                {selectedBooking.session_status !== "CANCELLED" &&
-                  !selectedBooking.mentee_confirmed && (
-                    <Button
-                      onClick={() =>
-                        handleCancelSession(
-                          selectedBooking.original_booking_id,
-                          selectedBooking.session_index
-                        )
-                      }
-                      className="w-full text-white hover:opacity-90 text-xs"
-                      style={{ backgroundColor: "#DC3545", color: "#FFFFFF" }}
-                      disabled={
-                        !cancelReason.trim() || !selectedBooking.original_booking_id
-                      }
-                    >
-                      Hủy buổi học
                     </Button>
                   )}
               </div>

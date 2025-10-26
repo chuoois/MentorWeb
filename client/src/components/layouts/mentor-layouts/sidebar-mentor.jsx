@@ -1,87 +1,107 @@
-import { BookOpen, FileText, Settings, LogOut, X, CalendarDays } from "lucide-react"
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
-import { Link, useLocation, useNavigate } from "react-router-dom"
+import { NavLink, Link, useNavigate } from "react-router-dom";
+import {
+  Users,
+  BookOpen,
+  Calendar,
+  GraduationCap,
+  LogOut,
+} from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 
-const navigation = [
-  { name: "Đơn ứng tuyển", icon: FileText, path: "/applications" },
-  { name: "Tiến độ", icon: BookOpen, path: "/progress" },
-  { name: "Lịch hẹn", icon: CalendarDays, path: "/schedule" },
-]
+export const Sidebar = () => {
+  const navigate = useNavigate();
 
-export const Sidebar = ({ onClose }) => {
-  const location = useLocation()
-  const currentPath = location.pathname
-  const navigate = useNavigate()
+  const tabs = [
+    { path: "/applications", label: "Danh sách Mentee", icon: <Users className="w-4 h-4" /> },
+    { path: "/progress", label: "Tiến độ hướng dẫn", icon: <BookOpen className="w-4 h-4" /> },
+    { path: "/schedule", label: "Lịch hướng dẫn", icon: <Calendar className="w-4 h-4" /> },
+  ];
 
   const handleLogout = () => {
-    // Xóa thông tin đăng nhập (tùy cách bạn lưu)
-    localStorage.removeItem("token")
-    sessionStorage.clear()
+    // Xóa localStorage (có thể tùy chỉnh)
+    localStorage.clear();
 
-    // Chuyển hướng về trang đăng nhập
-    navigate("/mentor")
-  }
+    // Điều hướng về trang đăng nhập
+    navigate("/mentor");
+  };
 
   return (
-    <div className="w-64 h-full bg-sidebar border-r border-sidebar-border flex flex-col">
+    <aside
+      className="fixed left-0 top-0 h-screen w-64 flex flex-col border-r shadow-sm"
+      style={{
+        backgroundColor: "#FFFFFF",
+        borderColor: "#F3F3F3",
+      }}
+    >
       {/* Header */}
-      <div className="p-6 border-b border-sidebar-border">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-sm">M</span>
-            </div>
-            <div>
-              <h1 className="font-semibold text-sidebar-foreground">MentorHub</h1>
-              <p className="text-xs text-muted-foreground">Bảng điều khiển</p>
-            </div>
-          </div>
-          {/* Nút đóng trên mobile */}
-          {onClose && (
-            <Button variant="ghost" size="sm" onClick={onClose} className="lg:hidden">
-              <X className="w-4 h-4" />
-            </Button>
-          )}
+      <div
+        className="flex items-center gap-2 px-6 py-4 border-b"
+        style={{
+          borderColor: "#F3F3F3",
+          background: "linear-gradient(135deg, #A3BFFA, #E2E8F0)",
+          color: "#2C3E50",
+        }}
+      >
+        <GraduationCap className="w-6 h-6" />
+        <Link to="/">
+          <h1 className="text-lg font-semibold">Mentor Dashboard</h1>
+        </Link>
+      </div>
+
+      {/* User Info */}
+      <div className="flex items-center gap-3 px-6 py-4 border-b border-[#F3F3F3]">
+        <Avatar className="w-10 h-10 border">
+          <AvatarImage src="https://i.pravatar.cc/100?img=14" alt="Mentor avatar" />
+          <AvatarFallback>MT</AvatarFallback>
+        </Avatar>
+        <div>
+          <p className="text-sm font-medium text-[#2C3E50]">Minh Tuấn</p>
+          <p className="text-xs text-gray-500">Mentor</p>
         </div>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-4">
-        <div className="space-y-2">
-          {navigation.map((item) => {
-            const isActive = currentPath === item.path
-            return (
-              <Link key={item.path} to={item.path}>
-                <Button
-                  variant={isActive ? "secondary" : "ghost"}
-                  className={cn(
-                    "w-full justify-start gap-3 h-10",
+      <nav className="flex-1 mt-3">
+        <ul className="space-y-1 px-3">
+          {tabs.map((tab) => (
+            <li key={tab.path}>
+              <NavLink
+                to={tab.path}
+                className={({ isActive }) =>
+                  `flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 ${
                     isActive
-                      ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                      : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                  )}
-                >
-                  <item.icon className="w-4 h-4" />
-                  {item.name}
-                </Button>
-              </Link>
-            )
-          })}
-        </div>
+                      ? "bg-[#A3BFFA]/80 text-[#2C3E50] shadow-[0_0_10px_rgba(163,191,250,0.5)]"
+                      : "text-[#333] hover:bg-[#A3BFFA]/30 hover:translate-x-1"
+                  }`
+                }
+              >
+                {tab.icon}
+                <span>{tab.label}</span>
+              </NavLink>
+            </li>
+          ))}
+        </ul>
       </nav>
 
-      {/* Nút đăng xuất */}
-      <div className="p-4 border-t border-sidebar-border">
+      {/* Logout Button */}
+      <div className="px-6 pb-3">
         <Button
-          variant="ghost"
-          className="w-full justify-start gap-3 text-red-500 hover:bg-red-100"
+          variant="outline"
+          className="w-full flex items-center justify-center gap-2 text-sm border-[#E5E7EB] hover:bg-[#A3BFFA]/40 transition"
           onClick={handleLogout}
         >
           <LogOut className="w-4 h-4" />
           Đăng xuất
         </Button>
       </div>
-    </div>
-  )
-}
+
+      {/* Footer */}
+      <div className="mt-auto border-t border-[#F3F3F3] px-6 py-3">
+        <p className="text-xs text-center text-gray-400 mt-2">
+          © 2025 Mentor App
+        </p>
+      </div>
+    </aside>
+  );
+};
