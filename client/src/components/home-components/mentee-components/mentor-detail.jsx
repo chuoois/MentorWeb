@@ -130,8 +130,8 @@ export const MentorDetailPage = () => {
   const generateAvailableSlots = useCallback(
     (date) => {
       const slots = new Set();
-      const startHour = 8;
-      const endHour = 20;
+      const startHour = Number(mentor.availability?.startTime);
+      const endHour = Number(mentor.availability?.endTime);
       const interval = 0.5;
 
       for (let hour = startHour; hour <= endHour - sessionDuration; hour += interval) {

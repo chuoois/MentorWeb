@@ -342,15 +342,16 @@ exports.getMentorByID = async (req, res) => {
         ratings: mentor.ratings?.map(r => ({
           mentee: r.mentee
             ? {
-                id: r.mentee._id,
-                full_name: r.mentee.full_name,
-                email: r.mentee.email
-              }
+              id: r.mentee._id,
+              full_name: r.mentee.full_name,
+              email: r.mentee.email
+            }
             : null,
           score: r.score,
           comment: r.comment,
           created_at: r.created_at
-        })) || []
+        })) || [],
+        availability: mentor.availability || { startTime: null, endTime: null }
       }
     };
 
@@ -381,12 +382,12 @@ exports.recommend = async (req, res) => {
 
     const normalizedSkills = Array.isArray(skills)
       ? skills
-          .map((s) => String(s || "").toLowerCase().trim())
-          .filter((s) => s.length > 0)
+        .map((s) => String(s || "").toLowerCase().trim())
+        .filter((s) => s.length > 0)
       : String(skills || "")
-          .split(/[,;/]/)
-          .map((s) => s.toLowerCase().trim())
-          .filter((s) => s.length > 0);
+        .split(/[,;/]/)
+        .map((s) => s.toLowerCase().trim())
+        .filter((s) => s.length > 0);
 
     const priceFilter = {};
     if (budgetMin !== undefined && budgetMin !== null) priceFilter.$gte = Number(budgetMin);
@@ -472,3 +473,57 @@ exports.get8MentorsRating = async (req, res) => {
     res.status(500).json({ ok: false, message: 'Server error', error: error.message });
   }
 };
+
+exports.updateAvailability = async (req, res) => {
+  try {
+    const mentorId = req.user.id;
+    const { startTime, endTime } = req.body;
+
+    // Kiểm tra dữ liệu đầu vào
+    if (typeof startTime !== 'number' || typeof endTime !== 'number') {
+      return res.status(400).json({ message: 'startTime và endTime phải là số (giờ dạng 0-23).' });
+    }
+
+    if (startTime < 0 || endTime > 24 || startTime >= endTime) {
+      return res.status(400).json({ message: 'Thời gian không hợp lệ. startTime phải nhỏ hơn endTime và nằm trong 0-24.' });
+    }
+
+    // Tìm và cập nhật mentor
+    const updatedMentor = await Mentor.findByIdAndUpdate(
+      mentorId,
+      {
+        $set: {
+          availability: { startTime, endTime },
+          updatedAt: new Date(),
+        },
+      },
+      { new: true } // trả về document sau khi update
+    ).select('-password_hash'); // ẩn password
+
+    if (!updatedMentor) {
+      return res.status(404).json({ message: 'Không tìm thấy mentor.' });
+    }
+
+    res.status(200).json({
+      message: 'Cập nhật availability thành công.',
+      data: updatedMentor,
+    });
+  } catch (error) {
+    console.error('❌ Lỗi khi cập nhật availability:', error);
+    res.status(500).json({ message: 'Lỗi server khi cập nhật availability.', error: error.message });
+  }
+};
+
+exports.getAvailability = async (req, res) => {
+  try {
+    const mentorId = req.user.id; 
+    const mentor = await Mentor.findById(mentorId).select('availability').lean();
+    if (!mentor) {
+      return res.status(404).json({ message: 'Không tìm thấy mentor.' });
+    }
+    res.status(200).json({ availability: mentor.availability });
+  } catch (error) {
+    console.error('❌ Lỗi khi tìm availability:', error);
+    res.status(500).json({ message: 'Lỗi server khi tìm availability.', error: error.message });
+  }
+};  

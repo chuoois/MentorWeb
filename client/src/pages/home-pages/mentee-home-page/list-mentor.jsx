@@ -1,9 +1,9 @@
-import { ListMentor } from '@/components/home-components';
+import { ListMentors } from '@/components/home-components';
 
 export const MentorList = () => {
     return (
     <>
-      <ListMentor />
+      <ListMentors />
     </>
   )
 };

@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const c = require("../controller/mentor.controller");
+const { authMiddleware, checkRole } = require("../middleware/auth.middleware");
 
 // POST /api/mentors/register
 router.post("/register", c.register);
@@ -19,6 +20,12 @@ router.get("/rating", c.get8MentorsRating);
 
 // POST /api/mentors/recommend
 router.post("/recommend", c.recommend);
+
+// PUT /api/mentors/:id/availability
+router.put("/availability", authMiddleware, checkRole("MENTOR"), c.updateAvailability);
+
+// GET /api/mentors/availability
+router.get("/availability", authMiddleware, checkRole("MENTOR"), c.getAvailability);
 
 // GET /api/mentors/:id
 router.get("/:id", c.getMentorByID);

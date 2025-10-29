@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Search, DollarSign, ChevronDown, Filter, X, MapPin, Briefcase, Star, Clock } from "lucide-react";
+import { Search, DollarSign, ChevronDown, Filter, X, MapPin, Briefcase } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -47,17 +47,18 @@ const sortOrders = [
   { value: "desc", label: "Giảm dần" },
 ];
 
-export const ListMentor = () => {
+export const ListMentors = () => {
   const [mentors, setMentors] = useState([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [limit] = useState(9);
-  const [initialLimit] = useState(100);
+  const [initialLimit] = useState(100); // Lấy 100 để gom skill
   const [loading, setLoading] = useState(false);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
 
   const [searchParams, setSearchParams] = useSearchParams();
-  const [searchQuery, setSearchQuery] = useState(searchParams.get("search") || "");
+
+  const [searchQuery, setSearchQuery] = useState("");
   const [selectedSkills, setSelectedSkills] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("");
   const [company, setCompany] = useState("");
@@ -72,84 +73,94 @@ export const ListMentor = () => {
 
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
-  const fetchMentors = async (reset = false, isInitial = false) => {
-    try {
-      setLoading(true);
-      const currentLimit = isInitial ? initialLimit : limit;
-      const currentPage = isInitial ? 1 : reset ? 1 : page;
-
-      const params = {
-        search: debouncedSearchQuery,
-        skill: selectedSkills.join(","),
-        category: selectedCategory,
-        company,
-        location,
-        minPrice: minPrice ? Number(minPrice) : undefined,
-        maxPrice: maxPrice ? Number(maxPrice) : undefined,
-        sortBy,
-        sortOrder,
-        page: currentPage,
-        limit: currentLimit,
-      };
-
-      Object.keys(params).forEach((key) => {
-        if (params[key] === undefined || params[key] === "") delete params[key];
-      });
-
-      const res = await MentorService.listActiveMentors(params);
-      const fetched = res.mentors || [];
-      setTotal(res.pagination?.totalItems || 0);
-
-      if (isInitial || reset) {
-        setMentors(fetched);
-      } else {
-        setMentors((prev) => [...prev, ...fetched]);
-      }
-    } catch (err) {
-      console.error(err);
-      toast.error("Không thể tải danh sách mentor.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // ĐỌC TỪ URL KHI LOAD TRANG
   useEffect(() => {
-    const allSkills = new Set();
-    mentors.forEach((mentor) => {
-      if (mentor.skill) {
-        mentor.skill.split(",").forEach((s) => {
-          const trimmed = s.trim();
-          if (trimmed && trimmed.length > 0) {
-            allSkills.add(trimmed);
+    const params = Object.fromEntries(searchParams.entries());
+
+    setSearchQuery(params.search || "");
+    setSelectedSkills(params.skills ? params.skills.split(",").map(s => s.trim()) : []);
+    setSelectedCategory(params.category || "");
+    setCompany(params.company || "");
+    setLocation(params.location || "");
+    setMinPrice(params.minPrice || "30000");
+    setMaxPrice(params.maxPrice || "");
+    setSortBy(params.sortBy || "full_name");
+    setSortOrder(params.sortOrder || "asc");
+
+    const urlPage = parseInt(params.page);
+    setPage(isNaN(urlPage) || urlPage < 1 ? 1 : urlPage);
+
+    setPriceRange([
+      params.minPrice ? Number(params.minPrice) : 30000,
+      params.maxPrice ? Number(params.maxPrice) : 1000000,
+    ]);
+  }, [searchParams]);
+
+  // LẤY DANH SÁCH SKILL TỪ 100 MENTOR ĐẦU TIÊN
+  useEffect(() => {
+    const fetchInitialSkills = async () => {
+      try {
+        const res = await MentorService.listActiveMentors({
+          limit: initialLimit,
+          page: 1,
+        });
+        const allSkills = new Set();
+        res.mentors?.forEach((mentor) => {
+          if (mentor.skill) {
+            mentor.skill.split(",").forEach((s) => {
+              const trimmed = s.trim();
+              if (trimmed) allSkills.add(trimmed);
+            });
           }
         });
+        setUniqueSkills(Array.from(allSkills).sort((a, b) => a.localeCompare(b)));
+      } catch (err) {
+        console.error("Lỗi lấy danh sách kỹ năng:", err);
       }
-    });
+    };
 
-    const sortedSkills = Array.from(allSkills).sort((a, b) => a.localeCompare(b));
-    setUniqueSkills(sortedSkills);
-  }, [mentors]);
-
-  useEffect(() => {
-    fetchMentors(true, true);
+    fetchInitialSkills();
   }, []);
 
+  // GỌI API CHÍNH (filter + page)
   useEffect(() => {
-    setPage(1);
-    fetchMentors(true, false);
+    const fetchMentors = async () => {
+      try {
+        setLoading(true);
+        const params = {
+          page,
+          limit,
+          search: debouncedSearchQuery || undefined,
+          skills: selectedSkills.length > 0 ? selectedSkills.join(",") : undefined,
+          category: selectedCategory || undefined,
+          company: company || undefined,
+          location: location || undefined,
+          minPrice: minPrice ? Number(minPrice) : undefined,
+          maxPrice: maxPrice ? Number(maxPrice) : undefined,
+          sortBy,
+          sortOrder,
+        };
 
-    const params = new URLSearchParams();
-    if (debouncedSearchQuery) params.set("search", debouncedSearchQuery);
-    if (selectedSkills.length) params.set("skills", selectedSkills.join(","));
-    if (selectedCategory) params.set("category", selectedCategory);
-    if (company) params.set("company", company);
-    if (location) params.set("location", location);
-    if (minPrice) params.set("minPrice", minPrice);
-    if (maxPrice) params.set("maxPrice", maxPrice);
-    if (sortBy) params.set("sortBy", sortBy);
-    if (sortOrder) params.set("sortOrder", sortOrder);
-    setSearchParams(params);
+        Object.keys(params).forEach(key => {
+          if (params[key] === undefined || params[key] === "") delete params[key];
+        });
+
+        const res = await MentorService.listActiveMentors(params);
+        setMentors(res.mentors || []);
+        setTotal(res.pagination?.totalItems || 0);
+      } catch (err) {
+        console.error(err);
+        toast.error("Không thể tải danh sách mentor.");
+        setMentors([]);
+        setTotal(0);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMentors();
   }, [
+    page,
     debouncedSearchQuery,
     selectedSkills,
     selectedCategory,
@@ -161,9 +172,37 @@ export const ListMentor = () => {
     sortOrder,
   ]);
 
+  // ĐỒNG BỘ URL
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (debouncedSearchQuery) params.set("search", debouncedSearchQuery);
+    if (selectedSkills.length) params.set("skills", selectedSkills.join(","));
+    if (selectedCategory) params.set("category", selectedCategory);
+    if (company) params.set("company", company);
+    if (location) params.set("location", location);
+    if (minPrice && minPrice !== "30000") params.set("minPrice", minPrice);
+    if (maxPrice) params.set("maxPrice", maxPrice);
+    if (sortBy !== "full_name") params.set("sortBy", sortBy);
+    if (sortOrder !== "asc") params.set("sortOrder", sortOrder);
+    params.set("page", page);
+
+    setSearchParams(params, { replace: true });
+  }, [
+    debouncedSearchQuery,
+    selectedSkills,
+    selectedCategory,
+    company,
+    location,
+    minPrice,
+    maxPrice,
+    sortBy,
+    sortOrder,
+    page,
+  ]);
+
   const handlePageChange = (newPage) => {
+    if (newPage < 1 || newPage > Math.ceil(total / limit)) return;
     setPage(newPage);
-    fetchMentors(true, false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -183,6 +222,7 @@ export const ListMentor = () => {
     if (minPrice && maxPrice && Number(minPrice) > Number(maxPrice)) {
       toast.error("Giá min không thể lớn hơn giá max!");
       setMinPrice(maxPrice || "30000");
+      setPriceRange([Number(maxPrice) || 30000, priceRange[1]]);
     }
   }, [minPrice, maxPrice]);
 
@@ -197,6 +237,7 @@ export const ListMentor = () => {
     setSortBy("full_name");
     setSortOrder("asc");
     setPriceRange([30000, 1000000]);
+    setPage(1);
     setSearchParams({});
   };
 
@@ -235,20 +276,15 @@ export const ListMentor = () => {
       <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
         <h3 className="text-lg font-bold text-[#2C3E50] mb-4">Danh mục</h3>
         <div className="space-y-3">
-          {categories.map((category) => (
-            <label
-              key={category}
-              className="flex items-center gap-3 cursor-pointer group"
-            >
+          {categories.map((cat) => (
+            <label key={cat} className="flex items-center gap-3 cursor-pointer group">
               <Checkbox
-                checked={selectedCategory === category}
-                onCheckedChange={() =>
-                  setSelectedCategory(selectedCategory === category ? "" : category)
-                }
+                checked={selectedCategory === cat}
+                onCheckedChange={() => setSelectedCategory(selectedCategory === cat ? "" : cat)}
                 className="border-2 border-gray-300 data-[state=checked]:bg-[#F9C5D5] data-[state=checked]:border-[#F9C5D5]"
               />
               <span className="text-sm text-[#333333] group-hover:text-[#F9C5D5] transition-colors">
-                {category}
+                {cat}
               </span>
             </label>
           ))}
@@ -262,15 +298,10 @@ export const ListMentor = () => {
         </h3>
         <div className="space-y-3 max-h-72 overflow-y-auto custom-scrollbar">
           {displayedSkills.map((skill) => (
-            <label
-              key={skill}
-              className="flex items-center gap-3 cursor-pointer group"
-            >
+            <label key={skill} className="flex items-center gap-3 cursor-pointer group">
               <Checkbox
                 checked={selectedSkills.includes(skill)}
-                onCheckedChange={() =>
-                  toggleArrayItem(selectedSkills, skill, setSelectedSkills)
-                }
+                onCheckedChange={() => toggleArrayItem(selectedSkills, skill, setSelectedSkills)}
                 className="border-2 border-gray-300 data-[state=checked]:bg-[#F9C5D5] data-[state=checked]:border-[#F9C5D5]"
               />
               <span className="text-sm text-[#333333] group-hover:text-[#F9C5D5] transition-colors">
@@ -294,9 +325,7 @@ export const ListMentor = () => {
       {/* Location & Company */}
       <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 space-y-4">
         <div>
-          <label className="text-sm font-semibold text-[#2C3E50] mb-2 block">
-            Công ty
-          </label>
+          <label className="text-sm font-semibold text-[#2C3E50] mb-2 block">Công ty</label>
           <div className="relative">
             <Briefcase className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
@@ -308,9 +337,7 @@ export const ListMentor = () => {
           </div>
         </div>
         <div>
-          <label className="text-sm font-semibold text-[#2C3E50] mb-2 block">
-            Vị trí
-          </label>
+          <label className="text-sm font-semibold text-[#2C3E50] mb-2 block">Vị trí</label>
           <div className="relative">
             <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
@@ -347,8 +374,9 @@ export const ListMentor = () => {
             placeholder="Min"
             value={minPrice}
             onChange={(e) => {
-              setMinPrice(e.target.value);
-              setPriceRange([Number(e.target.value) || 30000, priceRange[1]]);
+              const val = e.target.value;
+              setMinPrice(val);
+              setPriceRange([Number(val) || 30000, priceRange[1]]);
             }}
             className="h-10 bg-gray-50 border-0 focus-visible:ring-2 focus-visible:ring-[#F9C5D5] rounded-xl"
           />
@@ -357,8 +385,9 @@ export const ListMentor = () => {
             placeholder="Max"
             value={maxPrice}
             onChange={(e) => {
-              setMaxPrice(e.target.value);
-              setPriceRange([priceRange[0], Number(e.target.value) || 1000000]);
+              const val = e.target.value;
+              setMaxPrice(val);
+              setPriceRange([priceRange[0], Number(val) || 1000000]);
             }}
             className="h-10 bg-gray-50 border-0 focus-visible:ring-2 focus-visible:ring-[#F9C5D5] rounded-xl"
           />
@@ -443,11 +472,7 @@ export const ListMentor = () => {
               <div className="absolute right-0 top-0 bottom-0 w-80 bg-gray-50 overflow-y-auto p-6" onClick={(e) => e.stopPropagation()}>
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-xl font-bold text-[#2C3E50]">Bộ lọc</h2>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setShowMobileFilters(false)}
-                  >
+                  <Button variant="ghost" size="sm" onClick={() => setShowMobileFilters(false)}>
                     <X className="h-5 w-5" />
                   </Button>
                 </div>
@@ -504,10 +529,7 @@ export const ListMentor = () => {
                   <p className="text-gray-500 mb-6">
                     Thử điều chỉnh bộ lọc hoặc tìm kiếm với từ khóa khác
                   </p>
-                  <Button
-                    onClick={resetFilters}
-                    className="bg-[#F9C5D5] hover:bg-[#f5b3c9] text-white"
-                  >
+                  <Button onClick={resetFilters} className="bg-[#F9C5D5] hover:bg-[#f5b3c9] text-white">
                     Xóa bộ lọc
                   </Button>
                 </div>
@@ -520,26 +542,17 @@ export const ListMentor = () => {
                     className="group bg-white border-0 shadow-sm hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden"
                   >
                     <CardContent className="p-0">
-                      {/* Header with Avatar */}
                       <div className="bg-gradient-to-br from-[#F9C5D5] to-[#f5b3c9] p-6 relative">
                         <div className="flex items-start gap-4">
                           <Avatar className="h-20 w-20 border-4 border-white shadow-lg ring-2 ring-pink-100">
-                            <AvatarImage
-                              src={mentor.avatar_url || "/placeholder.svg"}
-                              alt={mentor.full_name}
-                              className="object-cover"
-                            />
+                            <AvatarImage src={mentor.avatar_url || "/placeholder.svg"} alt={mentor.full_name} />
                             <AvatarFallback className="bg-white text-[#F9C5D5] text-xl font-bold">
                               {mentor.full_name?.split(" ").map((n) => n[0]).join("")}
                             </AvatarFallback>
                           </Avatar>
                           <div className="flex-1 text-white">
-                            <h3 className="font-bold text-lg mb-1 line-clamp-1">
-                              {mentor.full_name}
-                            </h3>
-                            <p className="text-sm opacity-90 line-clamp-1">
-                              {mentor.job_title}
-                            </p>
+                            <h3 className="font-bold text-lg mb-1 line-clamp-1">{mentor.full_name}</h3>
+                            <p className="text-sm opacity-90 line-clamp-1">{mentor.job_title}</p>
                             {mentor.company && (
                               <div className="flex items-center gap-1 mt-2 text-xs opacity-80">
                                 <Briefcase className="h-3 w-3" />
@@ -550,24 +563,17 @@ export const ListMentor = () => {
                         </div>
                       </div>
 
-                      {/* Content */}
                       <div className="p-6 space-y-4">
-                        {/* Category */}
                         {mentor.category && (
                           <Badge className="bg-[#2C3E50] text-white hover:bg-[#1e2d3d]">
                             {mentor.category}
                           </Badge>
                         )}
 
-                        {/* Skills */}
                         {mentor.skill && (
                           <div className="flex flex-wrap gap-2">
-                            {mentor.skill.split(",").slice(0, 3).map((s, index) => (
-                              <Badge
-                                key={`${s}-${index}`}
-                                variant="outline"
-                                className="border-[#F9C5D5] text-[#F9C5D5] text-xs"
-                              >
+                            {mentor.skill.split(",").slice(0, 3).map((s, i) => (
+                              <Badge key={`${s}-${i}`} variant="outline" className="border-[#F9C5D5] text-[#F9C5D5] text-xs">
                                 {s.trim()}
                               </Badge>
                             ))}
@@ -579,14 +585,10 @@ export const ListMentor = () => {
                           </div>
                         )}
 
-                        {/* Bio Preview */}
                         {mentor.bio && (
-                          <p className="text-sm text-gray-600 line-clamp-2">
-                            {mentor.bio}
-                          </p>
+                          <p className="text-sm text-gray-600 line-clamp-2">{mentor.bio}</p>
                         )}
 
-                        {/* Footer */}
                         <div className="pt-4 border-t border-gray-100 flex items-center justify-between">
                           <div>
                             {mentor.price && (
@@ -597,10 +599,7 @@ export const ListMentor = () => {
                             )}
                           </div>
                           <Link to={`/mentor/${mentor.id}`}>
-                            <Button
-                              size="sm"
-                              className="bg-[#F9C5D5] hover:bg-[#f5b3c9] text-white rounded-lg px-6"
-                            >
+                            <Button size="sm" className="bg-[#F9C5D5] hover:bg-[#f5b3c9] text-white rounded-lg px-6">
                               Xem chi tiết
                             </Button>
                           </Link>
@@ -620,11 +619,7 @@ export const ListMentor = () => {
                     <PaginationItem>
                       <PaginationPrevious
                         onClick={() => handlePageChange(page - 1)}
-                        className={`rounded-lg ${
-                          page === 1
-                            ? "pointer-events-none opacity-50"
-                            : "hover:bg-pink-50 hover:text-[#F9C5D5] cursor-pointer"
-                        }`}
+                        className={`rounded-lg ${page === 1 ? "pointer-events-none opacity-50" : "hover:bg-pink-50 hover:text-[#F9C5D5] cursor-pointer"}`}
                       />
                     </PaginationItem>
                     {getPaginationRange().map((pageNum) => (
@@ -632,11 +627,7 @@ export const ListMentor = () => {
                         <PaginationLink
                           onClick={() => handlePageChange(pageNum)}
                           isActive={page === pageNum}
-                          className={`rounded-lg cursor-pointer ${
-                            page === pageNum
-                              ? "bg-[#F9C5D5] text-white hover:bg-[#f5b3c9]"
-                              : "hover:bg-pink-50 hover:text-[#F9C5D5]"
-                          }`}
+                          className={`rounded-lg cursor-pointer ${page === pageNum ? "bg-[#F9C5D5] text-white hover:bg-[#f5b3c9]" : "hover:bg-pink-50 hover:text-[#F9C5D5]"}`}
                         >
                           {pageNum}
                         </PaginationLink>
@@ -645,11 +636,7 @@ export const ListMentor = () => {
                     <PaginationItem>
                       <PaginationNext
                         onClick={() => handlePageChange(page + 1)}
-                        className={`rounded-lg ${
-                          page === totalPages
-                            ? "pointer-events-none opacity-50"
-                            : "hover:bg-pink-50 hover:text-[#F9C5D5] cursor-pointer"
-                        }`}
+                        className={`rounded-lg ${page === totalPages ? "pointer-events-none opacity-50" : "hover:bg-pink-50 hover:text-[#F9C5D5] cursor-pointer"}`}
                       />
                     </PaginationItem>
                   </PaginationContent>

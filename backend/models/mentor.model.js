@@ -7,13 +7,6 @@ const ratingSchema = new mongoose.Schema({
   created_at: { type: Date, default: Date.now }
 }, { _id: false });
 
-const timeSlotSchema = new mongoose.Schema({
-  date: { type: Date, required: true },
-  start_time: { type: String, required: true },
-  end_time: { type: String, required: true },
-  is_booked: { type: Boolean, default: false },
-}, { _id: false });
-
 const mentorSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   full_name: { type: String, required: true },
@@ -47,7 +40,10 @@ const mentorSchema = new mongoose.Schema({
   reviewed_by: { type: mongoose.Schema.Types.ObjectId, ref: 'admin' },
   review_note: String,
 
-  availability: [timeSlotSchema],
+  availability: {
+    startTime: Number,
+    endTime: Number,
+  },
 }, { timestamps: true });
 
 module.exports = mongoose.model('Mentor', mentorSchema);

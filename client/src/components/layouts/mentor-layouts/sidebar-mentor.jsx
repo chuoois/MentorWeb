@@ -5,6 +5,7 @@ import {
   Calendar,
   GraduationCap,
   LogOut,
+  Timer
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -16,6 +17,7 @@ export const Sidebar = () => {
     { path: "/applications", label: "Danh sách Mentee", icon: <Users className="w-4 h-4" /> },
     { path: "/progress", label: "Tiến độ hướng dẫn", icon: <BookOpen className="w-4 h-4" /> },
     { path: "/schedule", label: "Lịch hướng dẫn", icon: <Calendar className="w-4 h-4" /> },
+    { path: "/availability", label: "Thời gian khả dụng", icon: <Timer className="w-4 h-4" /> },
   ];
 
   const handleLogout = () => {

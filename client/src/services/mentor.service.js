@@ -25,6 +25,14 @@ const MentorService = {
         const response = await api.get(`/api/mentors/${id}`);
         return response.data;
     },
+    updateAvailability: async (data) => {
+        const response = await api.put(`/api/mentors/availability`, data);
+        return response.data;
+    },
+    getAvailability: async () => {
+        const response = await api.get(`/api/mentors/availability`);
+        return response.data;
+    }
 };
 
 export default MentorService;
