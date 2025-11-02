@@ -46,13 +46,28 @@ const BookingService = {
     return res.data;
   },
 
-  updateApplicationStatus: async (data) => {
-    const res = await api.patch("/api/bookings/applications/action/status", data);
+  // Mentor xác nhận buổi học
+  confirmSessionByMentor: async (bookingId, sessionIndex) => {
+    const res = await api.patch(
+      `/api/bookings/applications/${bookingId}/session/${sessionIndex}/confirm`
+    );
     return res.data;
   },
 
-  updateSessionByMentor: async (applicationId, data) => {
-    const res = await api.patch(`/api/bookings/applications/${applicationId}/session`, data);
+  // Mentor hủy buổi học
+  cancelSessionByMentor: async (bookingId, sessionIndex) => {
+    const res = await api.patch(
+      `/api/bookings/applications/${bookingId}/session/${sessionIndex}/cancel`
+    );
+    return res.data;
+  },
+
+  // Mentor cập nhật link buổi học
+  updateSessionLinkByMentor: async (bookingId, sessionIndex, meeting_link) => {
+    const res = await api.patch(
+      `/api/bookings/applications/${bookingId}/session/${sessionIndex}/link`,
+      { meeting_link }
+    );
     return res.data;
   },
 
@@ -80,11 +95,6 @@ const BookingService = {
 
   confirmSession: async (bookingId, sessionIndex) => {
     const res = await api.patch(`/api/bookings/${bookingId}/sessions/${sessionIndex}/confirm`, { role: "mentee" });
-    return res.data;
-  },
-
-  confirmSessionByMentor: async (bookingId, sessionIndex, data) => {
-    const res = await api.patch(`/api/bookings/${bookingId}/sessions/${sessionIndex}/confirm-by-mentor`, data);
     return res.data;
   },
 

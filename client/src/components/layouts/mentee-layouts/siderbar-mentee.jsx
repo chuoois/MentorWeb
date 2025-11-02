@@ -43,17 +43,6 @@ export const Sidebar = () => {
         </Link>
       </div>
 
-      {/* User Info */}
-      <div className="flex items-center gap-3 px-6 py-4 border-b border-[#F3F3F3]">
-        <Avatar className="w-10 h-10 border">
-          <AvatarImage src="https://i.pravatar.cc/100?img=13" alt="User avatar" />
-          <AvatarFallback>MT</AvatarFallback>
-        </Avatar>
-        <div>
-          <p className="text-xs text-gray-500">Mentee</p>
-        </div>
-      </div>
-
       {/* Navigation */}
       <nav className="flex-1 mt-3">
         <ul className="space-y-1 px-3">

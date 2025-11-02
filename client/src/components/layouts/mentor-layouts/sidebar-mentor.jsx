@@ -51,18 +51,6 @@ export const Sidebar = () => {
         </Link>
       </div>
 
-      {/* User Info */}
-      <div className="flex items-center gap-3 px-6 py-4 border-b border-[#F3F3F3]">
-        <Avatar className="w-10 h-10 border">
-          <AvatarImage src="https://i.pravatar.cc/100?img=14" alt="Mentor avatar" />
-          <AvatarFallback>MT</AvatarFallback>
-        </Avatar>
-        <div>
-          <p className="text-sm font-medium text-[#2C3E50]">Minh Tuấn</p>
-          <p className="text-xs text-gray-500">Mentor</p>
-        </div>
-      </div>
-
       {/* Navigation */}
       <nav className="flex-1 mt-3">
         <ul className="space-y-1 px-3">
@@ -71,10 +59,9 @@ export const Sidebar = () => {
               <NavLink
                 to={tab.path}
                 className={({ isActive }) =>
-                  `flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 ${
-                    isActive
-                      ? "bg-[#A3BFFA]/80 text-[#2C3E50] shadow-[0_0_10px_rgba(163,191,250,0.5)]"
-                      : "text-[#333] hover:bg-[#A3BFFA]/30 hover:translate-x-1"
+                  `flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 ${isActive
+                    ? "bg-[#A3BFFA]/80 text-[#2C3E50] shadow-[0_0_10px_rgba(163,191,250,0.5)]"
+                    : "text-[#333] hover:bg-[#A3BFFA]/30 hover:translate-x-1"
                   }`
                 }
               >

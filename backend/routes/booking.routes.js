@@ -33,11 +33,9 @@ router.get("/mentee/transactions", authMiddleware, checkRole("MENTEE"), c.getTra
 // 1. Lấy danh sách đơn ứng tuyển
 router.get("/applications", authMiddleware, checkRole("MENTOR"), cx.getMentorApplications);
 
-// 2. Cập nhật trạng thái đơn ứng tuyển (CONFIRMED / CANCELLED)
-router.patch("/applications/action/status", authMiddleware, checkRole("MENTOR"), cx.updateApplicationStatus);
-
-// 3. Cập nhật thông tin buổi học
-router.patch("/applications/:applicationId/session", authMiddleware, checkRole("MENTOR"), cx.updateSessionByMentor);
+router.patch("/applications/:bookingId/session/:sessionIndex/confirm", authMiddleware, checkRole("MENTOR"), c.confirmSessionByMentor);
+router.patch("/applications/:bookingId/session/:sessionIndex/cancel", authMiddleware, checkRole("MENTOR"), c.cancelSessionByMentor);
+router.patch("/applications/:bookingId/session/:sessionIndex/link", authMiddleware, checkRole("MENTOR"), c.updateSessionLinkByMentor);
 
 // 4. Lấy chi tiết đơn ứng tuyển theo ID
 router.get("/applications/:applicationId", authMiddleware, checkRole("MENTOR"), cx.getApplicationDetail);

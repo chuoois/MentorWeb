@@ -618,7 +618,7 @@ exports.confirmSession = async (req, res) => {
     session.mentee_confirmed = true;
 
     // ✅ Nếu cả hai bên đã xác nhận → CONFIRMED
-    if (session.mentor_confirmed && session.mentee_confirmed) {
+    if (session.mentee_confirmed) {
       session.status = "CONFIRMED";
     } else {
       session.status = "PENDING";
@@ -658,6 +658,122 @@ exports.cancelSession = async (req, res) => {
 
   await booking.save();
   res.json({ message: "Đã hủy buổi học", booking });
+};
+
+exports.confirmSessionByMentor = async (req, res) => {
+  try {
+    const { bookingId, sessionIndex } = req.params;
+    const mentorId = req.user.id;
+
+    // 🔍 Tìm booking thuộc về mentor
+    const booking = await Booking.findOne({ _id: bookingId, mentor: mentorId });
+    if (!booking)
+      return res.status(404).json({ message: "Không tìm thấy booking của mentor này" });
+
+    if (sessionIndex >= booking.session_times.length)
+      return res.status(400).json({ message: "Session không hợp lệ" });
+
+    const session = booking.session_times[sessionIndex];
+
+    // ✅ Mentor xác nhận
+    session.mentor_confirmed = true;
+
+    // ✅ Nếu cả hai bên đã xác nhận → CONFIRMED
+    if (session.mentor_confirmed) {
+      session.status = "CONFIRMED";
+    } else {
+      session.status = "PENDING";
+    }
+
+    await booking.save();
+
+    res.json({
+      success: true,
+      message: "Mentor đã xác nhận buổi học thành công",
+      data: session,
+    });
+  } catch (error) {
+    console.error("Lỗi confirmSessionByMentor:", error);
+    res.status(500).json({ message: "Lỗi server" });
+  }
+};
+
+exports.cancelSessionByMentor = async (req, res) => {
+  try {
+    const { bookingId, sessionIndex } = req.params;
+    const mentorId = req.user.id;
+
+    const booking = await Booking.findOne({ _id: bookingId, mentor: mentorId });
+    if (!booking)
+      return res.status(404).json({ message: "Không tìm thấy booking của mentor này" });
+
+    if (sessionIndex >= booking.session_times.length)
+      return res.status(400).json({ message: "Session không hợp lệ" });
+
+    const session = booking.session_times[sessionIndex];
+
+    // ✅ Cập nhật trạng thái
+    session.status = "CANCELLED";
+    session.mentor_confirmed = false;
+
+    await booking.save();
+
+    res.json({
+      success: true,
+      message: "Mentor đã hủy buổi học thành công",
+      data: session,
+    });
+  } catch (error) {
+    console.error("Lỗi cancelSessionByMentor:", error);
+    res.status(500).json({ message: "Lỗi server" });
+  }
+};
+
+exports.updateSessionLinkByMentor = async (req, res) => {
+  try {
+    const { bookingId, sessionIndex } = req.params;
+    const { meeting_link } = req.body;
+    const mentorId = req.user.id; // lấy từ middleware xác thực JWT
+
+    // 🔍 Tìm booking thuộc về mentor
+    const booking = await Booking.findOne({
+      _id: bookingId,
+      mentor: mentorId,
+    });
+
+    if (!booking)
+      return res.status(404).json({ message: "Không tìm thấy booking của mentor này" });
+
+    // 🔍 Kiểm tra session tồn tại
+    const session = booking.session_times[sessionIndex];
+    if (!session)
+      return res.status(404).json({ message: "Không tìm thấy session này" });
+
+    // ✅ Cập nhật meeting link
+    if (!meeting_link)
+      return res.status(400).json({ message: "Thiếu meeting_link trong body" });
+
+    session.meeting_link = meeting_link;
+
+    await booking.save();
+
+    // (Tuỳ chọn) gửi mail hoặc thông báo cho mentee
+    // sendEmailToMentee(booking.mentee.email, ...)
+
+    res.json({
+      success: true,
+      message: "Mentor đã cập nhật link buổi học thành công",
+      data: {
+        bookingId: booking._id,
+        sessionIndex,
+        meeting_link: session.meeting_link,
+        status: session.status,
+      },
+    });
+  } catch (error) {
+    console.error("Lỗi updateSessionLinkByMentor:", error);
+    res.status(500).json({ message: "Lỗi server" });
+  }
 };
 
 // ---------------------- GET TRANSACTION HISTORY ----------------------
