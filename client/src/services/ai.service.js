@@ -3,7 +3,7 @@ import api from "../lib/axios";
 
 const AIService = {
   chatMentorAdvisor: (message) => {
-    return api.post("/ai/chat-mentor", message);
+    return api.post("/api/ai/chat-mentor", message);
   }
 };
 
