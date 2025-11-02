@@ -4,7 +4,7 @@ const Mentor = require("../models/mentor.model");
 
 class AiService {
   constructor() {
-    this.client = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    this.client = new GoogleGenerativeAI('AIzaSyDYasZSJw24s_zNLoMjOSxn0J2l2Xg42S0');
     this.model = this.client.getGenerativeModel({ model: "models/gemini-2.5-flash" });
   }
 
