@@ -37,6 +37,17 @@ const AdminService = {
     const res = await api.get(`/api/admin/mentees/${id}`);
     return res.data;
   },
+
+  // ---------------------- BOOKING ----------------------
+  getMentorWeeklyRevenue: async (mentorId) => {
+    const res = await api.get(`/api/admin/mentor/${mentorId}/stats`);
+    return res.data;
+  },
+
+  markMentorWeeklyPaid: async (mentorId) => {
+    const res = await api.put(`/api/admin/mentor/${mentorId}/mark-paid`);
+    return res.data;
+  },
 };
 
 export default AdminService;

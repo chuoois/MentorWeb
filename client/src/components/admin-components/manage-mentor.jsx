@@ -1,10 +1,18 @@
 import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
-import { User, Search, XCircle } from "lucide-react";
+import { User, Search, DollarSign } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import AdminService from "@/services/admin.service";
+import toast from "react-hot-toast";
 
 // Custom useDebounce hook
 const useDebounce = (value, delay) => {
@@ -23,18 +31,86 @@ const useDebounce = (value, delay) => {
   return debouncedValue;
 };
 
+// Component: Form cập nhật trạng thái riêng cho từng mentor
+const MentorStatusForm = ({ mentorId, currentStatus, onStatusChanged }) => {
+  const [status, setStatus] = useState("");
+  const [reviewNote, setReviewNote] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async () => {
+    if (!status) return;
+
+    setLoading(true);
+    try {
+      await AdminService.changeMentorStatus(mentorId, {
+        status,
+        review_note: reviewNote,
+      });
+      toast.success("Cập nhật trạng thái thành công!");
+      setStatus("");
+      setReviewNote("");
+      onStatusChanged();
+    } catch (error) {
+      console.error("Error changing mentor status:", error);
+      toast.error("Cập nhật trạng thái thất bại.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Tự động chọn trạng thái hiện tại (tùy chọn)
+  useEffect(() => {
+    if (currentStatus) {
+      setStatus(currentStatus);
+    }
+  }, [currentStatus]);
+
+  return (
+    <div className="flex flex-col gap-2">
+      <Select value={status} onValueChange={setStatus}>
+        <SelectTrigger className="h-9 text-xs">
+          <SelectValue placeholder="Trạng thái" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="PENDING">Chờ duyệt</SelectItem>
+          <SelectItem value="ACTIVE">Hoạt động</SelectItem>
+          <SelectItem value="REJECTED">Bị từ chối</SelectItem>
+          <SelectItem value="BANNED">Bị cấm</SelectItem>
+        </SelectContent>
+      </Select>
+
+      <Input
+        placeholder="Ghi chú (tùy chọn)"
+        value={reviewNote}
+        onChange={(e) => setReviewNote(e.target.value)}
+        className="h-9 text-xs"
+      />
+
+      <Button
+        size="sm"
+        className="h-8"
+        style={{ backgroundColor: "#F9C5D5", color: "#2C3E50" }}
+        onClick={handleSubmit}
+        disabled={!status || loading}
+      >
+        {loading ? "Đang lưu..." : "Cập nhật"}
+      </Button>
+    </div>
+  );
+};
+
 export const MentorsManagementPage = () => {
+  const navigate = useNavigate();
+
   const [mentors, setMentors] = useState([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(5);
   const [search, setSearch] = useState("");
-  const [status, setStatus] = useState("ALL"); // Default to "ALL" to show all mentors initially
+  const [status, setStatus] = useState("ALL");
   const [loading, setLoading] = useState(true);
-  const [selectedMentor, setSelectedMentor] = useState(null);
-  const [statusForm, setStatusForm] = useState({ status: "", review_note: "" });
 
-  // Debounce search input
+  // Debounce search
   const debouncedSearch = useDebounce(search, 500);
 
   // Fetch mentors
@@ -42,7 +118,6 @@ export const MentorsManagementPage = () => {
     const fetchMentors = async () => {
       try {
         setLoading(true);
-        // Prepare query parameters, exclude status if "ALL" is selected
         const queryParams = { page, limit, search: debouncedSearch };
         if (status !== "ALL") {
           queryParams.status = status;
@@ -52,6 +127,7 @@ export const MentorsManagementPage = () => {
         setTotal(response.data.total);
       } catch (error) {
         console.error("Error fetching mentors:", error);
+        toast.error("Không thể tải danh sách mentor.");
       } finally {
         setLoading(false);
       }
@@ -59,31 +135,13 @@ export const MentorsManagementPage = () => {
     fetchMentors();
   }, [page, limit, debouncedSearch, status]);
 
-  // Handle status change
-  const handleStatusChange = async (id) => {
-    try {
-      await AdminService.changeMentorStatus(id, statusForm);
-      setSelectedMentor(null);
-      setStatusForm({ status: "", review_note: "" });
-      // Refresh mentor list
-      const queryParams = { page, limit, search: debouncedSearch };
-      if (status !== "ALL") {
-        queryParams.status = status;
-      }
-      const response = await AdminService.getMentors(queryParams);
-      setMentors(response.data.mentors);
-      setTotal(response.data.total);
-    } catch (error) {
-      console.error("Error changing mentor status:", error);
-    }
-  };
-
-  // Format price to VND
-  const formatPrice = (price) => {
-    return new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND",
-    }).format(price);
+  // Hàm refresh danh sách (dùng chung cho MentorStatusForm)
+  const refreshMentors = async () => {
+    const queryParams = { page, limit, search: debouncedSearch };
+    if (status !== "ALL") queryParams.status = status;
+    const response = await AdminService.getMentors(queryParams);
+    setMentors(response.data.mentors);
+    setTotal(response.data.total);
   };
 
   // Loading UI
@@ -149,6 +207,7 @@ export const MentorsManagementPage = () => {
         <h3 className="text-lg font-semibold mb-4" style={{ color: "#333333" }}>
           Danh sách Mentor
         </h3>
+
         {mentors.length === 0 ? (
           <div className="text-center py-12">
             <User className="w-16 h-16 text-gray-300 mx-auto mb-4" />
@@ -186,9 +245,11 @@ export const MentorsManagementPage = () => {
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-4">
+
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    {/* Status Badge */}
                     <div
-                      className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
+                      className={`inline-block px-3 py-1 rounded-full text-sm font-medium self-start sm:self-center ${
                         mentor.status === "ACTIVE"
                           ? "bg-green-100 text-green-700"
                           : mentor.status === "PENDING"
@@ -206,12 +267,29 @@ export const MentorsManagementPage = () => {
                         ? "Bị từ chối"
                         : "Bị cấm"}
                     </div>
-                    <Button
-                      variant="outline"
-                      onClick={() => setSelectedMentor(mentor)} // Use mentor directly
-                    >
-                      Xem chi tiết
-                    </Button>
+
+                    {/* Action Buttons */}
+                    <div className="flex gap-2">
+                      {/* Thanh toán tuần */}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex items-center gap-1"
+                        onClick={() =>
+                          navigate(`/admin/mentors/${mentor._id}/payment`)
+                        }
+                      >
+                        <DollarSign className="w-4 h-4" />
+                        Thanh toán
+                      </Button>
+
+                      {/* Form cập nhật trạng thái riêng */}
+                      <MentorStatusForm
+                        mentorId={mentor._id}
+                        currentStatus={mentor.status}
+                        onStatusChanged={refreshMentors}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -242,134 +320,8 @@ export const MentorsManagementPage = () => {
           </div>
         </div>
       </div>
-
-      {/* Mentor Detail Modal */}
-      {selectedMentor && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl p-6 max-w-lg w-full">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold" style={{ color: "#333333" }}>
-                Chi tiết Mentor
-              </h3>
-              <Button variant="ghost" onClick={() => setSelectedMentor(null)}>
-                <XCircle className="w-5 h-5" />
-              </Button>
-            </div>
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <img
-                  src={selectedMentor.avatar_url || "https://via.placeholder.com/40"}
-                  alt={selectedMentor.full_name}
-                  className="w-12 h-12 rounded-full object-cover"
-                />
-                <div>
-                  <p className="font-medium" style={{ color: "#2C3E50" }}>
-                    {selectedMentor.full_name}
-                  </p>
-                  <p className="text-sm text-gray-500">{selectedMentor.email}</p>
-                </div>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Chức vụ</p>
-                <p className="font-medium" style={{ color: "#2C3E50" }}>
-                  {selectedMentor.job_title} tại {selectedMentor.company}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Danh mục</p>
-                <p className="font-medium" style={{ color: "#2C3E50" }}>
-                  {selectedMentor.category}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Kỹ năng</p>
-                <p className="font-medium" style={{ color: "#2C3E50" }}>
-                  {selectedMentor.skill}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Vị trí</p>
-                <p className="font-medium" style={{ color: "#2C3E50" }}>
-                  {selectedMentor.location || "Không có thông tin"}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Giá mỗi buổi</p>
-                <p className="font-medium" style={{ color: "#2C3E50" }}>
-                  {formatPrice(selectedMentor.price || 0)}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Giới thiệu</p>
-                <p className="font-medium" style={{ color: "#2C3E50" }}>
-                  {selectedMentor.bio || "Không có thông tin"}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Trạng thái</p>
-                <p className="font-medium" style={{ color: "#2C3E50" }}>
-                  {selectedMentor.status === "ACTIVE"
-                    ? "Hoạt động"
-                    : selectedMentor.status === "PENDING"
-                    ? "Chờ duyệt"
-                    : selectedMentor.status === "REJECTED"
-                    ? "Bị từ chối"
-                    : "Bị cấm"}
-                </p>
-              </div>
-              {selectedMentor.review_note && (
-                <div>
-                  <p className="text-sm text-gray-500">Ghi chú duyệt</p>
-                  <p className="font-medium" style={{ color: "#2C3E50" }}>
-                    {selectedMentor.review_note}
-                  </p>
-                </div>
-              )}
-              {selectedMentor.reviewed_by && (
-                <div>
-                  <p className="text-sm text-gray-500">Duyệt bởi</p>
-                  <p className="font-medium" style={{ color: "#2C3E50" }}>
-                    {selectedMentor.reviewed_by.full_name} ({selectedMentor.reviewed_by.email})
-                  </p>
-                </div>
-              )}
-            </div>
-
-            {/* Change Status Form */}
-            <div className="mt-6">
-              <h4 className="text-sm font-semibold text-gray-500">Thay đổi trạng thái</h4>
-              <Select
-                value={statusForm.status}
-                onValueChange={(value) => setStatusForm({ ...statusForm, status: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Chọn trạng thái" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="PENDING">Chờ duyệt</SelectItem>
-                  <SelectItem value="ACTIVE">Hoạt động</SelectItem>
-                  <SelectItem value="REJECTED">Bị từ chối</SelectItem>
-                  <SelectItem value="BANNED">Bị cấm</SelectItem>
-                </SelectContent>
-              </Select>
-              <Input
-                placeholder="Ghi chú duyệt (tùy chọn)"
-                value={statusForm.review_note}
-                onChange={(e) => setStatusForm({ ...statusForm, review_note: e.target.value })}
-                className="mt-2"
-              />
-              <Button
-                className="mt-4 w-full"
-                style={{ backgroundColor: "#F9C5D5", color: "#2C3E50" }}
-                onClick={() => handleStatusChange(selectedMentor._id)}
-                disabled={!statusForm.status}
-              >
-                Cập nhật trạng thái
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
+
+export default MentorsManagementPage;

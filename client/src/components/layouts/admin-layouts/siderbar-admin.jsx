@@ -9,7 +9,6 @@ import {
 import { Button } from "@/components/ui/button"
 
 const navigation = [
-  { name: "Thống kê", icon: LayoutDashboard, path: "/admin/dashboard" },
   { name: "Quản lý mentor", icon: Users, path: "/admin/mentors" },
   { name: "Quản lý mentee", icon: UserPlus, path: "/admin/mentees" },
 ]

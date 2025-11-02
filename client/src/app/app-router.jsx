@@ -36,6 +36,7 @@ import {
   LearningProgressMentorPage,
   MenteeTransactionHistoryPage,
   MentorAvailabilitySettingsPage,
+  MentorWeeklyPaymentPage,
 } from "@/pages";
 
 // Layout trống (không có header/footer)
@@ -107,7 +108,7 @@ export const router = createBrowserRouter([
     path: "/admin",
     element: <AdminLayout />,
     children: [
-      { path: "dashboard", element: <AdminDashboard /> },
+      { path: "mentors/:mentorId/payment", element: <MentorWeeklyPaymentPage /> },
       { path: "mentors", element: <MentorManagement /> },
       { path: "mentees", element: <MenteesManagement /> }
     ],

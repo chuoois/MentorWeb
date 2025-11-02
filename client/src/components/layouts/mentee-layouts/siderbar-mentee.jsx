@@ -50,7 +50,6 @@ export const Sidebar = () => {
           <AvatarFallback>MT</AvatarFallback>
         </Avatar>
         <div>
-          <p className="text-sm font-medium text-[#2C3E50]">Ngọc Thịnh</p>
           <p className="text-xs text-gray-500">Mentee</p>
         </div>
       </div>

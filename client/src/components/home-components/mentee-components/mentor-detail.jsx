@@ -355,7 +355,7 @@ export const MentorDetailPage = () => {
                       <h1 className="text-xl sm:text-2xl font-semibold text-[#2C3E50] dark:text-white">
                         {mentor.full_name}
                       </h1>
-                      {mentor.average_rating && (
+                      {mentor.average_rating > 0 && (
                         <div className="flex items-center gap-1">
                           <Star className="h-4 w-4 fill-[#F9C5D5] text-[#F9C5D5]" />
                           <span className="text-sm font-medium text-[#2C3E50] dark:text-gray-200">
@@ -494,11 +494,10 @@ export const MentorDetailPage = () => {
                             {[...Array(5)].map((_, i) => (
                               <Star
                                 key={i}
-                                className={`h-3 w-3 ${
-                                  i < rating.score
+                                className={`h-3 w-3 ${i < rating.score
                                     ? "fill-[#F9C5D5] text-[#F9C5D5]"
                                     : "text-gray-300 dark:text-gray-600"
-                                }`}
+                                  }`}
                               />
                             ))}
                           </div>
@@ -538,9 +537,9 @@ export const MentorDetailPage = () => {
                         {totalSlots > 0
                           ? calculatedPrice
                           : `${mentor.price?.toLocaleString("vi-VN", {
-                              style: "currency",
-                              currency: "VND",
-                            })}/giờ`}
+                            style: "currency",
+                            currency: "VND",
+                          })}/giờ`}
                       </span>
                     </div>
                   </div>
@@ -587,11 +586,10 @@ export const MentorDetailPage = () => {
                             ? "default"
                             : "outline"
                         }
-                        className={`text-xs px-2 py-1 rounded-md flex items-center gap-1 ${
-                          format(day, "yyyy-MM-dd") === format(selectedDate, "yyyy-MM-dd")
+                        className={`text-xs px-2 py-1 rounded-md flex items-center gap-1 ${format(day, "yyyy-MM-dd") === format(selectedDate, "yyyy-MM-dd")
                             ? "bg-[#2C3E50] text-white hover:bg-[#1a252f]"
                             : "border-[#F9C5D5] text-[#2C3E50] dark:text-gray-200 hover:bg-[#F9C5D5]/10"
-                        } transition-all duration-200`}
+                          } transition-all duration-200`}
                         onClick={() => setSelectedDate(day)}
                       >
                         {format(day, "dd/MM", { locale: vi })}
@@ -659,11 +657,10 @@ export const MentorDetailPage = () => {
                             <Button
                               key={idx}
                               variant={isSelected ? "default" : "outline"}
-                              className={`w-full justify-start text-xs py-1.5 rounded-md relative group ${
-                                isSelected
+                              className={`w-full justify-start text-xs py-1.5 rounded-md relative group ${isSelected
                                   ? "bg-[#2C3E50] text-white hover:bg-[#1a252f]"
                                   : "border-[#F9C5D5] text-[#2C3E50] dark:text-gray-200 hover:bg-[#F9C5D5]/10"
-                              } transition-all duration-200`}
+                                } transition-all duration-200`}
                               onClick={() => handleSlotSelect(slot)}
                             >
                               <span className="w-16 text-left">{format(slot.start, "HH:mm")}</span>

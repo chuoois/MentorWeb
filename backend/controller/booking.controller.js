@@ -3,6 +3,7 @@
 const Booking = require("../models/booking.model");
 const Mentor = require("../models/mentor.model");
 const payosSvc = require("../business/payos.service"); // <-- update path nếu khác
+const mongoose = require("mongoose");
 
 // ---------------------- CREATE BOOKING ----------------------
 exports.createBooking = async (req, res) => {
@@ -753,5 +754,117 @@ exports.getTransactionHistory = async (req, res) => {
       message: "Lỗi server khi lấy lịch sử giao dịch",
       error: error.message,
     });
+  }
+};
+
+exports.getMentorWeeklyRevenue = async (req, res) => {
+  try {
+    const { mentorId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(mentorId)) {
+      return res.status(400).json({ message: "Mentor ID không hợp lệ" });
+    }
+
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    // Lọc booking đủ điều kiện thanh toán
+    const bookings = await Booking.find({
+      mentor: mentorId,
+      status: "COMPLETED",
+      paymentStatus: "PAID",
+      paymentforMentor: "PENDING",
+      "session_times.mentor_confirmed": true,
+      "session_times.mentee_confirmed": true,
+      payment_at: { $gte: sevenDaysAgo },
+    })
+      .populate("mentee", "full_name email")
+      .populate("mentor", "full_name email")
+      .sort({ payment_at: -1 })
+      .lean();
+
+    if (!bookings.length) {
+      return res.json({
+        message: "Không có booking nào đủ điều kiện thanh toán tuần này.",
+        totalRevenue7Days: 0,
+        bookings: [],
+      });
+    }
+
+    // Tổng doanh thu 7 ngày
+    const totalRevenue7Days = bookings.reduce(
+      (sum, b) => sum + (b.price || 0),
+      0
+    );
+
+    res.json({
+      mentorId,
+      mentorName: bookings[0].mentor?.full_name,
+      totalBookings: bookings.length,
+      totalRevenue7Days,
+      bookings: bookings.map((b) => ({
+        booking_id: b._id,
+        mentee_name: b.mentee?.full_name,
+        price: b.price,
+        payment_at: b.payment_at,
+        status: b.status,
+      })),
+    });
+  } catch (error) {
+    console.error("Lỗi getMentorWeeklyRevenue:", error);
+    res.status(500).json({ message: "Lỗi server", error });
+  }
+};
+
+exports.markMentorWeeklyPaid = async (req, res) => {
+  try {
+    const { mentorId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(mentorId)) {
+      return res.status(400).json({ message: "Mentor ID không hợp lệ" });
+    }
+
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    const unpaidBookings = await Booking.find({
+      mentor: mentorId,
+      status: "COMPLETED",
+      paymentStatus: "PAID",
+      paymentforMentor: "PENDING",
+      "session_times.mentor_confirmed": true,
+      "session_times.mentee_confirmed": true,
+      payment_at: { $gte: sevenDaysAgo },
+    });
+
+    if (!unpaidBookings.length) {
+      return res.json({ message: "Không có booking nào cần thanh toán tuần này." });
+    }
+
+    // Đánh dấu đã thanh toán cho mentor
+    await Booking.updateMany(
+      {
+        mentor: mentorId,
+        status: "COMPLETED",
+        paymentStatus: "PAID",
+        paymentforMentor: "PENDING",
+        "session_times.mentor_confirmed": true,
+        "session_times.mentee_confirmed": true,
+        payment_at: { $gte: sevenDaysAgo },
+      },
+      { $set: { paymentforMentor: "PAID" } }
+    );
+
+    const totalPaid = unpaidBookings.reduce((sum, b) => sum + (b.price || 0), 0);
+
+    res.json({
+      message: "Đã thanh toán cho mentor trong chu kỳ 7 ngày.",
+      totalBookingsPaid: unpaidBookings.length,
+      totalAmountPaid: totalPaid,
+      paidAt: new Date(),
+    });
+  } catch (error) {
+    console.error("Lỗi markMentorWeeklyPaid:", error);
+    res.status(500).json({ message: "Lỗi server", error });
   }
 };
