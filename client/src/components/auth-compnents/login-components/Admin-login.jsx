@@ -77,7 +77,7 @@ export const AdminLoginPage = () => {
       if (rememberMe) setCookie("admin_remember_email", email, 30)
       else eraseCookie("admin_remember_email")
 
-      navigate("/admin/dashboard")
+      navigate("/admin/mentors")
     } catch (err) {
       const msg = err?.error || err?.message || "Đăng nhập thất bại. Kiểm tra lại thông tin."
       setErrors((p) => ({ ...p, password: msg }))

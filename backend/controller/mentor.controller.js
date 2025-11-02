@@ -527,3 +527,78 @@ exports.getAvailability = async (req, res) => {
     res.status(500).json({ message: 'Lỗi server khi tìm availability.', error: error.message });
   }
 };  
+
+exports.getBankAccount = async (req, res) => {
+  try {
+    const mentorId = req.user.id;
+
+    const mentor = await Mentor.findById(mentorId).select('bank_account');
+    if (!mentor) {
+      return res.status(404).json({ success: false, message: 'Mentor không tồn tại' });
+    }
+
+    res.json({ success: true, data: mentor.bank_account });
+  } catch (err) {
+    console.error('Lỗi khi lấy tài khoản ngân hàng:', err);
+    res.status(500).json({ success: false, message: 'Lỗi máy chủ' });
+  }
+};
+
+exports.getBankAccountbyId = async (req, res) => {
+  try {
+    const mentorId = req.params.id;
+
+    const mentor = await Mentor.findById(mentorId).select('bank_account');
+    if (!mentor) {
+      return res.status(404).json({ success: false, message: 'Mentor không tồn tại' });
+    }
+
+    res.json({ success: true, data: mentor.bank_account });
+  } catch (err) {
+    console.error('Lỗi khi lấy tài khoản ngân hàng:', err);
+    res.status(500).json({ success: false, message: 'Lỗi máy chủ' });
+  }
+};
+
+exports.upsertBankAccount = async (req, res) => {
+  try {
+    const mentorId = req.user.id;
+    const { bank_name, account_number, account_holder } = req.body;
+
+    if (!bank_name || !account_number || !account_holder) {
+      return res.status(400).json({ success: false, message: 'Thiếu thông tin bắt buộc' });
+    }
+
+    const mentor = await Mentor.findById(mentorId);
+    if (!mentor) {
+      return res.status(404).json({ success: false, message: 'Mentor không tồn tại' });
+    }
+
+    mentor.bank_account = { bank_name, account_number, account_holder };
+    await mentor.save();
+
+    res.json({ success: true, message: 'Cập nhật tài khoản ngân hàng thành công', data: mentor.bank_account });
+  } catch (err) {
+    console.error('Lỗi khi cập nhật tài khoản ngân hàng:', err);
+    res.status(500).json({ success: false, message: 'Lỗi máy chủ' });
+  }
+};
+
+exports.deleteBankAccount = async (req, res) => {
+  try {
+    const mentorId = req.user.id;
+
+    const mentor = await Mentor.findById(mentorId);
+    if (!mentor) {
+      return res.status(404).json({ success: false, message: 'Mentor không tồn tại' });
+    }
+
+    mentor.bank_account = {};
+    await mentor.save();
+
+    res.json({ success: true, message: 'Xóa thông tin tài khoản ngân hàng thành công' });
+  } catch (err) {
+    console.error('Lỗi khi xóa tài khoản ngân hàng:', err);
+    res.status(500).json({ success: false, message: 'Lỗi máy chủ' });
+  }
+};

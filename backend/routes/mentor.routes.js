@@ -27,7 +27,14 @@ router.put("/availability", authMiddleware, checkRole("MENTOR"), c.updateAvailab
 // GET /api/mentors/availability
 router.get("/availability", authMiddleware, checkRole("MENTOR"), c.getAvailability);
 
+router.get('/bank', authMiddleware, checkRole("MENTOR"), c.getBankAccount);
+router.post('/bank', authMiddleware, checkRole("MENTOR"), c.upsertBankAccount);
+router.delete('/bank', authMiddleware, checkRole("MENTOR"), c.deleteBankAccount);
+
+router.put("/bank/:id", authMiddleware, checkRole("ADMIN"), c.getBankAccountbyId);
+
 // GET /api/mentors/:id
 router.get("/:id", c.getMentorByID);
+
 
 module.exports = router;

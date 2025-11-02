@@ -44,6 +44,13 @@ const mentorSchema = new mongoose.Schema({
     startTime: Number,
     endTime: Number,
   },
+
+  bank_account: {
+    bank_name: { type: String, required: false },
+    account_number: { type: String, required: false },
+    account_holder: { type: String, required: false }
+  }
+
 }, { timestamps: true });
 
 module.exports = mongoose.model('Mentor', mentorSchema);
