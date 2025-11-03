@@ -42,6 +42,8 @@ const getStatusColor = (status) => {
       return "bg-red-500/10 text-red-500 border-red-500/20";
     case "pending":
       return "bg-blue-500/10 text-blue-500 border-blue-500/20";
+    case "completed":
+      return "bg-gray-500/10 text-gray-500 border-gray-500/20";
     default:
       return "bg-blue-500/10 text-blue-500 border-blue-500/20";
   }
@@ -55,6 +57,8 @@ const getStatusLabel = (status) => {
       return "Đã từ chối";
     case "pending":
       return "Đang chờ";
+    case "completed":
+      return "Đã hoàn thành";
     default:
       return "Đang chờ";
   }

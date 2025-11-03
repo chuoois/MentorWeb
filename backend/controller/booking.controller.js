@@ -78,7 +78,7 @@ exports.createBooking = async (req, res) => {
       price,
       status: "PENDING",
       paymentStatus: "PENDING",
-      paymentforMentor:"PENDING",
+      paymentforMentor: "PENDING",
       note,
     });
     await newBooking.save();
@@ -123,7 +123,7 @@ exports.getBookedSlots = async (req, res) => {
   try {
     const { mentorId } = req.params;
 
-    const mentor = await Mentor.findOne({ _id: mentorId, status: "ACTIVE"  });
+    const mentor = await Mentor.findOne({ _id: mentorId, status: "ACTIVE" });
     if (!mentor) return res.status(404).json({ message: "Mentor không tồn tại hoặc không hoạt động" });
 
     const bookings = await Booking.find({
@@ -623,7 +623,9 @@ exports.confirmSession = async (req, res) => {
     } else {
       session.status = "PENDING";
     }
-
+    if (session.mentor_confirmed == true && session.mentee_confirmed == true) {
+      session.status = "COMPLETED";
+    }
     await booking.save();
 
     res.json({
@@ -684,7 +686,9 @@ exports.confirmSessionByMentor = async (req, res) => {
     } else {
       session.status = "PENDING";
     }
-
+    if (session.mentor_confirmed == true && session.mentee_confirmed == true) {
+      session.status = "COMPLETED";
+    }
     await booking.save();
 
     res.json({
@@ -784,10 +788,10 @@ exports.getTransactionHistory = async (req, res) => {
 
     // Xây dựng điều kiện lọc
     const query = { mentee: menteeId };
-    
+
     if (status) query.status = status;
     if (paymentStatus) query.paymentStatus = paymentStatus;
-    
+
     // Lọc theo ngày
     if (startDate || endDate) {
       query.createdAt = {};
@@ -809,7 +813,7 @@ exports.getTransactionHistory = async (req, res) => {
     // Format dữ liệu lịch sử giao dịch
     const transactionHistory = bookings.map((booking) => {
       const mentor = booking.mentor || {};
-      
+
       return {
         transactionId: booking._id,
         orderCode: booking.order_code,

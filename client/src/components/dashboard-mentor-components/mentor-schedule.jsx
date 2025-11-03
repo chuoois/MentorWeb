@@ -264,6 +264,7 @@ export const MentorSchedule = () => {
         selectedBooking.original_booking_id,
         selectedBooking.session_index
       );
+      console.log("Confirm session response:", response);
 
       const newStatus = response.data?.status || "PENDING";
       const mentorConfirmed = true;

@@ -39,6 +39,7 @@ exports.getMentorApplications = async (req, res) => {
         status: s.status,
         meetingLink: s.meeting_link || null,
         mentorConfirmed: s.mentor_confirmed,
+        menteeConfirmed: s.mentee_confirmed,
         note: s.note || "",
       })),
       sessions: b.sessions,
